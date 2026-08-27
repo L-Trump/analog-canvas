@@ -50,4 +50,42 @@ describe("drafting create controller", () => {
     expect(setTool).toHaveBeenCalledWith("pointer");
     expect(clear).toHaveBeenCalledOnce();
   });
+
+  it("creates a circle from its center and radius point", () => {
+    const transact = vi.fn(() => ({ ok: true }));
+    const controller = createDraftingCreateController({
+      document: createEmptyDocument("cell", "Cell"),
+      resolver: new InMemorySymbolResolver(builtInSymbols),
+      visibleEndpoints: [],
+      routeGeometryRecords: [],
+      tool: "circle",
+      source: { x: 20, y: 20 },
+      hover: { x: 50, y: 60 },
+      waypoints: [],
+      setSource: vi.fn(),
+      setHover: vi.fn(),
+      setWaypoints: vi.fn(),
+      setSnapPoint: vi.fn(),
+      clear: vi.fn(),
+      setTool: vi.fn(),
+      transact,
+      setStatus: vi.fn(),
+      nextId: () => "circle-1",
+    });
+
+    controller.finish();
+
+    expect(transact).toHaveBeenCalledWith([
+      expect.objectContaining({
+        kind: "upsert_drafting_object",
+        object: expect.objectContaining({
+          id: "circle-1",
+          kind: "circle",
+          center: { x: 20, y: 20 },
+          radius: 50,
+          lineStyle: "solid",
+        }),
+      }),
+    ]);
+  });
 });

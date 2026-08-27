@@ -204,6 +204,9 @@ function reportDraftingObjectGridAlignment(
       return;
     case "rectangle":
       reportGridPoint(object.center, grid, [...path, "center"], context);
+      return;
+    case "circle":
+      reportGridPoint(object.center, grid, [...path, "center"], context);
   }
 }
 

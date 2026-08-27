@@ -180,5 +180,6 @@ function findObjectPlacement(
     (candidate) => candidate.id === objectId,
   );
   if (drafting?.kind === "rectangle") return drafting.center;
+  if (drafting?.kind === "circle") return drafting.center;
   return null;
 }

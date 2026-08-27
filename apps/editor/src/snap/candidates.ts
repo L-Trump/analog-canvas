@@ -86,6 +86,14 @@ function draftingGeometryPoints(
       return geometry.vertices;
     case "rectangle":
       return [geometry.center, ...geometry.corners];
+    case "circle":
+      return [
+        geometry.center,
+        { x: geometry.center.x + geometry.radius, y: geometry.center.y },
+        { x: geometry.center.x - geometry.radius, y: geometry.center.y },
+        { x: geometry.center.x, y: geometry.center.y + geometry.radius },
+        { x: geometry.center.x, y: geometry.center.y - geometry.radius },
+      ];
   }
 }
 

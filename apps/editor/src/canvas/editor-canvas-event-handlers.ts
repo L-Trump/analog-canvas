@@ -220,7 +220,8 @@ export function createEditorCanvasEventHandlers({
         selectedDrafting &&
         (selectedDrafting.kind === "arrow" ||
           selectedDrafting.kind === "construction-line" ||
-          selectedDrafting.kind === "rectangle") &&
+          selectedDrafting.kind === "rectangle" ||
+          selectedDrafting.kind === "circle") &&
         !target.closest(
           `[data-testid="drafting-hit-${selectedDrafting.id}"]`,
         ) &&
@@ -249,7 +250,8 @@ export function createEditorCanvasEventHandlers({
       if (
         (tool === "arrow" ||
           tool === "construction-line" ||
-          tool === "rectangle") &&
+          tool === "rectangle" ||
+          tool === "circle") &&
         event.detail === 1 &&
         onBackground
       ) {
@@ -335,7 +337,8 @@ export function createEditorCanvasEventHandlers({
       if (
         tool === "arrow" ||
         tool === "construction-line" ||
-        tool === "rectangle"
+        tool === "rectangle" ||
+        tool === "circle"
       ) {
         if (target !== event.currentTarget && target.tagName !== "rect") return;
         finishDraftingCreate();
@@ -388,7 +391,8 @@ export function createEditorCanvasEventHandlers({
       if (
         tool === "arrow" ||
         tool === "construction-line" ||
-        tool === "rectangle"
+        tool === "rectangle" ||
+        tool === "circle"
       ) {
         if (draftingSourceActive) {
           cancelDraftingCreate();

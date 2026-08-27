@@ -120,6 +120,41 @@ export function marqueeSelection(
             ? geometry.corners.every((corner) => pointInRect(corner, rect))
             : rectangleBoundaryIntersectsRect(geometry.corners, rect);
         }
+        if (geometry.kind === "circle") {
+          const centerInRect = pointInRect(geometry.center, rect);
+          const radius = geometry.radius;
+          if (window) {
+            return (
+              pointInRect(
+                {
+                  x: geometry.center.x - radius,
+                  y: geometry.center.y - radius,
+                },
+                rect,
+              ) &&
+              pointInRect(
+                {
+                  x: geometry.center.x + radius,
+                  y: geometry.center.y + radius,
+                },
+                rect,
+              )
+            );
+          }
+          const closestX = Math.max(
+            rect.x,
+            Math.min(geometry.center.x, rect.x + rect.width),
+          );
+          const closestY = Math.max(
+            rect.y,
+            Math.min(geometry.center.y, rect.y + rect.height),
+          );
+          const nearestDistance = Math.hypot(
+            closestX - geometry.center.x,
+            closestY - geometry.center.y,
+          );
+          return !centerInRect && nearestDistance <= radius;
+        }
         return boxSelected(geometry.bounds);
       })
       .map((object) => object.id),

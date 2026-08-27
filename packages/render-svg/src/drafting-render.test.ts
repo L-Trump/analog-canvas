@@ -163,6 +163,30 @@ describe("drafting layer rendering", () => {
     expect(svg).toContain('points="10,30 90,30 90,70 10,70"');
   });
 
+  it("renders an orientation-free outline circle with the shared drafting style", () => {
+    const document = createEmptyDocument("doc", "Circle");
+    document.drafting = {
+      objects: [
+        {
+          id: "circle-1",
+          kind: "circle",
+          locked: false,
+          zIndex: 0,
+          anchor: { kind: "free", position: { x: 50, y: 50 } },
+          center: { x: 50, y: 50 },
+          radius: 30,
+          lineStyle: "dashed",
+          styleOverride: { strokeScale: 1.5 },
+        },
+      ],
+    };
+    const svg = renderDocumentSvg(document, resolver);
+    expect(svg).toContain('data-kind="draft-circle"');
+    expect(svg).toContain('cx="50" cy="50" r="30"');
+    expect(svg).toContain('fill="none"');
+    expect(svg).toContain('stroke-dasharray="6 4"');
+  });
+
   it("renders a draft arrow with a head", () => {
     const document = createEmptyDocument("doc", "Drafting");
     document.drafting = {

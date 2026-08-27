@@ -27,6 +27,23 @@ function rectangle(
   };
 }
 
+function circle(
+  id: string,
+  center: { x: number; y: number },
+  radius = 40,
+): Extract<DraftingObject, { kind: "circle" }> {
+  return {
+    id,
+    kind: "circle",
+    locked: false,
+    zIndex: 0,
+    anchor: { kind: "free", position: center },
+    center,
+    radius,
+    lineStyle: "solid",
+  };
+}
+
 function anchoredLabel(
   id: string,
   rectangleId: string,
@@ -57,6 +74,20 @@ function documentWith(objects: DraftingObject[]): SchematicDocument {
 }
 
 describe("object-anchored drafting text on rectangles", () => {
+  it("resolves circle geometry from its center and radius", () => {
+    const object = circle("circle-1", { x: 100, y: 60 }, 30);
+    const geometry = resolveDraftingObjectGeometry(
+      documentWith([object]),
+      resolver,
+      object,
+    );
+    expect(geometry).toMatchObject({
+      kind: "circle",
+      center: { x: 100, y: 60 },
+      radius: 30,
+      bounds: { x: 64, y: 24, width: 72, height: 72 },
+    });
+  });
   it("resolves the label at the rectangle center", () => {
     const document = documentWith([
       rectangle("box-1", { x: 100, y: 60 }),

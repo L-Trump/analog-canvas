@@ -7,6 +7,7 @@ export type ToolIconName =
   | "arrow"
   | "line"
   | "rectangle"
+  | "circle"
   | "style"
   | "rotate"
   | "mirror-horizontal"
@@ -73,6 +74,9 @@ export function ToolIcon({ name }: { name: ToolIconName }) {
       {name === "line" ? <path d="M3 15L17 5" {...common} /> : null}
       {name === "rectangle" ? (
         <rect x="3" y="5" width="14" height="10" rx="1" {...common} />
+      ) : null}
+      {name === "circle" ? (
+        <circle cx="10" cy="10" r="6.5" {...common} />
       ) : null}
       {name === "style" ? (
         <>

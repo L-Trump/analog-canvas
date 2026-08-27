@@ -32,6 +32,7 @@ export function DraftingCreatePreview({
   const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
   const rectangle = normalizedRect(start, hover);
   const isRectangle = tool === "rectangle";
+  const isCircle = tool === "circle";
   const showHead = tool === "arrow" && length > 1;
   const head = styleProfile.annotations.arrowHeadLength;
   const halfHeadWidth = styleProfile.annotations.arrowHeadWidth / 2;
@@ -46,6 +47,14 @@ export function DraftingCreatePreview({
     <g data-testid="drafting-create-preview" pointerEvents="none">
       {isRectangle ? (
         <rect className="drafting-create-preview" {...rectangle} fill="none" />
+      ) : isCircle ? (
+        <circle
+          className="drafting-create-preview"
+          cx={start.x}
+          cy={start.y}
+          r={length}
+          fill="none"
+        />
       ) : (
         <polyline
           className="drafting-create-preview"
@@ -66,6 +75,7 @@ export function DraftingCreatePreview({
         r="3"
       />
       {!isRectangle &&
+        !isCircle &&
         waypoints.map((point, index) => (
           <circle
             key={`draft-preview-vx-${index}`}
@@ -97,7 +107,9 @@ export function DraftingCreatePreview({
       >
         {isRectangle
           ? `${Math.round(rectangle.width)} × ${Math.round(rectangle.height)}`
-          : `${Math.round(length)} · ${Math.round(angle)}°`}
+          : isCircle
+            ? `r ${Math.round(length)}`
+            : `${Math.round(length)} · ${Math.round(angle)}°`}
       </text>
     </g>
   );

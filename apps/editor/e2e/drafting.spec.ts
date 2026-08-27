@@ -644,6 +644,48 @@ test("R creates a selectable, styleable rectangle with four resize handles", asy
   expect(await rectangle.getAttribute("points")).not.toBe(pointsBeforeResize);
 });
 
+test("O creates a selectable, styleable circle with one radial handle and no rotation", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await awaitEditorReady(page);
+  await page.keyboard.press("o");
+  await clickCreate(page, { x: 260, y: 260 }, { x: 340, y: 260 });
+  await expect(page.getByTestId("revision")).toHaveText("1");
+
+  const circle = page.locator('[data-kind="draft-circle"]');
+  await expect(circle).toHaveCount(1);
+  await expect(circle).toHaveAttribute("fill", "none");
+  await expect(circle).toHaveAttribute("r", "80");
+
+  const hit = page.getByTestId(/^drafting-hit-circle-/);
+  await expect(hit).toHaveCSS("pointer-events", "stroke");
+  const hitPoint = await hit.evaluate((element) => {
+    const circle = element as SVGCircleElement;
+    const matrix = circle.getScreenCTM();
+    if (!matrix) return null;
+    return new DOMPoint(
+      circle.cx.baseVal.value + circle.r.baseVal.value,
+      circle.cy.baseVal.value,
+    ).matrixTransform(matrix);
+  });
+  if (!hitPoint) throw new Error("circle hit target is not measurable");
+  await page.mouse.click(hitPoint.x, hitPoint.y);
+  await expect(
+    page.locator('[data-testid^="draft-handle-radius-circle-"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.getByTestId("drafting-properties").getByLabel("Drawing bearing"),
+  ).toHaveCount(0);
+  await expect(
+    page.getByTestId("drafting-properties").getByLabel("Line style"),
+  ).toHaveCount(1);
+
+  await page.keyboard.press("r");
+  await expect(page.getByTestId("revision")).toHaveText("1");
+  await expect(page.locator('[data-kind="draft-rectangle"]')).toHaveCount(0);
+});
+
 test("E converts a rectangle into a navigable hierarchical Cell", async ({
   page,
 }) => {

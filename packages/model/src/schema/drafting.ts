@@ -71,6 +71,17 @@ export const DraftRectangleSchema = DraftingObjectBaseSchema.extend({
   rotation: z.number().finite().min(0).lt(360),
   lineStyle: z.enum(["solid", "dashed", "dotted"]),
 });
+/**
+ * A circle is a stroke-only drafting primitive.  Unlike a rectangle it is
+ * intentionally orientation-free: its center/radius are the complete
+ * persistent geometry, which avoids a meaningless rotation property.
+ */
+export const DraftCircleSchema = DraftingObjectBaseSchema.extend({
+  kind: z.literal("circle"),
+  center: PointSchema,
+  radius: z.number().int().positive(),
+  lineStyle: z.enum(["solid", "dashed", "dotted"]),
+});
 export const DraftFloatingSymbolSchema = DraftingObjectBaseSchema.extend({
   kind: z.literal("floating-symbol"),
   symbolId: StableIdSchema,
@@ -83,6 +94,7 @@ export const DraftingObjectSchema = z.discriminatedUnion("kind", [
   DraftCalloutSchema,
   DraftConstructionLineSchema,
   DraftRectangleSchema,
+  DraftCircleSchema,
   DraftFloatingSymbolSchema,
 ]);
 export const DraftingLayerSchema = z.strictObject({

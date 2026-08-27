@@ -52,6 +52,7 @@ export type DrawTool =
   | "arrow"
   | "line"
   | "rectangle"
+  | "circle"
   | "document-style";
 
 /** Activate one tool from the always-visible drawing toolbar. */

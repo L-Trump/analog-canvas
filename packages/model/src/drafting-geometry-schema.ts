@@ -81,6 +81,13 @@ export const ResolvedDraftingGeometrySchema = z.discriminatedUnion("kind", [
     diagnostics: z.array(DraftingDiagnosticSchema),
   }),
   z.strictObject({
+    kind: z.literal("circle"),
+    center: DerivedPointSchema,
+    radius: z.number().positive(),
+    bounds: DerivedRectSchema,
+    diagnostics: z.array(DraftingDiagnosticSchema),
+  }),
+  z.strictObject({
     kind: z.literal("floating-symbol"),
     position: DerivedPointSchema,
     rotation: RotationSchema,

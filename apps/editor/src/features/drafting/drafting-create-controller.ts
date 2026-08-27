@@ -20,7 +20,7 @@ import type { RouteGeometryRecord } from "../wiring/route-interaction-geometry";
 type TransactionResult = { ok: boolean };
 type DraftingTool = Extract<
   EditorTool,
-  "arrow" | "construction-line" | "rectangle"
+  "arrow" | "construction-line" | "rectangle" | "circle"
 >;
 
 export function constrainDraftingAngle(
@@ -76,7 +76,10 @@ export function createDraftingCreateController({
   nextId: (prefix: string) => string;
 }) {
   const activeTool = (): DraftingTool | null =>
-    tool === "arrow" || tool === "construction-line" || tool === "rectangle"
+    tool === "arrow" ||
+    tool === "construction-line" ||
+    tool === "rectangle" ||
+    tool === "circle"
       ? tool
       : null;
 
@@ -166,7 +169,37 @@ export function createDraftingCreateController({
     const id = nextId(active === "construction-line" ? "construction" : active);
     const snappedStart = snapGridPoint(start, document.presentation.grid);
     const snappedEnd = snapGridPoint(end, document.presentation.grid);
-    if (active === "rectangle") {
+    if (active === "circle") {
+      const radius = Math.round(
+        Math.hypot(
+          snappedEnd.x - snappedStart.x,
+          snappedEnd.y - snappedStart.y,
+        ),
+      );
+      if (radius < 1) {
+        setStatus("Circle needs a non-zero radius");
+        return;
+      }
+      if (
+        transact([
+          {
+            kind: "upsert_drafting_object",
+            object: {
+              id,
+              kind: "circle",
+              locked: false,
+              zIndex: 0,
+              anchor: { kind: "free", position: snappedStart },
+              center: snappedStart,
+              radius,
+              lineStyle: "solid",
+            },
+          },
+        ]).ok
+      ) {
+        setStatus(`Added circle ${id}`);
+      }
+    } else if (active === "rectangle") {
       const width = Math.round(Math.abs(snappedEnd.x - snappedStart.x));
       const height = Math.round(Math.abs(snappedEnd.y - snappedStart.y));
       if (width < 1 || height < 1) {
@@ -266,9 +299,15 @@ export function createDraftingCreateController({
           ? "Arrow: click the end point (Enter to finish, Esc to cancel)"
           : active === "rectangle"
             ? "Rectangle: click the opposite corner (Esc to cancel)"
-            : "Construction line: click next vertex (Enter to finish, Esc to cancel)",
+            : active === "circle"
+              ? "Circle: click the radius point (Esc to cancel)"
+              : "Construction line: click next vertex (Enter to finish, Esc to cancel)",
       );
-    } else if (active === "arrow" || active === "rectangle") {
+    } else if (
+      active === "arrow" ||
+      active === "rectangle" ||
+      active === "circle"
+    ) {
       commit(active, source, resolved.point);
       clear();
     } else {
@@ -283,7 +322,7 @@ export function createDraftingCreateController({
     const active = activeTool();
     if (!active || source === null) return;
     const end = hover ?? source;
-    if (active === "arrow" || active === "rectangle") {
+    if (active === "arrow" || active === "rectangle" || active === "circle") {
       if (source.x !== end.x || source.y !== end.y) commit(active, source, end);
     } else {
       const points = [source, ...waypoints];

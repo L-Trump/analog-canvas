@@ -132,6 +132,17 @@ export function DrawingToolbar({
         <ToolIcon name="rectangle" />
         <span>Rect</span>
       </button>
+      <button
+        type="button"
+        className="draw-tool"
+        data-testid="draw-tool-circle"
+        aria-pressed={tool === "circle"}
+        title="Circle (O)"
+        onClick={() => onActivateTool("circle")}
+      >
+        <ToolIcon name="circle" />
+        <span>Circle</span>
+      </button>
       <span className="toolbar-divider" aria-hidden="true" />
       <button
         type="button"
