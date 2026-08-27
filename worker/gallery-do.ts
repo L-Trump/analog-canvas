@@ -19,6 +19,7 @@ import { analyzeDesignNetlist } from "@icm/netlist";
 import {
   parseProject,
   serializeProject,
+  upgradeSchema24To25,
   upgradeSchema25To26,
   upgradeSchema26To27WithReport,
 } from "@icm/project-protocol";
@@ -1101,10 +1102,18 @@ export class GalleryDO {
         try {
           const raw = JSON.parse(row.project_text) as Record<string, unknown>;
           // Rows can lag more than one version between converge runs; the
-          // retained adapters chain older stock up to the previous version
-          // before the boundary migration.
-          const lifted =
-            raw.schemaVersion === 25 ? upgradeSchema25To26(raw) : raw;
+          // retained adapters chain older stock link by link. Each retained
+          // adapter stamps the CURRENT constant, so the stamp is rewound to
+          // the link's real target before the next adapter decides to run —
+          // otherwise a 24 row would skip the 25->26 Route-leg migration.
+          let lifted = raw;
+          if (lifted.schemaVersion === 24) {
+            lifted = upgradeSchema24To25(lifted);
+            lifted.schemaVersion = 25;
+          }
+          if (lifted.schemaVersion === 25) {
+            lifted = upgradeSchema25To26(lifted);
+          }
           const migration =
             lifted.schemaVersion === CURRENT_PROJECT_SCHEMA_VERSION - 1
               ? upgradeSchema26To27WithReport(lifted)

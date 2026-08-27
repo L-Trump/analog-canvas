@@ -1874,6 +1874,49 @@ describe("gallery administration", () => {
     return JSON.stringify(raw);
   }
 
+  it("chains schema-24 stock through converge in one run", async () => {
+    const env = environment();
+    const adminCookie = await adminOf(env);
+    const id = await submitOne(env, "Ancient", { cookie: adminCookie });
+    const raw = JSON.parse(legacy25RouteText()) as any;
+    raw.schemaVersion = 24;
+    await env.GALLERY.getByName("gallery").fetch(
+      "https://gallery/update-entry",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id,
+          projectText: JSON.stringify(raw),
+          schemaVersion: 24,
+          svgText: "<svg/>",
+        }),
+      },
+    );
+
+    const maintenance = await route(
+      env,
+      new Request(`${ORIGIN}/api/gallery/maintenance/schema-current`, {
+        method: "POST",
+        headers: {
+          ...cookieHeaders(adminCookie),
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ apply: true }),
+      }),
+    );
+    expect(await maintenance.json()).toMatchObject({
+      applied: true,
+      ready: 1,
+      failures: [],
+    });
+    const detail = await route(env, new Request(`${ORIGIN}/api/gallery/${id}`));
+    const payload = (await detail.json()) as { projectText: string };
+    const stored = JSON.parse(payload.projectText) as any;
+    expect(stored.schemaVersion).toBe(CURRENT_PROJECT_SCHEMA_VERSION);
+    expect(stored.documents[0].routes[0].legs).toHaveLength(2);
+  });
+
   it("chains schema-25 stock through converge in one run", async () => {
     const env = environment();
     const adminCookie = await adminOf(env);
