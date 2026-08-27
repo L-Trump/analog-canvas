@@ -295,6 +295,22 @@ export function applyInstancesRouteFollow(
     }
 
     const normalized = normalizeRouteGeometry(points, modes);
+    if (normalized.points.length < 2) {
+      // A transformed endpoint can land exactly on the Route's other
+      // endpoint. Persisting that direct contact as a zero-length Route would
+      // violate the canonical one-mode-per-segment invariant. Remove only the
+      // redundant geometry; the endpoints and their Net membership remain,
+      // so a later transform can materialize an ordinary Route again through
+      // the direct-contact lifecycle.
+      if (samePoint(newFrom.contactPoint, newTo.contactPoint)) {
+        const routeIndex = draft.routes.findIndex(
+          (candidate) => candidate.id === route.id,
+        );
+        if (routeIndex >= 0) draft.routes.splice(routeIndex, 1);
+        changed.push(route.id);
+      }
+      continue;
+    }
     // Any heading is legal geometry (ADR 0039), so a follow-stretch is skipped
     // only when it would leave a degenerate segment behind — previously a
     // free-angle Route simply stopped following its instance.
@@ -317,7 +333,7 @@ export function planInstanceSymbolGeometryRouteFollow(
   originalResolver: SymbolResolver,
   resolver: SymbolResolver,
   instanceIds: ReadonlySet<string>,
-): Extract<SchematicEdit, { kind: "set_route_points" }>[] {
+): SchematicEdit[] {
   const draft = structuredClone(document);
   const changedRouteIds = applyInstancesRouteFollow(
     draft,
@@ -327,8 +343,9 @@ export function planInstanceSymbolGeometryRouteFollow(
     instanceIds,
     new Set(),
   );
-  return changedRouteIds.map((routeId) => {
-    const route = draft.routes.find((candidate) => candidate.id === routeId)!;
+  return changedRouteIds.map((routeId): SchematicEdit => {
+    const route = draft.routes.find((candidate) => candidate.id === routeId);
+    if (!route) return { kind: "remove_route_geometry", routeId };
     return {
       kind: "set_route_points",
       routeId: route.id,
