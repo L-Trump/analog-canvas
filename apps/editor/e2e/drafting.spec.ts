@@ -999,8 +999,7 @@ test("Properties sets precise size, stroke width, and color per shape", async ({
   await awaitEditorReady(page);
 
   // Rectangle: precise width/height plus an explicit color.
-  await page.keyboard.press("r");
-  await expect(page.getByTestId("active-tool")).toHaveText("rectangle");
+  await clickDrawTool(page, "rectangle");
   await clickCreate(page, { x: 220, y: 220 }, { x: 380, y: 320 });
   const rectangle = page.locator('[data-kind="draft-rectangle"]');
   await expect(rectangle).toHaveCount(1);
@@ -1057,8 +1056,7 @@ test("Properties sets precise size, stroke width, and color per shape", async ({
   // Circle: precise radius; its stroke stays at the profile default and is
   // therefore narrower than the widened rectangle stroke.
   await page.keyboard.press("Escape");
-  await page.keyboard.press("o");
-  await expect(page.getByTestId("active-tool")).toHaveText("circle");
+  await clickDrawTool(page, "circle");
   await clickCreate(page, { x: 560, y: 240 }, { x: 610, y: 240 });
   const circle = page.locator('[data-kind="draft-circle"]');
   await expect(circle).toHaveCount(1);
