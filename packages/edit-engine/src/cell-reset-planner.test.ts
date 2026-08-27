@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import { createEmptyDocument, createEmptyProject } from "@icm/model";
@@ -67,14 +68,16 @@ function fixture() {
       scope: "local",
     },
   );
-  child.routes.push({
-    id: "route-in",
-    netId: "net-in",
-    from: { kind: "terminal", instanceId: "P1", pinName: "P" },
-    to: { kind: "terminal", instanceId: "R1", pinName: "P" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  child.routes.push(
+    createRoutePath({
+      id: "route-in",
+      netId: "net-in",
+      start: { kind: "terminal", instanceId: "P1", pinName: "P" },
+      end: { kind: "terminal", instanceId: "R1", pinName: "P" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   child.drafting = {
     objects: [
       {

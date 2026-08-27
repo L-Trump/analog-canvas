@@ -31,9 +31,17 @@ import type {
   SchematicDocument,
   ScreenFlip,
 } from "@icm/model";
+import {
+  createRoutePath,
+  routeBends,
+  routeEnd,
+  routeEndpoints,
+  routeModes,
+} from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
 import type { SchematicEdit } from "./transaction.js";
+import { rebuildRoutePath } from "./route-leg-mutation.js";
 
 export interface WireEndpointGeometry {
   connection: EndpointRoutingGeometry;
@@ -109,6 +117,8 @@ export function proposeEndpointRouteAttachment(
 ): EndpointRouteAttachmentProposal {
   const route = document.routes.find((candidate) => candidate.id === routeId);
   if (!route) throw new Error(`Route not found: ${routeId}`);
+  const leg = route.legs[segmentIndex];
+  if (!leg) throw new Error(`Route leg index is out of range: ${segmentIndex}`);
   const edits: SchematicEdit[] = [];
   if (endpointNetId && endpointNetId !== route.netId) {
     edits.push({
@@ -126,7 +136,7 @@ export function proposeEndpointRouteAttachment(
     endpoint,
     routeId: route.id,
     point,
-    segmentIndex,
+    legId: leg.id,
     firstRouteId: routeIds[0],
     secondRouteId: routeIds[1],
   });
@@ -138,7 +148,7 @@ export type WireIntentAnchor =
   | {
       kind: "route-segment";
       routeId: string;
-      segmentIndex: number;
+      legId: string;
       point: Point;
     }
   | { kind: "free"; point: Point };
@@ -193,8 +203,16 @@ export function proposeGroupMoveEdits(
   document: SchematicDocument,
   resolver: SymbolResolver,
   moves: readonly { instanceId: string; position: Point }[],
+  additionalJunctionIds: readonly string[] = [],
+  explicitDelta?: Point,
 ): GroupMoveEditProposal {
-  const proposal = proposeGroupMove(document, resolver, moves);
+  const proposal = proposeGroupMove(
+    document,
+    resolver,
+    moves,
+    additionalJunctionIds,
+    explicitDelta,
+  );
   return {
     preview: {
       routes: proposal.routes,
@@ -244,10 +262,11 @@ export function proposeGroupReflectionEdits(
   resolver: SymbolResolver,
   instanceIds: readonly string[],
   direction: ScreenFlip,
+  center?: Point,
 ): GroupMoveEditProposal {
   return rigidBodyEdits(
     document,
-    proposeGroupReflection(document, resolver, instanceIds, direction),
+    proposeGroupReflection(document, resolver, instanceIds, direction, center),
   );
 }
 
@@ -255,11 +274,12 @@ export function proposeGroupRotationEdits(
   document: SchematicDocument,
   resolver: SymbolResolver,
   instanceIds: readonly string[],
-  deltaDegrees: 90 | -90,
+  deltaDegrees: 90 | -90 | 180,
+  center?: Point,
 ): GroupMoveEditProposal {
   return rigidBodyEdits(
     document,
-    proposeGroupRotation(document, resolver, instanceIds, deltaDegrees),
+    proposeGroupRotation(document, resolver, instanceIds, deltaDegrees, center),
   );
 }
 
@@ -333,14 +353,15 @@ function routeEdits(
     );
     if (!route) throw new Error(`Route not found: ${proposal.routeId}`);
     return {
-      kind: "set_route_points" as const,
-      routeId: route.id,
-      netId: route.netId,
-      from: route.from,
-      to: route.to,
-      waypoints: proposal.waypoints,
-      segmentModes: proposal.segmentModes,
-      ...(route.presentation ? { presentation: route.presentation } : {}),
+      kind: "set_route_path" as const,
+      route: rebuildRoutePath(
+        route,
+        route.start,
+        routeEnd(route),
+        proposal.waypoints,
+        proposal.segmentModes,
+        "route-edit",
+      ),
     };
   });
 }
@@ -377,10 +398,11 @@ function looseRouteAnchorIds(
   document: SchematicDocument,
   route: SchematicDocument["routes"][number],
 ): [string, string] | null {
+  const end = routeEnd(route);
   if (
-    route.from.kind !== "junction" ||
-    route.to.kind !== "junction" ||
-    route.from.junctionId === route.to.junctionId
+    route.start.kind !== "junction" ||
+    end.kind !== "junction" ||
+    route.start.junctionId === end.junctionId
   ) {
     return null;
   }
@@ -389,20 +411,19 @@ function looseRouteAnchorIds(
       (candidate) => candidate.id === junctionId,
     );
     if (!junction) return false;
-    const degree = document.routes.filter(
-      (candidate) =>
-        (candidate.from.kind === "junction" &&
-          candidate.from.junctionId === junctionId) ||
-        (candidate.to.kind === "junction" &&
-          candidate.to.junctionId === junctionId),
+    const degree = document.routes.filter((candidate) =>
+      routeEndpoints(candidate).some(
+        (endpoint) =>
+          endpoint.kind === "junction" && endpoint.junctionId === junctionId,
+      ),
     ).length;
     return (
       junction.role === "route-anchor" ||
       ((junction.role ?? "branch") === "branch" && degree === 1)
     );
   };
-  return isLoose(route.from.junctionId) && isLoose(route.to.junctionId)
-    ? [route.from.junctionId, route.to.junctionId]
+  return isLoose(route.start.junctionId) && isLoose(end.junctionId)
+    ? [route.start.junctionId, end.junctionId]
     : null;
 }
 
@@ -437,17 +458,18 @@ export function proposeLooseRouteTranslation(
     edits: [
       ...anchorEdits,
       {
-        kind: "set_route_points",
-        routeId: route.id,
-        netId: route.netId,
-        from: route.from,
-        to: route.to,
-        waypoints: route.waypoints.map((point) => ({
-          x: point.x + delta.x,
-          y: point.y + delta.y,
-        })),
-        segmentModes: [...route.segmentModes],
-        ...(route.presentation ? { presentation: route.presentation } : {}),
+        kind: "set_route_path",
+        route: rebuildRoutePath(
+          route,
+          route.start,
+          routeEnd(route),
+          routeBends(route).map((point) => ({
+            x: point.x + delta.x,
+            y: point.y + delta.y,
+          })),
+          routeModes(route),
+          "loose-route-translation",
+        ),
       },
     ],
   };
@@ -608,22 +630,22 @@ export function proposeVisualRouteDeletion(
   while (changed) {
     changed = false;
     for (const route of document.routes) {
-      const touchesDeletedJunction =
-        (route.from.kind === "junction" &&
-          junctionsToRemove.has(route.from.junctionId)) ||
-        (route.to.kind === "junction" &&
-          junctionsToRemove.has(route.to.junctionId));
+      const touchesDeletedJunction = routeEndpoints(route).some(
+        (endpoint) =>
+          endpoint.kind === "junction" &&
+          junctionsToRemove.has(endpoint.junctionId),
+      );
       if (touchesDeletedJunction && !routesToRemove.has(route.id)) {
         changed = includeRouteAndBulkFamily(route) || changed;
       }
     }
     for (const junction of document.junctions) {
       if (junctionsToRemove.has(junction.id)) continue;
-      const attachedRoutes = document.routes.filter(
-        (route) =>
-          (route.from.kind === "junction" &&
-            route.from.junctionId === junction.id) ||
-          (route.to.kind === "junction" && route.to.junctionId === junction.id),
+      const attachedRoutes = document.routes.filter((route) =>
+        routeEndpoints(route).some(
+          (endpoint) =>
+            endpoint.kind === "junction" && endpoint.junctionId === junction.id,
+        ),
       );
       if (
         attachedRoutes.length > 0 &&
@@ -669,18 +691,18 @@ export function proposeVisualRouteDeletion(
   // otherwise a second remove would reject the transaction.
   const alreadyOrphanedJunctionIds = sortedJunctionIds.filter(
     (junctionId) =>
-      !document.routes.some(
-        (route) =>
-          (route.from.kind === "junction" &&
-            route.from.junctionId === junctionId) ||
-          (route.to.kind === "junction" && route.to.junctionId === junctionId),
+      !document.routes.some((route) =>
+        routeEndpoints(route).some(
+          (endpoint) =>
+            endpoint.kind === "junction" && endpoint.junctionId === junctionId,
+        ),
       ),
   );
   const disconnectedBulkInstances = [
     ...new Set(
       document.routes
         .filter((route) => bulkRoutesToRemove.has(route.id))
-        .flatMap((route) => [route.from, route.to])
+        .flatMap((route) => routeEndpoints(route))
         .filter(
           (
             endpoint,
@@ -696,7 +718,7 @@ export function proposeVisualRouteDeletion(
             !document.routes.some(
               (route) =>
                 !routesToRemove.has(route.id) &&
-                [route.from, route.to].some(
+                routeEndpoints(route).some(
                   (candidate) =>
                     candidate.kind === "terminal" &&
                     candidate.instanceId === endpoint.instanceId &&
@@ -959,14 +981,16 @@ export function proposeWireCommit(
     draft.cornerOrder ?? "auto",
   );
   edits.push({
-    kind: "set_route_points",
-    routeId,
-    netId,
-    from: from.endpoint,
-    to: to.endpoint,
-    waypoints: routed.waypoints,
-    segmentModes: routed.segmentModes,
-    ...(presentation ? { presentation } : {}),
+    kind: "set_route_path",
+    route: createRoutePath({
+      id: routeId,
+      netId,
+      start: from.endpoint,
+      end: to.endpoint,
+      bends: routed.waypoints,
+      modes: routed.segmentModes,
+      ...(presentation ? { presentation } : {}),
+    }),
   });
   return { routeId, netId, edits };
 }
@@ -1262,7 +1286,7 @@ export function createRouteWireAnchor(
           routeId: route.id,
           firstRouteId: ids.firstRouteId,
           secondRouteId: ids.secondRouteId,
-          segmentIndex,
+          legId: route.legs[segmentIndex]!.id,
         },
       },
     ],
@@ -1343,11 +1367,16 @@ export function proposeWireIntent(
     if (anchor.kind === "route-segment") {
       const route = routeFor(anchor);
       if (!route) return `Wire route does not exist: ${anchor.routeId}`;
+      const segmentIndex = route.legs.findIndex(
+        (leg) => leg.id === anchor.legId,
+      );
+      if (segmentIndex < 0)
+        return `Wire route leg does not exist: ${anchor.legId}`;
       return createRouteWireAnchor(
         document,
         route,
         anchor.point,
-        anchor.segmentIndex,
+        segmentIndex,
         document.presentation.grid,
         {
           junctionId: `${intent.id}-${side}-junction`,

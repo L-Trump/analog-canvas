@@ -9,10 +9,11 @@ Primary owners: `packages/model`, `packages/edit-engine`, `packages/derived`
 the same terminal endpoint for those Instances and every other component.
 
 A Route belongs to one Net and connects terminal or Junction endpoints. Its
-editable centerline is endpoint, zero or more waypoints, endpoint;
-`segmentModes.length` is always `waypoints.length + 1`. Junctions are explicit
-branch/route anchors. Geometric crossing or overlap does not create electrical
-contact.
+canonical path is one `start` endpoint followed by ordered legs. Non-final
+legs end at stable, dot-free bends; the final leg ends at the other endpoint.
+Each leg owns its mode and stable `legId`, so geometry and behavior cannot
+drift as parallel arrays. Junctions are explicit branch/route anchors.
+Geometric crossing or overlap does not create electrical contact.
 
 Route centerlines are one geometry protocol. Normal interactive Routes may use
 horizontal, vertical, or ±45-degree segments; orthogonal is the default
@@ -27,7 +28,7 @@ Route transaction.
   joins real Net membership through one atomic Edit Engine transaction.
 - Every terminal resolves through one `EndpointConnection`. Exact artwork
   contact and outward escape are derived presentation geometry; the Wire
-  compiler persists only grid landings and ordinary grid waypoints. An offset
+  compiler persists only grid landings and ordinary grid bends. An offset
   MOS B anchor therefore uses the same Route transaction as every other pin;
   `bulk-dashed` changes only presentation.
 - Exact visible endpoint coincidence is a zero-length physical contact. After
@@ -54,6 +55,24 @@ Route transaction.
   real disconnection.
 - A Route-anchored label or marker is part of the Route deletion closure and is
   removed through its typed annotation edit before the Route is cut.
+- Transform, `C` copy-placement, graph deletion, marker rename, and whole-Net
+  rename first compile one transient `RoutingOperationPlan`. The plan carries
+  a stable-ID affected closure, expected electrical effect, typed edits and ID
+  remap; an independent before/after projection validates the effect before
+  the same edits commit. It is not Project data or an Agent protocol.
+- Transform classifies selected conductors once: internal Routes move rigidly,
+  boundary Routes stretch only at the inside endpoint, and external Routes do
+  not move. Unsafe protected geometry rejects atomically; no transform invokes
+  rerouting.
+- `C` clones the selected internal electrical subgraph. Ordinary boundary
+  Routes and terminal membership are not copied, so copied boundary pins are
+  open. A selected Cell Pin, supply marker, or Net-label owner retains its own
+  naming evidence and rejoins a Logical Net only through `name + scope`.
+  Implicit MOS bulk binding remains the explicit Cell-policy exception.
+- Delete is one graph operation: selected Route geometry dominates incidental
+  marquee Junction dots; Junction-only deletion owns its incident arms; Route
+  attachments, orphan anchors, layout references and unreferenced local Nets
+  are cleaned in the same transaction.
 - `NoConnect` and Net membership are mutually exclusive.
 - Snap, selection, highlight, clipboard, undo, Agent Snapshot, and formal render
   consume the same resolved endpoint geometry.
@@ -111,6 +130,25 @@ highlight suppresses guides incident to the highlighted Net. Unplaced
 endpoints remain in the Placement Tray and do not receive invented page
 coordinates.
 
+## Net naming and lifecycle
+
+Base Nets remain physical connectivity; Logical Nets are derived from
+owner-addressed `name-claim` evidence. Reusing a spelling never merges Route
+geometry.
+
+- Renaming one marker detaches only that owner from its old Base Net, creates
+  or joins its requested name semantics, and rebinds its own label. Other
+  markers, Ports, rails and labels keep their names and physical Nets.
+- Renaming a whole Logical Net updates that Logical Net's editable owner
+  claims. A matching name may join compatible logical semantics but does not
+  merge Base Nets; incompatible scope or power domain rejects atomically.
+- Multiple same-name Ports, supply markers and power rails are legal. `VDD`,
+  `AVDD`, and `DVDD` are distinct names; `powerDomain: vdd` is a role, not a
+  singleton object or reserved Net ID.
+- MOS bulk defaults are explicit Cell policy and do not imply a globally
+  unique VDD. Deleting the last marker or owner cannot leave a ghost Net that
+  blocks later reuse of the same visible name or designator.
+
 ## Derived read models
 
 `ProjectConnectivityIndex` is the shared logical/routed connectivity view.
@@ -132,7 +170,7 @@ movement, stretch, and the `RouteEditPlan` preview/commit boundary belong to
 
 For explicit same-Net endpoints at the same page coordinate, contact evidence
 records terminals/Junctions, independently authored Route arms, and incident
-directions. Route waypoints are not implicit contacts. A visible dot represents
+directions. Route bends are not implicit contacts. A visible dot represents
 authored branch topology, not line intersection: Route arms and terminal stems
 count by distinct visible direction, so collinear incidents paint as one
 conductor and do not justify a dot. Three distinct visible directions require a

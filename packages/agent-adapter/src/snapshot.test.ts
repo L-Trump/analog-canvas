@@ -45,10 +45,8 @@ describe("Agent Document Snapshot", () => {
     expect(snapshot.document.revision).toBe(document.revision);
     expect(snapshot.document.presentation).toEqual(document.presentation);
     expect(snapshot.document.routes[0]).toMatchObject({
-      from: expect.any(Object),
-      to: expect.any(Object),
-      waypoints: expect.any(Array),
-      segmentModes: expect.any(Array),
+      start: expect.any(Object),
+      legs: expect.any(Array),
       polyline: expect.any(Array),
     });
     const snapshotRoute = snapshot.document.routes[0]!;
@@ -297,7 +295,7 @@ describe("Agent Document Snapshot", () => {
 
     const geometryOnly = structuredClone(withNoConnect);
     const geometryDocument = geometryOnly.documents[0]!;
-    geometryDocument.routes[0]!.segmentModes = ["locked"];
+    geometryDocument.routes[0]!.legs[0]!.mode = "locked";
     geometryDocument.junctions.push({
       id: "junction-hash-contract",
       netId: geometryDocument.nets[0]!.id,

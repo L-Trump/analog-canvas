@@ -1,7 +1,11 @@
 import {
   reflectOrientation,
+  routeBends,
+  routeEnd,
+  routeModes,
   type Orientation,
   type Point,
+  type RouteEndpoint,
   type SchematicDocument,
   type ScreenFlip,
 } from "@icm/model";
@@ -90,7 +94,7 @@ export interface WireSegmentDragProposal {
  */
 function movableSegmentJunctionId(
   document: SchematicDocument,
-  endpoint: SchematicDocument["routes"][number]["from"],
+  endpoint: RouteEndpoint,
 ): string | null {
   if (endpoint.kind !== "junction") return null;
   const junction = document.junctions.find(
@@ -98,6 +102,13 @@ function movableSegmentJunctionId(
   );
   if (!junction) return null;
   return junction.id;
+}
+
+function routeSideEndpoint(
+  route: SchematicDocument["routes"][number],
+  side: "from" | "to",
+): RouteEndpoint {
+  return side === "from" ? route.start : routeEnd(route);
 }
 
 /**
@@ -137,7 +148,7 @@ function assertJunctionBranchesStayVisible(
       side: "from" | "to",
       fallback: Point,
     ): Point | undefined => {
-      const value = route[side];
+      const value = routeSideEndpoint(route, side);
       return value.kind === "junction"
         ? (movedById.get(value.junctionId) ?? fallback)
         : fallback;
@@ -164,7 +175,7 @@ function assertJunctionBranchesStayVisible(
       const points = resultingPoints(route);
       if (!points) continue;
       for (const side of ["from", "to"] as const) {
-        const value = route[side];
+        const value = routeSideEndpoint(route, side);
         if (value.kind !== "junction" || value.junctionId !== junctionId) {
           continue;
         }
@@ -320,14 +331,13 @@ export function proposeJunctionGroupTranslation(
   const routingGeometry = resolveDocumentRoutingGeometry(document, resolver);
   const proposals = new Map<string, RouteStretchProposal>();
   for (const route of document.routes) {
+    const end = routeEnd(route);
     const movedFrom =
-      route.from.kind === "junction"
-        ? movedJunctions.get(route.from.junctionId)
+      route.start.kind === "junction"
+        ? movedJunctions.get(route.start.junctionId)
         : undefined;
     const movedTo =
-      route.to.kind === "junction"
-        ? movedJunctions.get(route.to.junctionId)
-        : undefined;
+      end.kind === "junction" ? movedJunctions.get(end.junctionId) : undefined;
     if (!movedFrom && !movedTo) continue;
 
     const polyline = routeEditPathFromGeometry(routingGeometry, route.id);
@@ -357,7 +367,7 @@ export function proposeJunctionGroupTranslation(
       }
       proposals.set(route.id, {
         routeId: route.id,
-        waypoints: route.waypoints.map((point) => ({
+        waypoints: routeBends(route).map((point) => ({
           x: point.x + fromDelta.x,
           y: point.y + fromDelta.y,
         })),
@@ -441,10 +451,10 @@ export function proposeWireSegmentDrag(
   const lastPointIndex = selectedPolyline.points.length - 1;
   const selectedEndpointJunction = (pointIndex: number): string | null => {
     if (pointIndex === 0) {
-      return movableSegmentJunctionId(document, selectedRoute.from);
+      return movableSegmentJunctionId(document, selectedRoute.start);
     }
     if (pointIndex === lastPointIndex) {
-      return movableSegmentJunctionId(document, selectedRoute.to);
+      return movableSegmentJunctionId(document, routeEnd(selectedRoute));
     }
     return null;
   };
@@ -586,8 +596,8 @@ export function proposeWireSegmentDrag(
 
   for (const route of document.routes) {
     if (route.id === routeId) continue;
-    const fromAnchor = movableSegmentJunctionId(document, route.from);
-    const toAnchor = movableSegmentJunctionId(document, route.to);
+    const fromAnchor = movableSegmentJunctionId(document, route.start);
+    const toAnchor = movableSegmentJunctionId(document, routeEnd(route));
     const movedFrom = fromAnchor ? movedJunctions.get(fromAnchor) : undefined;
     const movedTo = toAnchor ? movedJunctions.get(toAnchor) : undefined;
     if (!movedFrom && !movedTo) continue;
@@ -687,18 +697,18 @@ export function proposeLocalStretch(
   const proposals: RouteStretchProposal[] = [];
 
   for (const route of document.routes) {
+    const end = routeEnd(route);
     const movesFrom =
-      route.from.kind === "terminal" && route.from.instanceId === instanceId;
-    const movesTo =
-      route.to.kind === "terminal" && route.to.instanceId === instanceId;
+      route.start.kind === "terminal" && route.start.instanceId === instanceId;
+    const movesTo = end.kind === "terminal" && end.instanceId === instanceId;
     if (!movesFrom && !movesTo) continue;
     const original = routeEditPathFromGeometry(routingGeometry, route.id);
     const newFrom = resolveEndpointConnection(
       movedDocument,
       resolver,
-      route.from,
+      route.start,
     );
-    const newTo = resolveEndpointConnection(movedDocument, resolver, route.to);
+    const newTo = resolveEndpointConnection(movedDocument, resolver, end);
     if (!original || !newFrom || !newTo) continue;
     const points = original.points.map((point) => ({ ...point }));
     const modes = [...original.segmentModes];
@@ -741,6 +751,8 @@ export function proposeGroupMove(
   document: SchematicDocument,
   resolver: SymbolResolver,
   moves: readonly InstanceMoveProposal[],
+  additionalJunctionIds: readonly string[] = [],
+  explicitDelta?: Point,
 ): GroupMoveProposal {
   const moveByInstance = new Map(
     moves.map((move) => [move.instanceId, move.position]),
@@ -760,7 +772,7 @@ export function proposeGroupMove(
   }
 
   const deltas = [...deltaByInstance.values()];
-  const groupDelta = deltas[0] ?? { x: 0, y: 0 };
+  const groupDelta = deltas[0] ?? explicitDelta ?? { x: 0, y: 0 };
   if (
     deltas.some((delta) => delta.x !== groupDelta.x || delta.y !== groupDelta.y)
   ) {
@@ -771,24 +783,29 @@ export function proposeGroupMove(
   ]);
   const internalNetIds = new Set(internalSelection.netIds);
   const movableJunctionIds = new Set(internalSelection.junctionIds);
+  for (const junctionId of additionalJunctionIds) {
+    if (document.junctions.some((junction) => junction.id === junctionId)) {
+      movableJunctionIds.add(junctionId);
+    }
+  }
   const routingGeometry = resolveDocumentRoutingGeometry(document, resolver);
 
   const proposals = new Map<string, RouteStretchProposal>();
   for (const route of document.routes) {
+    const end = routeEnd(route);
     const fromDelta =
-      route.from.kind === "terminal"
-        ? deltaByInstance.get(route.from.instanceId)
+      route.start.kind === "terminal"
+        ? deltaByInstance.get(route.start.instanceId)
         : undefined;
     const toDelta =
-      route.to.kind === "terminal"
-        ? deltaByInstance.get(route.to.instanceId)
-        : route.to.kind === "junction" &&
-            movableJunctionIds.has(route.to.junctionId)
+      end.kind === "terminal"
+        ? deltaByInstance.get(end.instanceId)
+        : end.kind === "junction" && movableJunctionIds.has(end.junctionId)
           ? groupDelta
           : undefined;
     const resolvedFromDelta =
-      route.from.kind === "junction" &&
-      movableJunctionIds.has(route.from.junctionId)
+      route.start.kind === "junction" &&
+      movableJunctionIds.has(route.start.junctionId)
         ? groupDelta
         : fromDelta;
     if (!resolvedFromDelta && !toDelta) continue;
@@ -799,16 +816,16 @@ export function proposeGroupMove(
       resolvedFromDelta.x === toDelta.x &&
       resolvedFromDelta.y === toDelta.y
     ) {
-      if (route.segmentModes.includes("locked")) {
+      if (route.legs.some((leg) => leg.mode === "locked")) {
         throw new Error(`Route ${route.id} contains a locked segment`);
       }
       proposals.set(route.id, {
         routeId: route.id,
-        waypoints: route.waypoints.map((point) => ({
+        waypoints: routeBends(route).map((point) => ({
           x: point.x + resolvedFromDelta.x,
           y: point.y + resolvedFromDelta.y,
         })),
-        segmentModes: [...route.segmentModes],
+        segmentModes: routeModes(route),
       });
       continue;
     }
@@ -909,13 +926,13 @@ export interface GroupRotationProposal {
   pivot: Point;
 }
 
-/** Screen-space quarter turn: +90 turns clockwise, as SVG rotate() does. */
-function turn(point: Point, pivot: Point, deltaDegrees: 90 | -90): Point {
+/** Screen-space turn: positive angles turn clockwise, as SVG rotate() does. */
+function turn(point: Point, pivot: Point, deltaDegrees: 90 | -90 | 180): Point {
   const dx = point.x - pivot.x;
   const dy = point.y - pivot.y;
-  return deltaDegrees === 90
-    ? { x: pivot.x - dy, y: pivot.y + dx }
-    : { x: pivot.x + dy, y: pivot.y - dx };
+  if (deltaDegrees === 90) return { x: pivot.x - dy, y: pivot.y + dx };
+  if (deltaDegrees === -90) return { x: pivot.x + dy, y: pivot.y - dx };
+  return { x: pivot.x - dx, y: pivot.y - dy };
 }
 
 /**
@@ -939,16 +956,23 @@ export function proposeGroupRotation(
   document: SchematicDocument,
   resolver: SymbolResolver,
   instanceIds: readonly string[],
-  deltaDegrees: 90 | -90,
+  deltaDegrees: 90 | -90 | 180,
+  center?: Point,
 ): GroupRotationProposal {
-  return proposeRigidBodyMove(document, resolver, instanceIds, (pivot) => ({
-    point: (point) => turn(point, pivot, deltaDegrees),
-    placement: (placement) => ({
-      rotation: ((((placement.rotation + deltaDegrees) % 360) + 360) % 360) as
-        0 | 90 | 180 | 270,
-      mirror: placement.mirror,
+  return proposeRigidBodyMove(
+    document,
+    resolver,
+    instanceIds,
+    (pivot) => ({
+      point: (point) => turn(point, pivot, deltaDegrees),
+      placement: (placement) => ({
+        rotation: ((((placement.rotation + deltaDegrees) % 360) + 360) %
+          360) as 0 | 90 | 180 | 270,
+        mirror: placement.mirror,
+      }),
     }),
-  }));
+    center,
+  );
 }
 
 /**
@@ -965,12 +989,19 @@ export function proposeGroupReflection(
   resolver: SymbolResolver,
   instanceIds: readonly string[],
   direction: ScreenFlip,
+  center?: Point,
 ): GroupRotationProposal {
   const axis = direction === "left-right" ? "x" : "y";
-  return proposeRigidBodyMove(document, resolver, instanceIds, (pivot) => ({
-    point: (point) => ({ ...point, [axis]: 2 * pivot[axis] - point[axis] }),
-    placement: (placement) => reflectOrientation(placement, direction),
-  }));
+  return proposeRigidBodyMove(
+    document,
+    resolver,
+    instanceIds,
+    (pivot) => ({
+      point: (point) => ({ ...point, [axis]: 2 * pivot[axis] - point[axis] }),
+      placement: (placement) => reflectOrientation(placement, direction),
+    }),
+    center,
+  );
 }
 
 interface RigidBodyTransform {
@@ -983,6 +1014,7 @@ function proposeRigidBodyMove(
   resolver: SymbolResolver,
   instanceIds: readonly string[],
   transformFor: (pivot: Point) => RigidBodyTransform,
+  center?: Point,
 ): GroupRotationProposal {
   const selected = new Set(instanceIds);
   const placed = document.instances.filter(
@@ -1003,10 +1035,12 @@ function proposeRigidBodyMove(
   const ys = placed.map((instance) => instance.placement!.position.y);
   const snap = (value: number): number =>
     grid > 0 ? Math.round(value / grid) * grid : value;
-  const pivot = {
-    x: snap((Math.min(...xs) + Math.max(...xs)) / 2),
-    y: snap((Math.min(...ys) + Math.max(...ys)) / 2),
-  };
+  const pivot = center
+    ? { x: snap(center.x), y: snap(center.y) }
+    : {
+        x: snap((Math.min(...xs) + Math.max(...xs)) / 2),
+        y: snap((Math.min(...ys) + Math.max(...ys)) / 2),
+      };
 
   const transform = transformFor(pivot);
   const instances = placed
@@ -1031,29 +1065,27 @@ function proposeRigidBodyMove(
   const turningJunctionIds = new Set(internalSelection.junctionIds);
   const routingGeometry = resolveDocumentRoutingGeometry(document, resolver);
 
-  const turns = (
-    endpoint: SchematicDocument["routes"][number]["from"],
-  ): boolean =>
+  const turns = (endpoint: RouteEndpoint): boolean =>
     (endpoint.kind === "terminal" && selected.has(endpoint.instanceId)) ||
     (endpoint.kind === "junction" &&
       turningJunctionIds.has(endpoint.junctionId));
 
   const proposals = new Map<string, RouteStretchProposal>();
   for (const route of document.routes) {
-    const fromTurns = turns(route.from);
-    const toTurns = turns(route.to);
+    const fromTurns = turns(route.start);
+    const toTurns = turns(routeEnd(route));
     if (!fromTurns && !toTurns) continue;
 
     if (fromTurns && toTurns) {
-      if (route.segmentModes.includes("locked")) {
+      if (route.legs.some((leg) => leg.mode === "locked")) {
         throw new Error(`Route ${route.id} contains a locked segment`);
       }
       // Wholly inside: the Route is part of the body, so its own geometry
       // turns rather than being stretched between two moved ends.
       proposals.set(route.id, {
         routeId: route.id,
-        waypoints: route.waypoints.map((point) => transform.point(point)),
-        segmentModes: [...route.segmentModes],
+        waypoints: routeBends(route).map((point) => transform.point(point)),
+        segmentModes: routeModes(route),
       });
       continue;
     }

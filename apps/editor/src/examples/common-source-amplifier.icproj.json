@@ -380,10 +380,10 @@
               "y": 270
             },
             "kind": "route",
+            "legId": "route-leg-a5b59a07cb78c547",
             "normalOffset": -40,
             "orientation": "follow",
             "routeId": "route-ui-25",
-            "segmentIndex": 1,
             "t": 0.6996025085449219
           },
           "content": {
@@ -987,258 +987,391 @@
       "revision": 166,
       "routes": [
         {
-          "from": {
+          "id": "route-ui-5",
+          "legs": [
+            {
+              "id": "route-leg-b425448e843180bb",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-b425448e843180bb",
+                "kind": "bend",
+                "position": {
+                  "x": 290,
+                  "y": 290
+                }
+              }
+            },
+            {
+              "id": "route-leg-b425438e84317f08",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "R3-copy-5",
+                  "kind": "terminal",
+                  "pinName": "2"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-ui-5",
+          "start": {
             "instanceId": "V6",
             "kind": "terminal",
             "pinName": "+"
-          },
-          "id": "route-ui-5",
-          "netId": "net-ui-5",
-          "segmentModes": ["manual", "manual"],
-          "to": {
-            "instanceId": "R3-copy-5",
-            "kind": "terminal",
-            "pinName": "2"
-          },
-          "waypoints": [
-            {
-              "x": 290,
-              "y": 290
-            }
-          ]
+          }
         },
         {
-          "from": {
-            "instanceId": "R3-copy-5",
-            "kind": "terminal",
-            "pinName": "1"
-          },
           "id": "route-ui-8-a-10",
+          "legs": [
+            {
+              "id": "route-leg-938d19549064bc69",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-10",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-10",
-            "kind": "junction"
-          },
-          "waypoints": []
-        },
-        {
-          "from": {
-            "junctionId": "junction-ui-10",
-            "kind": "junction"
-          },
-          "id": "route-ui-8-b-10",
-          "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual"],
-          "to": {
-            "instanceId": "C1",
+          "start": {
+            "instanceId": "R3-copy-5",
             "kind": "terminal",
             "pinName": "1"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
+          "id": "route-ui-8-b-10",
+          "legs": [
+            {
+              "id": "route-leg-a5c54be8ef0ad91a",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "C1",
+                  "kind": "terminal",
+                  "pinName": "1"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-split-1143160ec6fc8d88",
+          "start": {
             "junctionId": "junction-ui-10",
             "kind": "junction"
-          },
+          }
+        },
+        {
           "id": "route-ui-11-a-12",
+          "legs": [
+            {
+              "id": "route-leg-35fa7da83873a292",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-12",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-12",
+          "start": {
+            "junctionId": "junction-ui-10",
             "kind": "junction"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
-            "junctionId": "junction-ui-12",
-            "kind": "junction"
-          },
           "id": "route-ui-11-b-12-a-26",
+          "legs": [
+            {
+              "id": "route-leg-b5ad9fac2435a25e",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-26",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-26",
+          "start": {
+            "junctionId": "junction-ui-12",
             "kind": "junction"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
-            "junctionId": "junction-ui-26",
-            "kind": "junction"
-          },
           "id": "route-ui-11-b-12-b-26-a-29",
+          "legs": [
+            {
+              "id": "route-leg-f3236c21b62696be",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-29",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-29",
+          "start": {
+            "junctionId": "junction-ui-26",
             "kind": "junction"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
-            "junctionId": "junction-ui-29",
-            "kind": "junction"
-          },
           "id": "route-ui-11-b-12-b-26-b-29",
+          "legs": [
+            {
+              "id": "route-leg-d9cdd983f0a7c33d",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "M2",
+                  "kind": "terminal",
+                  "pinName": "G"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual"],
-          "to": {
-            "instanceId": "M2",
-            "kind": "terminal",
-            "pinName": "G"
-          },
-          "waypoints": []
+          "start": {
+            "junctionId": "junction-ui-29",
+            "kind": "junction"
+          }
         },
         {
-          "from": {
+          "id": "route-ui-19",
+          "legs": [
+            {
+              "id": "route-leg-140975b95ad30063",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "GND5-copy-2",
+                  "kind": "terminal",
+                  "pinName": "0"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-global-0",
+          "start": {
             "instanceId": "M2",
             "kind": "terminal",
             "pinName": "S"
-          },
-          "id": "route-ui-19",
-          "netId": "net-global-0",
-          "segmentModes": ["manual"],
-          "to": {
-            "instanceId": "GND5-copy-2",
-            "kind": "terminal",
-            "pinName": "0"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
+          "id": "route-vdd7-rail-a-21",
+          "legs": [
+            {
+              "id": "route-leg-5993f683ca4eed8c",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-21",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-power-vdd7",
+          "presentation": "power-rail",
+          "start": {
             "junctionId": "junction-vdd7-start",
             "kind": "junction"
-          },
-          "id": "route-vdd7-rail-a-21",
-          "netId": "net-power-vdd7",
-          "presentation": "power-rail",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-21",
-            "kind": "junction"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
-            "junctionId": "junction-ui-21",
-            "kind": "junction"
-          },
           "id": "route-vdd7-rail-b-21",
+          "legs": [
+            {
+              "id": "route-leg-230c36b1a85c8fbf",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-vdd7-end",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-power-vdd7",
           "presentation": "power-rail",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-vdd7-end",
-            "kind": "junction"
-          },
-          "waypoints": []
-        },
-        {
-          "from": {
+          "start": {
             "junctionId": "junction-ui-21",
             "kind": "junction"
-          },
+          }
+        },
+        {
           "id": "route-ui-22",
+          "legs": [
+            {
+              "id": "route-leg-5f6ad70b8c5bcedd",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "R3",
+                  "kind": "terminal",
+                  "pinName": "1"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
           "netId": "net-power-vdd7",
-          "segmentModes": ["manual"],
-          "to": {
-            "instanceId": "R3",
-            "kind": "terminal",
-            "pinName": "1"
-          },
-          "waypoints": []
+          "start": {
+            "junctionId": "junction-ui-21",
+            "kind": "junction"
+          }
         },
         {
-          "from": {
-            "instanceId": "R3",
-            "kind": "terminal",
-            "pinName": "2"
-          },
           "id": "route-ui-23",
-          "netId": "net-split-315c27b4f6e1c409",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-15",
-            "kind": "junction"
-          },
-          "waypoints": []
-        },
-        {
-          "from": {
-            "junctionId": "junction-ui-15",
-            "kind": "junction"
-          },
-          "id": "route-ui-24",
-          "netId": "net-split-315c27b4f6e1c409",
-          "segmentModes": ["manual"],
-          "to": {
-            "instanceId": "M2",
-            "kind": "terminal",
-            "pinName": "D"
-          },
-          "waypoints": []
-        },
-        {
-          "from": {
-            "junctionId": "junction-ui-15",
-            "kind": "junction"
-          },
-          "id": "route-ui-25",
-          "netId": "net-split-315c27b4f6e1c409",
-          "segmentModes": ["manual", "manual"],
-          "to": {
-            "instanceId": "GND5",
-            "kind": "terminal",
-            "pinName": "0"
-          },
-          "waypoints": [
+          "legs": [
             {
-              "x": 590,
-              "y": 240
+              "id": "route-leg-5823016be2073ade",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-15",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
             }
-          ]
+          ],
+          "netId": "net-split-315c27b4f6e1c409",
+          "start": {
+            "instanceId": "R3",
+            "kind": "terminal",
+            "pinName": "2"
+          }
         },
         {
-          "from": {
+          "id": "route-ui-24",
+          "legs": [
+            {
+              "id": "route-leg-92d7673fc0ab7623",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "M2",
+                  "kind": "terminal",
+                  "pinName": "D"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-split-315c27b4f6e1c409",
+          "start": {
+            "junctionId": "junction-ui-15",
+            "kind": "junction"
+          }
+        },
+        {
+          "id": "route-ui-25",
+          "legs": [
+            {
+              "id": "route-leg-a5b59907cb78c394",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-a5b59907cb78c394",
+                "kind": "bend",
+                "position": {
+                  "x": 590,
+                  "y": 240
+                }
+              }
+            },
+            {
+              "id": "route-leg-a5b59a07cb78c547",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "GND5",
+                  "kind": "terminal",
+                  "pinName": "0"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-split-315c27b4f6e1c409",
+          "start": {
+            "junctionId": "junction-ui-15",
+            "kind": "junction"
+          }
+        },
+        {
+          "id": "route-ui-30",
+          "legs": [
+            {
+              "id": "route-leg-c45e0a2ff0d6df32",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-c45e0a2ff0d6df32",
+                "kind": "bend",
+                "position": {
+                  "x": 450,
+                  "y": 240
+                }
+              }
+            },
+            {
+              "id": "route-leg-c45e0b2ff0d6e0e5",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-29",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-split-1143160ec6fc8d88",
+          "start": {
             "instanceId": "C1-copy-1",
             "kind": "terminal",
             "pinName": "2"
-          },
-          "id": "route-ui-30",
-          "netId": "net-split-1143160ec6fc8d88",
-          "segmentModes": ["manual", "manual"],
-          "to": {
-            "junctionId": "junction-ui-29",
-            "kind": "junction"
-          },
-          "waypoints": [
-            {
-              "x": 450,
-              "y": 240
-            }
-          ]
+          }
         },
         {
-          "from": {
+          "id": "route-ui-31",
+          "legs": [
+            {
+              "id": "route-leg-c651e825d0e80431",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "junctionId": "junction-ui-15",
+                  "kind": "junction"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-split-315c27b4f6e1c409",
+          "start": {
             "instanceId": "C1-copy-1",
             "kind": "terminal",
             "pinName": "1"
-          },
-          "id": "route-ui-31",
-          "netId": "net-split-315c27b4f6e1c409",
-          "segmentModes": ["manual"],
-          "to": {
-            "junctionId": "junction-ui-15",
-            "kind": "junction"
-          },
-          "waypoints": []
+          }
         }
       ],
       "sourceStatus": "connectivity-modified"
@@ -1247,7 +1380,7 @@
   "externalSubcircuitDefinitions": [],
   "id": "project-main",
   "name": "New Circuit",
-  "schemaVersion": 25,
+  "schemaVersion": 26,
   "source": {
     "dialect": "none",
     "entry": null,

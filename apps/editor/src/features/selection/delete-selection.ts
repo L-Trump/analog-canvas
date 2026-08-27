@@ -1,5 +1,6 @@
 import {
   instanceOwnedAnnotationIds,
+  planRoutingDeletion,
   planInstanceDeletion,
   proposeVisualRouteDeletion,
   type SchematicEdit,
@@ -74,40 +75,8 @@ export function proposeVisualSelectionDeletion(
   selection: VisualDeletionSelection,
   sequence: number,
 ): SchematicEdit[] {
-  const visualRouteDeletion = proposeVisualRouteDeletion(
-    document,
-    selection.routeIds,
-    selection.routeIds.length > 0 ? [] : selection.junctionIds,
-    { instanceIdsScheduledForDeletion: selection.instanceIds },
-  );
-  const instanceEdits =
-    selection.instanceIds.length > 0
-      ? proposeConnectedInstanceDeletion(
-          document,
-          resolver,
-          selection.instanceIds,
-          sequence,
-        )
-      : [];
-  const annotationIds = explicitAnnotationRemovals(
-    document,
-    selection.instanceIds,
-    selection.annotationIds.filter(
-      (annotationId) =>
-        !visualRouteDeletion.annotationIds.includes(annotationId),
-    ),
-  );
   return [
-    ...instanceEdits,
-    ...visualRouteDeletion.edits,
-    ...annotationIds.map((annotationId): SchematicEdit => ({
-      kind: "remove_schematic_annotation",
-      annotationId,
-    })),
-    ...selection.draftingIds.map((objectId): SchematicEdit => ({
-      kind: "remove_drafting_object",
-      objectId,
-    })),
+    ...planRoutingDeletion(document, resolver, selection, sequence).edits,
   ];
 }
 

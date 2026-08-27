@@ -1,7 +1,7 @@
-import type { Point, RouteBranch } from "@icm/model";
+import type { Point, SegmentMode } from "@icm/model";
 import { areCollinear, polylineSatisfiesConstraint } from "@icm/derived";
 
-export type SegmentMode = RouteBranch["segmentModes"][number];
+export type { SegmentMode } from "@icm/model";
 
 export interface RouteEditPath {
   points: readonly Point[];

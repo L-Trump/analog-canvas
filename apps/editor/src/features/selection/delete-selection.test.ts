@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -157,14 +158,16 @@ describe("connected instance deletion", () => {
         { instanceId: "R2", pinName: "1" },
       ],
     });
-    document.routes.push({
-      id: "route-1",
-      netId: "net-1",
-      from: { kind: "terminal", instanceId: "R1", pinName: "2" },
-      to: { kind: "terminal", instanceId: "R2", pinName: "1" },
-      waypoints: [{ x: 100, y: 80 }],
-      segmentModes: ["manual", "manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-1",
+        netId: "net-1",
+        start: { kind: "terminal", instanceId: "R1", pinName: "2" },
+        end: { kind: "terminal", instanceId: "R2", pinName: "1" },
+        bends: [{ x: 100, y: 80 }],
+        modes: ["manual", "manual"],
+      }),
+    );
 
     const result = executeTransaction(
       document,
@@ -190,8 +193,23 @@ describe("connected instance deletion", () => {
         ],
         routes: [
           {
-            from: { kind: "junction", junctionId: "junction-lifecycle-1-1" },
-            to: { kind: "terminal", instanceId: "R2", pinName: "1" },
+            start: {
+              kind: "junction",
+              junctionId: "junction-lifecycle-1-1",
+            },
+            legs: [
+              {},
+              {
+                to: {
+                  kind: "endpoint",
+                  endpoint: {
+                    kind: "terminal",
+                    instanceId: "R2",
+                    pinName: "1",
+                  },
+                },
+              },
+            ],
           },
         ],
       },
@@ -219,15 +237,17 @@ describe("connected instance deletion", () => {
       netId: "net-body",
       position: { x: 180, y: 100 },
     });
-    document.routes.push({
-      id: "route-body",
-      netId: "net-body",
-      from: { kind: "terminal", instanceId: "M1", pinName: "B" },
-      to: { kind: "junction", junctionId: "junction-body" },
-      waypoints: [{ x: 100, y: 100 }],
-      segmentModes: ["escape", "manual"],
-      presentation: "bulk-dashed",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-body",
+        netId: "net-body",
+        start: { kind: "terminal", instanceId: "M1", pinName: "B" },
+        end: { kind: "junction", junctionId: "junction-body" },
+        bends: [{ x: 100, y: 100 }],
+        modes: ["escape", "manual"],
+        presentation: "bulk-dashed",
+      }),
+    );
 
     const edits = proposeVisualSelectionDeletion(
       document,
@@ -279,14 +299,16 @@ function documentWithJunctionRoute() {
     { id: "junction-left", netId: "net-1", position: { x: 100, y: 100 } },
     { id: "junction-right", netId: "net-1", position: { x: 200, y: 100 } },
   );
-  document.routes.push({
-    id: "route-1",
-    netId: "net-1",
-    from: { kind: "junction", junctionId: "junction-left" },
-    to: { kind: "junction", junctionId: "junction-right" },
-    waypoints: [],
-    segmentModes: ["auto"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "route-1",
+      netId: "net-1",
+      start: { kind: "junction", junctionId: "junction-left" },
+      end: { kind: "junction", junctionId: "junction-right" },
+      bends: [],
+      modes: ["auto"],
+    }),
+  );
   return document;
 }
 
@@ -305,30 +327,30 @@ function documentWithBranchedJunction() {
     { id: "junction-bottom", netId: "net-1", position: { x: 100, y: 200 } },
   );
   document.routes.push(
-    {
+    createRoutePath({
       id: "route-left",
       netId: "net-1",
-      from: { kind: "junction", junctionId: "junction-left" },
-      to: { kind: "junction", junctionId: "junction-center" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    },
-    {
+      start: { kind: "junction", junctionId: "junction-left" },
+      end: { kind: "junction", junctionId: "junction-center" },
+      bends: [],
+      modes: ["manual"],
+    }),
+    createRoutePath({
       id: "route-right",
       netId: "net-1",
-      from: { kind: "junction", junctionId: "junction-center" },
-      to: { kind: "junction", junctionId: "junction-right" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    },
-    {
+      start: { kind: "junction", junctionId: "junction-center" },
+      end: { kind: "junction", junctionId: "junction-right" },
+      bends: [],
+      modes: ["manual"],
+    }),
+    createRoutePath({
       id: "route-branch",
       netId: "net-1",
-      from: { kind: "junction", junctionId: "junction-center" },
-      to: { kind: "junction", junctionId: "junction-bottom" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    },
+      start: { kind: "junction", junctionId: "junction-center" },
+      end: { kind: "junction", junctionId: "junction-bottom" },
+      bends: [],
+      modes: ["manual"],
+    }),
   );
   return document;
 }

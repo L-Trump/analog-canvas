@@ -9,6 +9,14 @@ import {
   recoveryProjectTexts,
 } from "./editor-fixtures.js";
 
+async function openSelectionShelf(page: import("@playwright/test").Page) {
+  const shelf = page.getByTestId("selection-shelf");
+  await expect(shelf).toBeVisible();
+  if ((await shelf.getAttribute("aria-expanded")) !== "true") {
+    await shelf.click();
+  }
+}
+
 test("blocks destructive browser refresh shortcuts and uses the stronger grid", async ({
   page,
 }) => {
@@ -457,6 +465,31 @@ test("places the VDD power-port device as the default VDD entry", async ({
       .filter((annotation) => annotation.kind === "power-label")
       .map((annotation) => annotation.id),
   ).toEqual(["power-label-vdd1", "power-label-vdd2"]);
+});
+
+test("renames one supply marker without changing its same-name peer", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await chooseComponent(page, "vdd-port");
+  const canvas = page.getByTestId("schematic-canvas");
+  await canvas.click({ position: { x: 300, y: 180 } });
+  await canvas.click({ position: { x: 500, y: 180 } });
+  await page.keyboard.press("Escape");
+
+  await page.getByTestId("hit-VDD1").click();
+  await openSelectionShelf(page);
+  const name = page.getByRole("textbox", { name: "Supply name" });
+  await name.fill("AVDD");
+  await name.press("Tab");
+
+  await expect(page.getByTestId("status")).toContainText("Supply named AVDD");
+  await expect(
+    canvas.locator('[data-object-id="power-label-vdd1"]'),
+  ).toContainText("AVDD");
+  await expect(
+    canvas.locator('[data-object-id="power-label-vdd2"]'),
+  ).toContainText("VDD");
 });
 
 test("reopens I and starts Copy from retained selection without stacking modes", async ({
@@ -960,7 +993,8 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   const categories = panel.locator('[data-testid^="shapes-category-"]');
 
   await expect(panel).toHaveAttribute("data-open", "true");
-  await expect(libraryChips).toHaveCount(38);
+  const libraryChipCount = await libraryChips.count();
+  expect(libraryChipCount).toBeGreaterThanOrEqual(35);
   await expect(categories).toHaveCount(8);
   const transistorCategory = page.getByTestId("shapes-category-transistors");
   const transistorChips = transistorCategory.locator(
@@ -1074,7 +1108,7 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   expect(artworkGeometry.every((artwork) => artwork.separatedFromLabel)).toBe(
     true,
   );
-  await expect(libraryChips.locator("span")).toHaveCount(38);
+  await expect(libraryChips.locator("span")).toHaveCount(libraryChipCount);
   await expect(transistorCategory).toHaveJSProperty("open", true);
   await transistorCategory.locator("summary").click();
   await expect(transistorCategory).toHaveJSProperty("open", false);

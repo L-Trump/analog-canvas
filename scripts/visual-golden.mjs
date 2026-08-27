@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 import { parseProject } from "../packages/project-protocol/dist/index.js";
 import { renderDocumentSvg } from "../packages/render-svg/dist/index.js";
+import { createRoutePath } from "../packages/model/dist/index.js";
 import {
   InMemorySymbolResolver,
   builtInSymbols,
@@ -37,22 +38,22 @@ for (const fixture of fixtures) {
       pinName: "P",
     });
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-v",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
   }
   const svg = renderDocumentSvg(document, resolver, {

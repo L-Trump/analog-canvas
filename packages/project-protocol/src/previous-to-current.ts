@@ -9,3 +9,12 @@ export type {
   Schema24To25MigrationReport,
   Schema24To25MigrationResult,
 } from "./transforms/project.js";
+export {
+  upgradeSchema25To26,
+  upgradeSchema25To26WithReport,
+} from "./transforms/route-leg.js";
+export type {
+  MigratedRouteLegPath,
+  Schema25To26MigrationReport,
+  Schema25To26MigrationResult,
+} from "./transforms/route-leg.js";

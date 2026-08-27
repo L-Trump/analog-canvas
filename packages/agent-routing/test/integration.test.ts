@@ -4,7 +4,7 @@
 // This is the critical consistency test the original implementation failed:
 // the helper reported [from, to] but the Engine stored a different polyline
 // (because it called route_orthogonal internally). Now every edge is a
-// set_route_points with explicit waypoints, so the geometry must match exactly.
+// set_route_path with explicit bends, so the geometry must match exactly.
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -188,7 +188,7 @@ describe("expandRouteGraph → transact → actual geometry consistency", () => 
     );
     // The junction is still created (node position is valid), but the route edit is NOT.
     expect(
-      expansion.edits.filter((e) => e.kind === "set_route_points"),
+      expansion.edits.filter((e) => e.kind === "set_route_path"),
     ).toHaveLength(0);
   });
 
@@ -226,7 +226,7 @@ describe("expandRouteGraph → transact → actual geometry consistency", () => 
       true,
     );
     expect(
-      expansion.edits.filter((e) => e.kind === "set_route_points"),
+      expansion.edits.filter((e) => e.kind === "set_route_path"),
     ).toHaveLength(0);
   });
 

@@ -1,3 +1,4 @@
+import { routeEndpoints } from "@icm/model";
 import type { Point, RouteEndpoint, SchematicDocument } from "@icm/model";
 import {
   endpointKey,
@@ -147,8 +148,9 @@ export function nextPhysicalContactOperation(
       if (segment.mode === "escape") continue;
       if (!endpointChanged && !changedObjectIds.has(route.id)) continue;
       if (
-        endpointKey(route.from) === endpointKey(endpoint) ||
-        endpointKey(route.to) === endpointKey(endpoint)
+        routeEndpoints(route).some(
+          (candidate) => endpointKey(candidate) === endpointKey(endpoint),
+        )
       ) {
         continue;
       }

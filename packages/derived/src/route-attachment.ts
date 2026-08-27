@@ -13,7 +13,9 @@ export function resolveRouteAttachment(
   geometry: ResolvedRouteGeometry,
   attachment: RouteAnnotationAttachment,
 ): ResolvedRouteAttachment | null {
-  const segment = geometry.segments[attachment.segmentIndex];
+  const segment = geometry.segments.find(
+    (candidate) => candidate.address.legId === attachment.legId,
+  );
   if (!segment) return null;
   const dx = segment.to.x - segment.from.x;
   const dy = segment.to.y - segment.from.y;

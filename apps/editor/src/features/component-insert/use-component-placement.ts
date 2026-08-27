@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import type {
-  ConnectivityIntent,
+  RoutingOperationIntent,
   ProjectStructureEdit,
   SchematicEdit,
   WireSource,
@@ -85,9 +85,8 @@ export interface UseComponentPlacementOptions {
     options?: { preserveInteraction?: boolean },
   ) => TransactionResult;
   transactConnectivity: (
-    intent: ConnectivityIntent,
+    intent: RoutingOperationIntent,
     edits: readonly SchematicEdit[],
-    preview?: unknown,
     options?: { preserveInteraction?: boolean },
   ) => TransactionResult | null;
   transactProject: (
@@ -262,12 +261,9 @@ export function useComponentPlacement(options: UseComponentPlacementOptions) {
       })),
     ];
     const committed = Boolean(
-      options.transactConnectivity(
-        "connect_without_wire",
-        placementEdits,
-        { contact, standalonePower },
-        { preserveInteraction: true },
-      )?.ok,
+      options.transactConnectivity("connect", placementEdits, {
+        preserveInteraction: true,
+      })?.ok,
     );
     if (!committed) return;
     options.selectOnly("instance", [id]);
@@ -588,11 +584,7 @@ export function useComponentPlacement(options: UseComponentPlacementOptions) {
       );
       return;
     }
-    const result = options.transactConnectivity(
-      "draw_wire",
-      [...railPlan.edits],
-      { start, end, railPlan },
-    );
+    const result = options.transactConnectivity("connect", [...railPlan.edits]);
     if (!result?.ok) return;
     options.selectOnly("route", [routeId]);
     options.completeVddRailPlacement();

@@ -53,6 +53,7 @@ export interface PendingComponentPlacement {
 export interface CopyPlacement<TClipboard> {
   clipboard: TClipboard;
   anchor: Point;
+  sequence: number;
   previewPoint: Point | null;
   orientationOperations: PlacementOrientationOperation[];
 }
@@ -111,6 +112,7 @@ export type InteractionAction<TClipboard = never> =
       anchor: Point;
     }
   | { type: "set-copy-preview"; point: Point | null }
+  | { type: "advance-copy-placement" }
   | { type: "rotate-copy"; deltaDegrees: 90 | -90 }
   | { type: "mirror-copy"; direction: ScreenFlip }
   | { type: "begin-selection-move" }
@@ -279,6 +281,7 @@ export function interactionReducer<TClipboard>(
         copy: {
           clipboard: action.clipboard,
           anchor: action.anchor,
+          sequence: 1,
           previewPoint: null,
           orientationOperations: [],
         },
@@ -292,6 +295,13 @@ export function interactionReducer<TClipboard>(
         return state;
       }
       return { ...state, copy: { ...state.copy, previewPoint: action.point } };
+    case "advance-copy-placement":
+      return state.kind === "copy-placement"
+        ? {
+            ...state,
+            copy: { ...state.copy, sequence: state.copy.sequence + 1 },
+          }
+        : state;
     case "rotate-copy":
       return state.kind === "copy-placement"
         ? {
@@ -481,6 +491,7 @@ export function useInteractionState<TClipboard>() {
       dispatch({ type: "begin-copy-placement", clipboard, anchor }),
     setCopyPreviewPoint: (point: Point | null) =>
       dispatch({ type: "set-copy-preview", point }),
+    advanceCopyPlacement: () => dispatch({ type: "advance-copy-placement" }),
     rotateCopyPlacement: (deltaDegrees: 90 | -90) =>
       dispatch({ type: "rotate-copy", deltaDegrees }),
     mirrorCopyPlacement: (direction: ScreenFlip) =>

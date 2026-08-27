@@ -219,11 +219,10 @@ header buys nothing. Without such a session every admin route answers
 - `GET /api/gallery/maintenance/schema-backup` — download a full-fidelity
   administrator backup of entries, saved versions, and workspace slots.
 - `POST /api/gallery/maintenance/schema-current` — validate or transactionally
-  converge every stored Project to the current schema 25. The request body is
+  converge every stored Project to the current schema 26. The request body is
   `{ "apply": false }` for a dry run and `{ "apply": true }` to commit only
-  when every record is valid. The response reports each legacy multi-marker
-  terminal split, annotation rebinding, and intentionally preserved shared
-  physical Net.
+  when every record is valid. The response reports each migrated Route leg,
+  bend, and route-attachment rebinding.
 - `POST /api/gallery/maintenance/schema-restore` — atomically restore the three
   Project-bearing tables from an unmodified `schema-backup` payload supplied as
   `{ "backup": ... }`. This same-origin endpoint is an emergency rollback

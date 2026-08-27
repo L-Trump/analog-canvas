@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { resolveRouteGeometry } from "@icm/derived";
 import { createEmptyDocument } from "@icm/model";
 import { InMemorySymbolResolver, builtInSymbols } from "@icm/symbols";
@@ -24,14 +25,16 @@ describe("editor route handles", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "route-1",
-      netId: "net-1",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-1",
+        netId: "net-1",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     const route = document.routes[0]!;
     const geometry = resolveRouteGeometry(
       document,

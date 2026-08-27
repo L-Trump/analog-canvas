@@ -14,6 +14,7 @@ export interface ResolvedNetLabelBinding {
   netId: string;
   routeId?: string;
   segmentIndex?: number;
+  legId?: string;
   endpoint: RouteEndpoint;
 }
 
@@ -52,8 +53,9 @@ export function resolveNetLabelBinding(
         annotationId: annotation.id,
         netId,
         routeId: route.id,
-        segmentIndex: anchor.segmentIndex,
-        endpoint: route.from,
+        legId: anchor.legId,
+        segmentIndex: route.legs.findIndex((leg) => leg.id === anchor.legId),
+        endpoint: route.start,
       };
     }
   }
@@ -85,8 +87,9 @@ export function resolveNetLabelBinding(
         ? [
             {
               distance: hit.distanceSquared,
-              endpoint: route.from,
+              endpoint: route.start,
               routeId: route.id,
+              legId: hit.address.legId,
               segmentIndex: hit.address.segmentIndex,
             },
           ]
@@ -104,6 +107,7 @@ export function resolveNetLabelBinding(
       annotationId: annotation.id,
       netId,
       routeId: route.routeId,
+      legId: route.legId,
       segmentIndex: route.segmentIndex,
       endpoint: route.endpoint,
     };

@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import type { AgentSessionSnapshot } from "@icm/agent-adapter";
 
 function connection(x: number, y: number) {
@@ -159,12 +160,25 @@ export function testSnapshot(): AgentSessionSnapshot {
       ],
       routes: [
         {
-          id: "route-1",
-          netId: "net-vout",
-          from: { kind: "terminal", instanceId: "instance-1", pinName: "D" },
-          to: { kind: "terminal", instanceId: "instance-2", pinName: "1" },
-          waypoints: [],
-          segmentModes: ["auto"],
+          ...createRoutePath({
+            id: "route-1",
+            netId: "net-vout",
+            start: {
+              kind: "terminal",
+              instanceId: "instance-1",
+              pinName: "D",
+            },
+            end: {
+              kind: "terminal",
+              instanceId: "instance-2",
+              pinName: "1",
+            },
+            bends: [
+              { x: 300, y: 160 },
+              { x: 460, y: 160 },
+            ],
+            modes: ["auto", "auto", "auto"],
+          }),
           polyline: [
             { x: 300, y: 200 },
             { x: 300, y: 160 },

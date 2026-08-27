@@ -1,9 +1,10 @@
 import type {
   Point,
-  RouteBranch,
   RouteEndpoint,
+  SegmentMode,
   SchematicDocument,
 } from "@icm/model";
+import { routeEnd } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
 import {
@@ -15,6 +16,8 @@ import { unitDirection } from "./segment-geometry.js";
 /** A segment address is valid only for the current document revision. */
 export interface RouteSegmentAddress {
   routeId: string;
+  legId: string;
+  /** Revision-scoped ordered traversal index; never persisted identity. */
   segmentIndex: number;
 }
 
@@ -22,7 +25,7 @@ export interface ResolvedRouteSegment {
   address: RouteSegmentAddress;
   from: Point;
   to: Point;
-  mode: RouteBranch["segmentModes"][number];
+  mode: SegmentMode;
 }
 
 export type ResolvedRouteVertexKind =
@@ -86,37 +89,44 @@ export function resolveRouteGeometry(
   resolver: SymbolResolver,
   route: SchematicDocument["routes"][number],
 ): ResolvedRouteGeometry | null {
+  const end = routeEnd(route);
   const fromConnection = resolveEndpointConnection(
     document,
     resolver,
-    route.from,
+    route.start,
   );
-  const toConnection = resolveEndpointConnection(document, resolver, route.to);
+  const toConnection = resolveEndpointConnection(document, resolver, end);
   if (!fromConnection || !toConnection) return null;
   const from = fromConnection.contactPoint;
   const to = toConnection.contactPoint;
-  const centerline = [from, ...route.waypoints, to];
-  const segments: ResolvedRouteSegment[] = centerline
-    .slice(0, -1)
-    .map((segmentFrom, segmentIndex) => ({
-      address: { routeId: route.id, segmentIndex },
-      from: segmentFrom,
+  const centerline = [
+    from,
+    ...route.legs.flatMap((leg) =>
+      leg.to.kind === "bend" ? [leg.to.position] : [],
+    ),
+    to,
+  ];
+  const segments: ResolvedRouteSegment[] = route.legs.map(
+    (leg, segmentIndex) => ({
+      address: { routeId: route.id, legId: leg.id, segmentIndex },
+      from: centerline[segmentIndex]!,
       to: centerline[segmentIndex + 1]!,
-      mode: route.segmentModes[segmentIndex] ?? "auto",
-    }));
+      mode: leg.mode,
+    }),
+  );
   const vertices: ResolvedRouteVertex[] = centerline.map((point, index) => ({
     index,
     point,
     kind:
       index === 0
-        ? vertexKindForEndpoint(document, route.from)
+        ? vertexKindForEndpoint(document, route.start)
         : index === centerline.length - 1
-          ? vertexKindForEndpoint(document, route.to)
+          ? vertexKindForEndpoint(document, end)
           : "bend",
   }));
 
   const endpointJoins: EndpointJoin[] = [];
-  if (route.from.kind === "terminal" && centerline.length >= 2) {
+  if (route.start.kind === "terminal" && centerline.length >= 2) {
     const pinOutward = fromConnection.outward;
     const routeDirection = unitDirection(centerline[0]!, centerline[1]!);
     if (pinOutward && routeDirection) {
@@ -129,7 +139,7 @@ export function resolveRouteGeometry(
       });
     }
   }
-  if (route.to.kind === "terminal" && centerline.length >= 2) {
+  if (end.kind === "terminal" && centerline.length >= 2) {
     const pinOutward = toConnection.outward;
     const routeDirection = unitDirection(
       centerline.at(-1)!,
@@ -204,11 +214,7 @@ function resolveRouteAnchorJoinsFromGeometry(
       anchors.set(junction.id, { point: junction.position, directions: [] });
     }
   }
-  const record = (
-    endpoint: SchematicDocument["routes"][number]["from"],
-    point: Point,
-    neighbor: Point,
-  ) => {
+  const record = (endpoint: RouteEndpoint, point: Point, neighbor: Point) => {
     if (endpoint.kind !== "junction") return;
     const anchor = anchors.get(endpoint.junctionId);
     if (!anchor) return;
@@ -218,8 +224,8 @@ function resolveRouteAnchorJoinsFromGeometry(
   for (const route of document.routes) {
     const centerline = routes.get(route.id)?.centerline;
     if (!centerline || centerline.length < 2) continue;
-    record(route.from, centerline[0]!, centerline[1]!);
-    record(route.to, centerline.at(-1)!, centerline.at(-2)!);
+    record(route.start, centerline[0]!, centerline[1]!);
+    record(routeEnd(route), centerline.at(-1)!, centerline.at(-2)!);
   }
   return [...anchors.entries()]
     .filter(([, anchor]) => anchor.directions.length === 2)

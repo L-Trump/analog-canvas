@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import { createEmptyDocument } from "@icm/model";
@@ -41,14 +42,16 @@ function looseRouteDocument() {
       role: "route-anchor",
     },
   );
-  document.routes.push({
-    id: "route-1",
-    netId: "net-1",
-    from: { kind: "junction", junctionId: "j1" },
-    to: { kind: "junction", junctionId: "j2" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "route-1",
+      netId: "net-1",
+      start: { kind: "junction", junctionId: "j1" },
+      end: { kind: "junction", junctionId: "j2" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   return document;
 }
 
@@ -68,11 +71,16 @@ describe("route interaction geometry", () => {
     ]);
 
     document.junctions[0]!.role = "branch";
-    document.routes.push({
-      ...document.routes[0]!,
-      id: "route-branch",
-      to: { kind: "junction", junctionId: "j1" },
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-branch",
+        netId: "net-1",
+        start: { kind: "junction", junctionId: "j2" },
+        end: { kind: "junction", junctionId: "j1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     expect(looseRouteAnchorIds(document, document.routes[0]!)).toBeNull();
   });
 
@@ -83,7 +91,7 @@ describe("route interaction geometry", () => {
     expect(attached).toEqual({
       routeAttachment: {
         routeId: "route-1",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.75,
         direction: "forward",
         normalOffset: -14,
@@ -99,7 +107,7 @@ describe("route interaction geometry", () => {
       anchor: {
         kind: "route" as const,
         routeId: "route-1",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: -14,
         direction: "forward" as const,
@@ -130,7 +138,7 @@ describe("route interaction geometry", () => {
     ).toEqual({
       routeAttachment: {
         routeId: "route-1",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.8,
         direction: "forward",
         normalOffset: -24,
@@ -144,7 +152,7 @@ describe("route interaction geometry", () => {
     const record = routeRecord(document);
     const current = {
       routeId: "route-1",
-      segmentIndex: 0,
+      legId: document.routes[0]!.legs[0]!.id,
       t: 0.5,
       direction: "forward" as const,
       normalOffset: -14,
@@ -162,8 +170,14 @@ describe("route interaction geometry", () => {
   it("slides a dragged Net label along its route in a wide offset band", () => {
     const document = looseRouteDocument();
     document.junctions[1]!.position = { x: 100, y: 100 };
-    document.routes[0]!.waypoints = [{ x: 100, y: 0 }];
-    document.routes[0]!.segmentModes = ["manual", "manual"];
+    document.routes[0] = createRoutePath({
+      id: "route-1",
+      netId: "net-1",
+      start: { kind: "junction", junctionId: "j1" },
+      end: { kind: "junction", junctionId: "j2" },
+      bends: [{ x: 100, y: 0 }],
+      modes: ["manual", "manual"],
+    });
     const record = routeRecord(document);
     // Above the first segment, well past the old +/-30 clamp.
     expect(

@@ -125,58 +125,42 @@ function previousVersionText(): string {
   return JSON.stringify(raw);
 }
 
-function previousRepeatedCellPinVersionText(): string {
-  const raw = JSON.parse(projectText("Legacy repeated Pin")) as any;
+function previousRouteVersionText(): string {
+  const raw = JSON.parse(projectText("Legacy Route")) as any;
   raw.schemaVersion = CURRENT_PROJECT_SCHEMA_VERSION - 1;
   const document = raw.documents[0];
-  document.instances.push(
-    { id: "P1", symbolId: "port", placement: null },
-    { id: "P2", symbolId: "port", placement: null },
+  document.nets.push({ id: "net-route", terminals: [] });
+  document.junctions.push(
+    { id: "J1", netId: "net-route", position: { x: 0, y: 0 } },
+    { id: "J2", netId: "net-route", position: { x: 100, y: 100 } },
   );
-  document.nets.push({
-    id: "net-vin",
-    terminals: [
-      { instanceId: "P1", pinName: "P" },
-      { instanceId: "P2", pinName: "P" },
-    ],
+  document.routes.push({
+    id: "route-legacy",
+    netId: "net-route",
+    from: { kind: "junction", junctionId: "J1" },
+    to: { kind: "junction", junctionId: "J2" },
+    waypoints: [{ x: 100, y: 0 }],
+    segmentModes: ["manual", "trunk"],
   });
-  document.netlist.terminals.push({
-    id: "terminal-vin",
-    name: "VIN",
-    netId: "net-vin",
-    direction: "input",
-    interfaceInstanceIds: ["P1", "P2"],
+  document.annotations.push({
+    id: "label-route",
+    kind: "net-label",
+    netId: "net-route",
+    binding: { kind: "net-name", netId: "net-route" },
+    anchor: {
+      kind: "route",
+      routeId: "route-legacy",
+      segmentIndex: 1,
+      t: 0.5,
+      normalOffset: -10,
+      direction: "forward",
+      orientation: "follow",
+      fallbackPosition: { x: 100, y: 50 },
+    },
+    alignment: "middle",
+    rotation: 0,
+    locked: false,
   });
-  document.annotations.push(
-    {
-      id: "label-p1",
-      kind: "instance-label",
-      binding: { kind: "cell-terminal-name", terminalId: "terminal-vin" },
-      anchor: {
-        kind: "object",
-        objectId: "P1",
-        localOffset: { x: 0, y: 0 },
-        fallbackPosition: { x: 0, y: 0 },
-      },
-      alignment: "start",
-      rotation: 0,
-      locked: false,
-    },
-    {
-      id: "label-p2",
-      kind: "instance-label",
-      binding: { kind: "cell-terminal-name", terminalId: "terminal-vin" },
-      anchor: {
-        kind: "object",
-        objectId: "P2",
-        localOffset: { x: 0, y: 0 },
-        fallbackPosition: { x: 0, y: 0 },
-      },
-      alignment: "start",
-      rotation: 0,
-      locked: false,
-    },
-  );
   return JSON.stringify(raw);
 }
 
@@ -747,31 +731,24 @@ describe("gallery submissions", () => {
     );
   });
 
-  it("splits previous-schema repeated Cell Pins in stored text", async () => {
+  it("migrates previous-schema Route legs and anchors in stored text", async () => {
     const env = environment();
-    const id = await submitOne(env, "Legacy repeated Pin", {
-      text: previousRepeatedCellPinVersionText(),
+    const id = await submitOne(env, "Legacy Route", {
+      text: previousRouteVersionText(),
     });
     const detail = await route(env, new Request(`${ORIGIN}/api/gallery/${id}`));
     const payload = (await detail.json()) as { projectText: string };
     const stored = JSON.parse(payload.projectText) as any;
-    expect(stored.documents[0].netlist.terminals).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: "terminal-vin",
-          name: "VIN",
-          interfaceInstanceIds: ["P1"],
-        }),
-        expect.objectContaining({
-          name: "VIN",
-          interfaceInstanceIds: ["P2"],
-        }),
-      ]),
-    );
-    const bindings = stored.documents[0].annotations.map(
-      (annotation: any) => annotation.binding?.terminalId,
-    );
-    expect(new Set(bindings).size).toBe(2);
+    const storedRoute = stored.documents[0].routes[0];
+    expect(storedRoute.start).toEqual({
+      kind: "junction",
+      junctionId: "J1",
+    });
+    expect(storedRoute.legs).toHaveLength(2);
+    expect(stored.documents[0].annotations[0].anchor).toMatchObject({
+      routeId: storedRoute.id,
+      legId: storedRoute.legs[1].id,
+    });
   });
 
   it("refuses an anonymous submission: a session is the whole gate", async () => {
@@ -1871,7 +1848,7 @@ describe("gallery administration", () => {
     expect(await preview.text()).toContain("<svg");
   });
 
-  it("upgrades already-stored schema-24 repeated Cell Pins during maintenance", async () => {
+  it("upgrades already-stored schema-25 Routes during maintenance", async () => {
     const env = environment();
     const adminCookie = await adminOf(env);
     const id = await submitOne(env, "Broken VDD", { cookie: adminCookie });
@@ -1882,7 +1859,7 @@ describe("gallery administration", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           id,
-          projectText: previousRepeatedCellPinVersionText(),
+          projectText: previousRouteVersionText(),
           schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION - 1,
           svgText: "<svg/>",
         }),
@@ -1910,12 +1887,10 @@ describe("gallery administration", () => {
     const detail = await route(env, new Request(`${ORIGIN}/api/gallery/${id}`));
     const payload = (await detail.json()) as { projectText: string };
     const stored = JSON.parse(payload.projectText) as any;
-    expect(stored.documents[0].netlist.terminals).toHaveLength(2);
-    expect(
-      stored.documents[0].netlist.terminals.every(
-        (terminal: any) => terminal.interfaceInstanceIds.length === 1,
-      ),
-    ).toBe(true);
+    expect(stored.documents[0].routes[0]).toMatchObject({
+      start: { kind: "junction", junctionId: "J1" },
+      legs: expect.any(Array),
+    });
     const preview = await route(
       env,
       new Request(`${ORIGIN}/api/gallery/${id}/preview.svg`),
@@ -1959,7 +1934,7 @@ describe("gallery administration", () => {
     env.gallerySql.exec(
       "UPDATE gallery_entry_versions SET schema_version = ?, project_text = ? WHERE id = ?",
       CURRENT_PROJECT_SCHEMA_VERSION - 1,
-      previousRepeatedCellPinVersionText(),
+      previousRouteVersionText(),
       versionId,
     );
     env.gallerySql.exec(
@@ -1972,7 +1947,7 @@ describe("gallery administration", () => {
       "2026-08-24T00:00:00.000Z",
       1,
       CURRENT_PROJECT_SCHEMA_VERSION - 1,
-      previousRepeatedCellPinVersionText(),
+      previousRouteVersionText(),
     );
 
     const backup = await route(
@@ -2019,9 +1994,7 @@ describe("gallery administration", () => {
           table: "gallery_entries",
           id,
           report: expect.objectContaining({
-            splitRepeatedTerminalCount: expect.any(Number),
-            independentCellPins: expect.any(Array),
-            preservedLegacySharedNets: expect.any(Array),
+            routes: expect.any(Array),
           }),
         }),
       ]),

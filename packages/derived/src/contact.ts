@@ -1,4 +1,4 @@
-import { deriveStableId } from "@icm/model";
+import { deriveStableId, routeEnd } from "@icm/model";
 import type { Net, Point, RouteEndpoint, SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
@@ -136,13 +136,13 @@ function routeEndpointDirections(
 ): Point[] {
   const directions: Point[] = [];
   if (centerline.length < 2) return directions;
-  if (endpointKeys.has(endpointKey(route.from))) {
+  if (endpointKeys.has(endpointKey(route.start))) {
     directions.push({
       x: Math.sign(centerline[1]!.x - centerline[0]!.x),
       y: Math.sign(centerline[1]!.y - centerline[0]!.y),
     });
   }
-  if (endpointKeys.has(endpointKey(route.to))) {
+  if (endpointKeys.has(endpointKey(routeEnd(route)))) {
     directions.push({
       x: Math.sign(centerline.at(-2)!.x - centerline.at(-1)!.x),
       y: Math.sign(centerline.at(-2)!.y - centerline.at(-1)!.y),

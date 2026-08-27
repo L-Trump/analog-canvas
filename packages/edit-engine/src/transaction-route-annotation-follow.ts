@@ -58,7 +58,7 @@ export function followNetLabelsOnChangedRoutes(
     if (annotation.anchor.kind !== "route") continue;
     annotation.anchor = {
       ...annotation.anchor,
-      segmentIndex: attachment.segmentIndex,
+      legId: route.legs[attachment.segmentIndex]!.id,
       t: attachment.t,
       normalOffset: Math.round(offset.x * normal.x + offset.y * normal.y),
       fallbackPosition: snapPointToDocumentGrid(
@@ -139,7 +139,7 @@ export function followRouteMarkersOnChangedRoutes(
     if (annotation.anchor.kind === "route") {
       annotation.anchor = {
         ...annotation.anchor,
-        segmentIndex: attachment.segmentIndex,
+        legId: route.legs[attachment.segmentIndex]!.id,
         t: attachment.t,
         fallbackPosition: position,
       };
@@ -196,7 +196,7 @@ export function remapRouteMarkersAfterSplit(
       annotation.anchor = {
         ...annotation.anchor,
         routeId: closest.route.id,
-        segmentIndex,
+        legId: closest.route.legs[segmentIndex]!.id,
         t,
         fallbackPosition: position,
       };

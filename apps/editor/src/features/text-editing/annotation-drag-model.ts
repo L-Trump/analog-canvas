@@ -132,7 +132,7 @@ export function draggedAnnotationAtPosition(
       annotation.anchor.kind === "route"
         ? {
             ...annotation.anchor,
-            segmentIndex: attached.routeAttachment.segmentIndex,
+            legId: attached.routeAttachment.legId,
             t: attached.routeAttachment.t,
             normalOffset: attached.routeAttachment.normalOffset,
             direction: attached.routeAttachment.direction,
@@ -152,7 +152,7 @@ export function draggedAnnotationAtPosition(
       ...annotation,
       anchor: {
         ...annotation.anchor,
-        segmentIndex: attached.segmentIndex,
+        legId: attached.legId,
         t: attached.t,
         normalOffset: attached.normalOffset,
         fallbackPosition: attached.labelPosition,

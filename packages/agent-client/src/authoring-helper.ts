@@ -86,6 +86,7 @@ interface ResolvedDocument {
   routes: {
     id: string;
     netId: string;
+    legs: { id: string }[];
     polyline: { x: number; y: number }[] | null;
   }[];
   junctions: {
@@ -141,6 +142,7 @@ function resolvedDocument(snapshot: AgentSessionSnapshot): ResolvedDocument {
     routes: document.routes.map((route) => ({
       id: route.id,
       netId: route.netId,
+      legs: route.legs.map((leg) => ({ id: leg.id })),
       polyline: route.polyline,
     })),
     junctions: document.junctions.map((junction) => ({
@@ -775,7 +777,7 @@ function compileConnect(
       );
     let best: {
       routeId: string;
-      segmentIndex: number;
+      legId: string;
       point: { x: number; y: number };
     } | null = null;
     let bestDistance = Number.POSITIVE_INFINITY;
@@ -788,14 +790,16 @@ function compileConnect(
         (pinOrigin.y - candidate.point.y) ** 2;
       if (distance < bestDistance) {
         bestDistance = distance;
-        best = { routeId: route.id, ...candidate };
+        const leg = route.legs[candidate.segmentIndex];
+        if (!leg) continue;
+        best = { routeId: route.id, legId: leg.id, point: candidate.point };
       }
     }
     if (best) {
       return {
         kind: "route-segment",
         routeId: best.routeId,
-        segmentIndex: best.segmentIndex,
+        legId: best.legId,
         point: best.point,
       };
     }

@@ -217,6 +217,12 @@ export const SchematicDocumentSchema = SchematicDocumentBaseSchema.superRefine(
       ...document.nets,
       ...document.connectivityEvidence,
       ...document.routes,
+      ...document.routes.flatMap((route) => route.legs),
+      ...document.routes.flatMap((route) =>
+        route.legs.flatMap((leg) =>
+          leg.to.kind === "bend" ? [{ id: leg.to.bendId }] : [],
+        ),
+      ),
       ...document.junctions,
       ...document.annotations,
       ...document.layoutGroups,
@@ -536,14 +542,15 @@ export const SchematicDocumentSchema = SchematicDocumentBaseSchema.superRefine(
       }
     });
     document.routes.forEach((route, routeIndex) => {
-      route.waypoints.forEach((point, pointIndex) =>
+      route.legs.forEach((leg, legIndex) => {
+        if (leg.to.kind !== "bend") return;
         reportGridPoint(
-          point,
+          leg.to.position,
           grid,
-          ["routes", routeIndex, "waypoints", pointIndex],
+          ["routes", routeIndex, "legs", legIndex, "to", "position"],
           context,
-        ),
-      );
+        );
+      });
     });
     document.junctions.forEach((junction, index) =>
       reportGridPoint(
@@ -817,8 +824,27 @@ export const SchematicDocumentSchema = SchematicDocumentBaseSchema.superRefine(
         continue;
       }
       const routeNet = netById.get(route.netId);
-      for (const endpointName of ["from", "to"] as const) {
-        const endpoint = route[endpointName];
+      const finalTarget = route.legs.at(-1)?.to;
+      const routeEndpoints = [
+        {
+          endpoint: route.start,
+          path: ["routes", routeIndex, "start"] as (string | number)[],
+        },
+        {
+          endpoint:
+            finalTarget?.kind === "endpoint" ? finalTarget.endpoint : undefined,
+          path: [
+            "routes",
+            routeIndex,
+            "legs",
+            route.legs.length - 1,
+            "to",
+            "endpoint",
+          ] as (string | number)[],
+        },
+      ];
+      for (const { endpoint, path } of routeEndpoints) {
+        if (!endpoint) continue;
         if (
           endpoint.kind === "terminal" &&
           !instanceIds.has(endpoint.instanceId)
@@ -826,7 +852,7 @@ export const SchematicDocumentSchema = SchematicDocumentBaseSchema.superRefine(
           context.addIssue({
             code: "custom",
             message: `Unknown route terminal instance: ${endpoint.instanceId}`,
-            path: ["routes", routeIndex, endpointName, "instanceId"],
+            path: [...path, "instanceId"],
           });
         } else if (
           endpoint.kind === "terminal" &&
@@ -841,7 +867,7 @@ export const SchematicDocumentSchema = SchematicDocumentBaseSchema.superRefine(
             code: "custom",
             message:
               "Route terminal endpoint must be a member of the route net",
-            path: ["routes", routeIndex, endpointName],
+            path,
           });
         }
         if (endpoint.kind === "junction") {
@@ -850,14 +876,14 @@ export const SchematicDocumentSchema = SchematicDocumentBaseSchema.superRefine(
             context.addIssue({
               code: "custom",
               message: `Unknown route junction: ${endpoint.junctionId}`,
-              path: ["routes", routeIndex, endpointName, "junctionId"],
+              path: [...path, "junctionId"],
             });
           } else if (junction.netId !== route.netId) {
             context.addIssue({
               code: "custom",
               message:
                 "Route and endpoint junction must belong to the same net",
-              path: ["routes", routeIndex, endpointName, "junctionId"],
+              path: [...path, "junctionId"],
             });
           }
         }

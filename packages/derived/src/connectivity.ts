@@ -1,4 +1,4 @@
-import { deriveStableId, flattenRichText } from "@icm/model";
+import { deriveStableId, flattenRichText, routeEnd } from "@icm/model";
 import type { Net, Point, RouteEndpoint, SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
@@ -93,8 +93,8 @@ export function deriveNetConnectivity(
   for (const route of document.routes.filter(
     (candidate) => candidate.netId === net.id,
   )) {
-    const from = endpointKey(route.from);
-    const to = endpointKey(route.to);
+    const from = endpointKey(route.start);
+    const to = endpointKey(routeEnd(route));
     if (nodes.has(from) && nodes.has(to)) sets.union(from, to);
   }
   const contacts = deriveDocumentContactEvidence(document, resolver);
@@ -167,8 +167,8 @@ export function deriveNetConnectivity(
               route.netId === net.id &&
               componentNodes.some(
                 (node) =>
-                  node.key === endpointKey(route.from) ||
-                  node.key === endpointKey(route.to),
+                  node.key === endpointKey(route.start) ||
+                  node.key === endpointKey(routeEnd(route)),
               ),
           )
           .map((route) => route.id)
@@ -199,12 +199,14 @@ function flightlineNodePriority(
   const junction = document.junctions.find(
     (candidate) => candidate.id === junctionId,
   );
-  const degree = document.routes.filter(
-    (route) =>
-      (route.from.kind === "junction" &&
-        route.from.junctionId === junctionId) ||
-      (route.to.kind === "junction" && route.to.junctionId === junctionId),
-  ).length;
+  const degree = document.routes.filter((route) => {
+    const end = routeEnd(route);
+    return (
+      (route.start.kind === "junction" &&
+        route.start.junctionId === junctionId) ||
+      (end.kind === "junction" && end.junctionId === junctionId)
+    );
+  }).length;
   return junction?.role === "route-anchor" && degree <= 1 ? 0 : 2;
 }
 

@@ -1,8 +1,7 @@
 import {
   proposeEndpointRouteAttachment,
-  proposeGroupMoveEdits,
-  proposeLooseRouteTranslation,
-  type ConnectivityIntent,
+  planRoutingTransform,
+  type RoutingOperationIntent,
   type SchematicEdit,
   type WireSource,
 } from "@icm/edit-engine";
@@ -16,6 +15,7 @@ import {
   type RoutedComponent,
 } from "@icm/derived";
 import {
+  routeEndpoints,
   snapGridPoint,
   type DerivedPoint,
   type Point,
@@ -67,9 +67,8 @@ export function createSelectionMoveController({
   routeGeometryRecords: readonly RouteGeometryRecord[];
   contactComponents: readonly RoutedComponent[];
   transactConnectivity: (
-    intent: ConnectivityIntent,
+    intent: RoutingOperationIntent,
     edits: readonly SchematicEdit[],
-    preview?: unknown,
   ) => TransactionResult | null;
   setStatus: (status: string) => void;
   nextRoutingSuffix: () => number;
@@ -127,14 +126,27 @@ export function createSelectionMoveController({
     delta: Point,
   ): void => {
     if (delta.x === 0 && delta.y === 0) return;
-    const looseRouteEdits = movePlan.looseRouteIds.flatMap(
-      (routeId) => proposeLooseRouteTranslation(document, routeId, delta).edits,
+    const routingPlan = planRoutingTransform(
+      document,
+      resolver,
+      {
+        instanceIds: movePlan.instanceIds,
+        routeIds: movePlan.translatedRouteIds,
+        junctionIds: movePlan.translatedJunctionIds,
+      },
+      { kind: "translate", delta },
     );
-    const result = transactConnectivity(
-      "move_connected_selection",
-      [...looseRouteEdits, ...visualMoveEdits(movePlan, delta)],
-      { delta, looseRouteIds: movePlan.looseRouteIds },
+    const blocking = routingPlan.diagnostics.find(
+      (item) => item.severity === "error",
     );
+    if (blocking) {
+      setStatus(blocking.message);
+      return;
+    }
+    const result = transactConnectivity("transform", [
+      ...routingPlan.edits,
+      ...visualMoveEdits(movePlan, delta),
+    ]);
     if (result?.ok && movePlan.fixedObjectIds.length > 0) {
       setStatus(
         `Moved selection; ${movePlan.fixedObjectIds.length} attached object(s) remained fixed`,
@@ -289,7 +301,7 @@ export function createSelectionMoveController({
             y: moving.point.y + rawDelta.y,
           };
           return sourceRouteGeometryRecords.flatMap(({ route, geometry }) => {
-            const belongsToMovingInstance = [route.from, route.to].some(
+            const belongsToMovingInstance = routeEndpoints(route).some(
               (endpoint) =>
                 endpoint.kind === "terminal" &&
                 movingIds.has(endpoint.instanceId),
@@ -435,14 +447,20 @@ export function createSelectionMoveController({
     };
     if (delta.x === 0 && delta.y === 0 && prefixEdits.length === 0) return;
     try {
-      const groupMove =
-        delta.x !== 0 || delta.y !== 0
-          ? proposeGroupMoveEdits(sourceDocument, resolver, moves)
-          : { edits: [] };
-      const looseRouteEdits = preview.movePlan.looseRouteIds.flatMap(
-        (routeId) =>
-          proposeLooseRouteTranslation(sourceDocument, routeId, delta).edits,
+      const groupMove = planRoutingTransform(
+        sourceDocument,
+        resolver,
+        {
+          instanceIds: preview.movePlan.instanceIds,
+          routeIds: preview.movePlan.translatedRouteIds,
+          junctionIds: preview.movePlan.translatedJunctionIds,
+        },
+        { kind: "translate", delta },
       );
+      const blocking = groupMove.diagnostics.find(
+        (item) => item.severity === "error",
+      );
+      if (blocking) throw new Error(blocking.message);
       const movingElectrical = electricalMatch?.moving.electrical;
       const targetElectrical = electricalMatch?.target.electrical;
       const projected = structuredClone(sourceDocument);
@@ -467,18 +485,16 @@ export function createSelectionMoveController({
           : [];
       const result = transactConnectivity(
         targetElectrical?.kind === "route"
-          ? "attach_endpoint_to_wire"
+          ? "attach-to-route"
           : targetElectrical?.kind === "endpoint"
-            ? "connect_without_wire"
-            : "move_connected_selection",
+            ? "connect"
+            : "transform",
         [
           ...prefixEdits,
           ...groupMove.edits,
-          ...looseRouteEdits,
           ...visualMoveEdits(preview.movePlan, delta, sourceDocument),
           ...contactEdits,
         ],
-        { moves, electricalMatch },
       );
       if (result?.ok && electricalMatch) {
         setStatus("Snapped pin endpoints and connected them without a wire");
