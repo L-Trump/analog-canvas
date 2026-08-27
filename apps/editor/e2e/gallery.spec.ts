@@ -1294,11 +1294,19 @@ test("a reviewer browses version history and restores a version", async ({
 
   const history = page.getByTestId("version-history-dialog");
   await expect(history).toBeVisible();
-  await expect(page.locator(".version-history-backdrop")).toHaveCSS(
-    "position",
-    "fixed",
-  );
+  const backdrop = page.locator(".version-history-backdrop");
+  await expect(backdrop).toHaveCSS("position", "fixed");
   await expect(history).toHaveCSS("display", "flex");
+  const backdropBox = await backdrop.boundingBox();
+  const historyBox = await history.boundingBox();
+  expect(backdropBox).not.toBeNull();
+  expect(historyBox).not.toBeNull();
+  const upperGap = historyBox!.y - backdropBox!.y;
+  const lowerGap =
+    backdropBox!.y + backdropBox!.height - historyBox!.y - historyBox!.height;
+  // Loading this lazy dialog must not drop it into normal editor flow. The
+  // overlay owns the viewport and keeps the workbench vertically centered.
+  expect(Math.abs(upperGap - lowerGap)).toBeLessThanOrEqual(2);
   const version = page.getByTestId("version-2");
   await expect(version).toHaveCSS("display", "grid");
   await expect(version).toContainText("Ring Oscillator (older)");
