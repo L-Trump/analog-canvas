@@ -315,7 +315,7 @@ function rotateOffset(
   }
 }
 
-function renderVisiblePinNames(
+export function renderVisiblePinNames(
   definition: SymbolDefinition,
   hiddenPinNames: readonly string[],
   instance: SchematicDocument["instances"][number],
@@ -351,10 +351,31 @@ function renderVisiblePinNames(
         outward.y * hierarchyVerticalInset;
       const alignment =
         outward.x < 0 ? "start" : outward.x > 0 ? "end" : "middle";
-      const sizeAttribute = schematicTextSizeAttribute("pin-name", profile);
+      const sizeAttribute = schematicTextSizeAttribute(
+        "pin-name",
+        profile,
+        pin.presentation.textSizeScale,
+      );
+      const displayName = pin.presentation.displayName ?? pin.name;
       const content = definition.hierarchicalBlock
-        ? semanticTextDocument(pin.name, "formal-port")
-        : { runs: [{ kind: "text" as const, value: pin.name }] };
+        ? semanticTextDocument(displayName, "formal-port")
+        : pin.presentation.textStyle === "math-symbol"
+          ? {
+              runs: [
+                {
+                  kind: "span" as const,
+                  style: "italic" as const,
+                  children: [
+                    {
+                      kind: "span" as const,
+                      style: "bold" as const,
+                      children: [{ kind: "text" as const, value: displayName }],
+                    },
+                  ],
+                },
+              ],
+            }
+          : { runs: [{ kind: "text" as const, value: displayName }] };
       return `<text data-pin-name="${escapeXml(pin.name)}" x="${x}" y="${y}" text-anchor="${alignment}"${sizeAttribute}>${renderRichTextDocument(content, profile)}</text>`;
     })
     .join("");

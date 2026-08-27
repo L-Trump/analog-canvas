@@ -231,6 +231,20 @@
       "measurementKey": "xor-gate",
       "symbolId": "xor-gate",
       "useVariant": false
+    },
+    {
+      "id": "buffer",
+      "measurementPath": "buffer-dff-geometry.json",
+      "measurementKey": "buffer",
+      "symbolId": "buffer",
+      "useVariant": false
+    },
+    {
+      "id": "d-flip-flop",
+      "measurementPath": "buffer-dff-geometry.json",
+      "measurementKey": "d-flip-flop",
+      "symbolId": "d-flip-flop",
+      "useVariant": false
     }
   ]
 }

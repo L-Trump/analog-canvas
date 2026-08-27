@@ -55,6 +55,8 @@ export function symbolCategory(symbolId: string): string {
   if (
     [
       "inverter",
+      "buffer",
+      "d-flip-flop",
       "and-gate",
       "or-gate",
       "nand-gate",

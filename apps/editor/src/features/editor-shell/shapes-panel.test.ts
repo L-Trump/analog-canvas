@@ -20,7 +20,7 @@ describe("shapes quick-place", () => {
       }),
     );
 
-    expect(symbols).toHaveLength(33);
+    expect(symbols).toHaveLength(35);
     expect(markup).toContain("All devices");
     expect(markup.match(/data-testid="shapes-chip-/g)).toHaveLength(
       symbols.length,
@@ -38,7 +38,7 @@ describe("shapes quick-place", () => {
       ["Sources", 2],
       ["Switches", 2],
       ["Analog Blocks", 5],
-      ["Logic Gates", 7],
+      ["Logic Gates", 9],
     ]);
     const categoryTestIds = [
       "transistors",
@@ -66,6 +66,8 @@ describe("shapes quick-place", () => {
     expect(markup).toContain('title="Place Capacitor"');
     expect(markup).toContain('aria-label="Place Variable Resistor"');
     expect(markup).toContain('aria-label="Place Inverter"');
+    expect(markup).toContain('aria-label="Place Buffer"');
+    expect(markup).toContain('aria-label="Place D Flip-Flop"');
     expect(markup).toContain('aria-label="Place Comparator"');
     expect(markup).toContain(">V Src</span>");
     expect(markup).toContain(">Cap</span>");

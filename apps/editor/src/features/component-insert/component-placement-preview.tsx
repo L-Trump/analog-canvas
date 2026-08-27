@@ -1,8 +1,10 @@
+import { razaviTextbookProfile } from "@icm/derived";
 import { renderSymbolDefinitionBody } from "@icm/render-svg";
 import type { SymbolDefinition } from "@icm/symbols";
 
 import { defaultRazaviSymbolVariantId } from "../../presentation/razavi-presentation";
 import { findPaletteSymbol } from "./symbol-catalog";
+import { renderSymbolPreviewPinNames } from "./symbol-artwork";
 
 export interface ComponentPlacementPreviewProps {
   styleProfileId: string;
@@ -28,25 +30,44 @@ export function ComponentPlacementPreview({
     (candidate) => candidate.id === variantId,
   );
 
+  const transform = `translate(${position.x} ${position.y}) rotate(${rotation})${
+    mirror === "x" ? " scale(-1 1)" : ""
+  }`;
+  const pinNames = renderSymbolPreviewPinNames(
+    definition,
+    variant?.hiddenPinNames ?? [],
+    rotation,
+    mirror,
+  );
+
   return (
-    <g
-      data-testid="component-placement-preview"
-      className="component-placement-preview"
-      transform={`translate(${position.x} ${position.y}) rotate(${rotation})${
-        mirror === "x" ? " scale(-1 1)" : ""
-      }`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
-      dangerouslySetInnerHTML={{
-        __html: renderSymbolDefinitionBody(
-          definition,
-          variant?.hiddenPrimitiveParts,
-          variant?.additionalPrimitives,
-        ),
-      }}
-    />
+    <>
+      <g
+        data-testid="component-placement-preview"
+        className="component-placement-preview"
+        transform={transform}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+        dangerouslySetInnerHTML={{
+          __html: renderSymbolDefinitionBody(
+            definition,
+            variant?.hiddenPrimitiveParts,
+            variant?.additionalPrimitives,
+          ),
+        }}
+      />
+      {pinNames ? (
+        <g
+          transform={`translate(${position.x} ${position.y})`}
+          fill="currentColor"
+          stroke="none"
+          style={{ fontFamily: razaviTextbookProfile.typography.fontFamily }}
+          dangerouslySetInnerHTML={{ __html: pinNames }}
+        />
+      ) : null}
+    </>
   );
 }

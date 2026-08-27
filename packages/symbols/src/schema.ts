@@ -47,6 +47,11 @@ export const SymbolPinSchema = z.strictObject({
     visibility: z.enum(["visible", "implicit", "conditional"]),
     leadLength: z.number().int().nonnegative().optional(),
     showName: z.boolean().optional(),
+    // Keeps the canonical electrical pin name stable while allowing a source-
+    // faithful glyph such as Q with a separately drawn complement bar.
+    displayName: z.string().min(1).optional(),
+    textStyle: z.enum(["plain", "math-symbol"]).optional(),
+    textSizeScale: z.number().positive().optional(),
   }),
 });
 export const SymbolStrokeRoleSchema = z.enum([

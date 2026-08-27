@@ -12,7 +12,10 @@
 //   - no padding mismatch, no aspect-ratio drift
 
 import { razaviTextbookProfile } from "../../packages/derived/dist/style-profile.js";
-import { renderSymbolDefinitionBody } from "../../packages/render-svg/dist/render.js";
+import {
+  renderSymbolDefinitionBody,
+  renderVisiblePinNames,
+} from "../../packages/render-svg/dist/render.js";
 import { rasterizeSvgBytes } from "../../packages/exporters/dist/node.js";
 import { decodePng } from "./png-io.mjs";
 
@@ -75,6 +78,20 @@ export function buildSymbolSvg(
     additionalPrimitives,
     profile,
   );
+  const pinNames = renderVisiblePinNames(
+    definition,
+    useVariant ? (variant?.hiddenPinNames ?? []) : [],
+    {
+      id: "fidelity-instance",
+      symbolId: definition.id,
+      placement: {
+        position: { x: 0, y: 0 },
+        rotation,
+        mirror: "none",
+      },
+    },
+    profile,
+  );
 
   // Wrap exactly like render.ts:470: <g fill none stroke fg stroke-width=symbol
   // linecap linejoin miterlimit>...primitives...</g>
@@ -87,7 +104,7 @@ export function buildSymbolSvg(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBoxX} ${viewBoxY} ${logicalWidth} ${logicalHeight}" ` +
     `width="${pixelWidth}" height="${pixelHeight}">` +
     `<rect x="${viewBoxX}" y="${viewBoxY}" width="${logicalWidth}" height="${logicalHeight}" fill="${profile.background}"/>` +
-    `${group}</svg>`;
+    `${group}${pinNames}</svg>`;
 
   return { svg, pixelWidth, pixelHeight };
 }

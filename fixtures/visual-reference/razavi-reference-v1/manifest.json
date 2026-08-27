@@ -258,6 +258,38 @@
       "rasterPath": "logic-inverter-reference.png",
       "rasterSha256": "4911da6e698c75449502cf3438166cb4ee48b33350b6ad0edf994ce6857b6c4c",
       "scope": ["direct inverter triangle, negation bubble, and lead junctions"]
+    },
+    {
+      "id": "razavi-textbook-buffer",
+      "kind": "pdf-vector-extract",
+      "source": {
+        "title": "Design of Analog CMOS Integrated Circuits, Second Edition",
+        "sha256": "a6031d1149c2c6191a1f0e541065165b72dafc4bc4ab4b0ea37af41b7cb0f739",
+        "pdfPage": 703,
+        "printedPage": 684,
+        "figure": "16.53(a)"
+      },
+      "extractPath": "buffer-vector-source.json",
+      "extractSha256": "10ba76da5559df0353cfc89b3bf35eb311b4f091345dffff02291edb30f4ac62",
+      "rasterPath": "buffer-reference.png",
+      "rasterSha256": "6a51fc726184302657c5cc7a7290fb706b1e8e1a02ac39e431be37d3ec7cc3d1",
+      "scope": ["direct buffer triangle and lead/body seams"]
+    },
+    {
+      "id": "razavi-textbook-d-flip-flop",
+      "kind": "pdf-vector-extract",
+      "source": {
+        "title": "Design of Analog CMOS Integrated Circuits, Second Edition",
+        "sha256": "a6031d1149c2c6191a1f0e541065165b72dafc4bc4ab4b0ea37af41b7cb0f739",
+        "pdfPage": 687,
+        "printedPage": 668,
+        "figure": "16.23(a)"
+      },
+      "extractPath": "d-flip-flop-vector-source.json",
+      "extractSha256": "fcd9cd46b1e2799d65d088e4b576e0d19a1606a4b272cf85f29cab3ca1004380",
+      "rasterPath": "d-flip-flop-reference.png",
+      "rasterSha256": "b3a7caab14b71944766da26cac934902a96fa7a304b4963cbb43ac49fe97fa2e",
+      "scope": ["generic D/CK/Q/Q-bar flip-flop block without external circuit ports"]
     }
   ],
   "mosGeometryPath": "mos-geometry.json",
@@ -282,8 +314,10 @@
   "commonSymbolGeometrySha256": "de9531139628f23ecdadf7dbc51d64ad176d790cb17f6929ef7fbaae597c398a",
   "logicGateGeometryPath": "logic-gate-geometry.json",
   "logicGateGeometrySha256": "82ab85760e6c5db3f1201a792fbad19d7a3dad32dfc42c90bd69603f693c88f8",
+  "bufferDffGeometryPath": "buffer-dff-geometry.json",
+  "bufferDffGeometrySha256": "eafca52e46e90a020b5fc6aa934a3d07785df907d3313fcecb86ceb9cc42c3be",
   "fidelityTargetsPath": "fidelity-targets.json",
-  "fidelityTargetsSha256": "aa6ac0c4b8882c7dcfd5d908c8c80f6f0db5a4ba386b8e1234d4711eb4da7044",
+  "fidelityTargetsSha256": "9f5652abaa4a2481048028ddf1ec5693d0467e929347e37cd840254f551cfb6b",
   "pixels": {
     "width": 1204,
     "height": 794
@@ -301,7 +335,8 @@
     "PDF-derived three-terminal op-amp geometry and polarity marks",
     "PDF-derived fully differential op-amp geometry and polarity marks",
     "PDF-derived common BJT, diode, gain-block, and switch families",
-    "PDF-derived logic-gate bodies, bubbles, and lead junctions"
+    "PDF-derived logic-gate bodies, bubbles, and lead junctions",
+    "PDF-derived Buffer and generic D flip-flop geometry"
   ],
   "notes": [
     "This manifest is the sole visual authority for Razavi style v1.",

@@ -25,11 +25,13 @@ The product set is exactly the reviewed, Reference-calibrated entries:
   recorded in its catalog `generation` block so a schematic mixing R, C, and L
   reads at one scale. Imported SPICE `L` elements take `inductor-compact`;
 - the behavioral block family `inverter`, `and-gate`, `or-gate`, `nand-gate`,
-  `nor-gate`, `xor-gate`, `xnor-gate`, and `comparator` (manual-only netlist
-  mapping, like `opamp`). Inverter, AND, NAND, NOR, and XOR use hash-pinned
-  native-vector evidence from textbook Figures 16.2, 16.24, and 16.25. OR is
-  the reviewed NOR body without its output bubble; XNOR is the direct XOR body
-  with the reviewed two-input NOR negation bubble.
+  `nor-gate`, `xor-gate`, `xnor-gate`, `buffer`, `d-flip-flop`, and
+  `comparator` (manual-only netlist mapping, like `opamp`). Inverter, AND,
+  NAND, NOR, and XOR use hash-pinned native-vector evidence from textbook
+  Figures 16.2, 16.24, and 16.25. Buffer and the generic D/CK/Q/Q-bar flip-flop
+  use direct evidence from Figures 16.53(a) and 16.23(a). OR is the reviewed
+  NOR body without its output bubble; XNOR is the direct XOR body with the
+  reviewed two-input NOR negation bubble.
 
 `nmos` and `pmos` are the only MOS asset IDs. Their default visual variant is
 `textbook-3terminal`; explicit bulk-capable variants remain properties of the
