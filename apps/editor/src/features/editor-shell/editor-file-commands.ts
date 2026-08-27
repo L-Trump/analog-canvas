@@ -8,7 +8,7 @@ import { planCheckBulkDefaults } from "../netlist-export/check-and-save";
 import type { WorkspaceSlot } from "./workspace-shelf";
 import { saveToWorkspaceShelf } from "./workspace-shelf";
 import {
-  createRasterExportArtifact,
+  createVisualExportArtifact,
   createSvgExportArtifact,
   planDesignNetlistExport,
   requestBrowserDownload,
@@ -137,7 +137,7 @@ export function createEditorFileCommands({
   const exportRaster = async (format: "png" | "pdf"): Promise<void> => {
     setStatus(`Preparing ${format.toUpperCase()} export`);
     try {
-      const artifact = await createRasterExportArtifact(
+      const artifact = await createVisualExportArtifact(
         format,
         document,
         resolver,

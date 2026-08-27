@@ -15,29 +15,32 @@ Every export starts from one validated `SchematicDocument`, one symbol
 resolver, and the formal SVG scene. Editor overlays, hit targets, selections,
 flightlines, and diagnostics are never part of a formal artifact.
 
-| Format | v0.1 derivation                           | Media type        |
-| ------ | ----------------------------------------- | ----------------- |
-| SVG    | canonical formal scene                    | `image/svg+xml`   |
-| PNG    | white-background raster of that SVG at 3x | `image/png`       |
-| PDF    | same PNG fitted to the same viewBox page  | `application/pdf` |
+| Format | v0.1 derivation                             | Media type        |
+| ------ | ------------------------------------------- | ----------------- |
+| SVG    | canonical formal scene                      | `image/svg+xml`   |
+| PNG    | white-background raster of that SVG at 3x   | `image/png`       |
+| PDF    | browser: formal SVG converted to vector PDF | `application/pdf` |
 
-The SVG viewBox is the authoritative page bound. Node raster export substitutes
-the formal serif stack with a bundled DejaVu Serif family before rasterization,
-so missing host fonts cannot remove labels. The original SVG is unchanged.
-Export filenames are normalized and all three formats use the same base name.
+The SVG viewBox is the authoritative page bound. Browser PDF export converts
+that same curated, renderer-generated SVG through `svg2pdf.js` into PDF paths
+and text; it never embeds the page-cover PNG used by the PNG artifact. The
+original SVG is unchanged. Export filenames are normalized and all three
+formats use the same base name.
 
-## Known limit
+Node/headless export retains a high-resolution raster-PDF fallback for release
+tooling because the browser vector converter requires a live DOM. It is not the
+interactive editor's user-facing PDF path.
 
-PDF 0.1 is a high-resolution raster PDF. It preserves page bounds and visual
-content but not selectable vector primitives. Vector PDF is a later compatible
-enhancement, not a reason to introduce a second renderer.
+If vector conversion fails, browser export fails visibly; it must not silently
+downgrade the requested PDF to a bitmap. SVG remains the portable vector
+fallback.
 
 ## Validation
 
 - parse the SVG viewBox and reject invalid bounds;
 - check PNG signature and dimensions against viewBox times scale;
-- reopen PDF, check one page and page bounds, render it with Poppler, and
-  visually compare it with the SVG/PNG fixture;
+- reopen browser PDF, check one page and page bounds, assert it contains no
+  page-cover image XObject, and visually compare it with the SVG fixture;
 - assert formal SVG has no editor-only layers.
 
 ## Agent File Resource
