@@ -3,23 +3,23 @@
   "id": "d-flip-flop",
   "name": "D Flip-Flop",
   "viewBox": {
-    "x": -44,
-    "y": -24,
-    "width": 88,
-    "height": 48
+    "x": -55,
+    "y": -30,
+    "width": 110,
+    "height": 60
   },
   "pins": [
     {
       "name": "D",
       "role": "input",
       "at": {
-        "x": -40,
+        "x": -50,
         "y": -10
       },
       "direction": "west",
       "presentation": {
         "visibility": "visible",
-        "leadLength": 20,
+        "leadLength": 25,
         "showName": true,
         "textStyle": "math-symbol",
         "textSizeScale": 0.68
@@ -29,13 +29,13 @@
       "name": "CK",
       "role": "clock",
       "at": {
-        "x": -40,
+        "x": -50,
         "y": 10
       },
       "direction": "west",
       "presentation": {
         "visibility": "visible",
-        "leadLength": 20,
+        "leadLength": 25,
         "showName": true,
         "textStyle": "math-symbol",
         "textSizeScale": 0.68
@@ -45,13 +45,13 @@
       "name": "Q",
       "role": "output",
       "at": {
-        "x": 40,
+        "x": 50,
         "y": -10
       },
       "direction": "east",
       "presentation": {
         "visibility": "visible",
-        "leadLength": 20,
+        "leadLength": 25,
         "showName": true,
         "textStyle": "math-symbol",
         "textSizeScale": 0.68
@@ -61,13 +61,13 @@
       "name": "QBAR",
       "role": "output-complement",
       "at": {
-        "x": 40,
+        "x": 50,
         "y": 10
       },
       "direction": "east",
       "presentation": {
         "visibility": "visible",
-        "leadLength": 20,
+        "leadLength": 25,
         "showName": true,
         "displayName": "Q",
         "textStyle": "math-symbol",
@@ -79,11 +79,11 @@
     {
       "kind": "line",
       "from": {
-        "x": -40,
+        "x": -50,
         "y": -10
       },
       "to": {
-        "x": -20.000684,
+        "x": -25.000855,
         "y": -10
       },
       "style": {
@@ -95,11 +95,11 @@
     {
       "kind": "line",
       "from": {
-        "x": -40,
+        "x": -50,
         "y": 10
       },
       "to": {
-        "x": -20.000684,
+        "x": -25.000855,
         "y": 10
       },
       "style": {
@@ -110,7 +110,7 @@
     },
     {
       "kind": "path",
-      "data": "M -20.000684 -20.0 L 20.000684 -20.0 L 20.000684 20.0 L -20.000684 20.0 Z",
+      "data": "M -25.000855 -25.0 L 25.000855 -25.0 L 25.000855 25.0 L -25.000855 25.0 Z",
       "style": {
         "strokeRole": "emphasis",
         "lineCap": "butt",
@@ -121,11 +121,11 @@
     {
       "kind": "line",
       "from": {
-        "x": 20.000684,
+        "x": 25.000855,
         "y": -10
       },
       "to": {
-        "x": 40,
+        "x": 50,
         "y": -10
       },
       "style": {
@@ -137,11 +137,11 @@
     {
       "kind": "line",
       "from": {
-        "x": 20.000684,
+        "x": 25.000855,
         "y": 10
       },
       "to": {
-        "x": 40,
+        "x": 50,
         "y": 10
       },
       "style": {
@@ -153,11 +153,11 @@
     {
       "kind": "line",
       "from": {
-        "x": 8.687,
+        "x": 13.687,
         "y": 4.24947
       },
       "to": {
-        "x": 17.354168,
+        "x": 22.354168,
         "y": 4.24947
       },
       "style": {

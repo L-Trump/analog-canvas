@@ -14,6 +14,7 @@ const PRODUCT_IDS = [
   "comparator",
   "current-source",
   "d-flip-flop",
+  "delay-cell",
   "diode",
   "ground",
   "ideal-switch",

@@ -919,7 +919,7 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   const categories = panel.locator('[data-testid^="shapes-category-"]');
 
   await expect(panel).toHaveAttribute("data-open", "true");
-  await expect(libraryChips).toHaveCount(35);
+  await expect(libraryChips).toHaveCount(36);
   await expect(categories).toHaveCount(7);
   const transistorCategory = page.getByTestId("shapes-category-transistors");
   const transistorChips = transistorCategory.locator(
@@ -1033,7 +1033,7 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   expect(artworkGeometry.every((artwork) => artwork.separatedFromLabel)).toBe(
     true,
   );
-  await expect(libraryChips.locator("span")).toHaveCount(35);
+  await expect(libraryChips.locator("span")).toHaveCount(36);
   await expect(transistorCategory).toHaveJSProperty("open", true);
   await transistorCategory.locator("summary").click();
   await expect(transistorCategory).toHaveJSProperty("open", false);
@@ -1049,8 +1049,9 @@ test("shows the complete foldable categorized Library, quick-places a device, an
     page
       .getByTestId("shapes-category-logic-gates")
       .locator('[data-testid^="shapes-chip-"]'),
-  ).toHaveCount(9);
+  ).toHaveCount(10);
   await expect(page.getByTestId("shapes-chip-buffer")).toBeAttached();
+  await expect(page.getByTestId("shapes-chip-delay-cell")).toBeAttached();
   await expect(page.getByTestId("shapes-chip-d-flip-flop")).toBeAttached();
   await expect(
     panel.getByRole("button", { name: "Place Independent Voltage Source" }),

@@ -235,7 +235,7 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral logic symbol; structural SPICE realization requires an explicit subcircuit or PDK mapping.",
     assetPath: "d-flip-flop.symbol.json",
     assetHash:
-      "1d980b4f14d3e1dc38e2b452fb87541d91854c3d80b967368816b43ec3af5e4f",
+      "890d5181dbe3c8cdfacc04f7e29a6eba696e95597d7295f083b0f9ca12a76164",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
@@ -254,6 +254,40 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       referencePath:
         "fixtures/visual-reference/razavi-reference-v1/d-flip-flop-vector-source.json",
       converterPath: "scripts/generate-razavi-buffer-dff-assets.mjs",
+      converterVersion: 1,
+    },
+  },
+  {
+    symbolId: "delay-cell",
+    name: "Delay Cell",
+    category: "logic",
+    reviewStatus: "reviewed",
+    pinOrder: ["A", "Y"],
+    palette: true,
+    automaticMappings: [],
+    manualOnlyReason:
+      "Visual delay-stage block; timing and structural netlist semantics require an explicit implementation mapping.",
+    assetPath: "delay-cell.symbol.json",
+    assetHash:
+      "b660cf9d097ec89283ac2a9f1f15d7a3589defada238bf2df98aa75e577d789a",
+    visualAuthority: {
+      kind: "razavi-reference-v1",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePaths: [
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-vector-source.json",
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-reference.png",
+      ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-geometry.json",
+    },
+    generation: {
+      kind: "razavi-pdf-vector-reference",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePath:
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-vector-source.json",
+      converterPath: "scripts/generate-razavi-delay-cell-asset.mjs",
       converterVersion: 1,
     },
   },
@@ -2081,23 +2115,23 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
     id: "d-flip-flop",
     name: "D Flip-Flop",
     viewBox: {
-      x: -44,
-      y: -24,
-      width: 88,
-      height: 48,
+      x: -55,
+      y: -30,
+      width: 110,
+      height: 60,
     },
     pins: [
       {
         name: "D",
         role: "input",
         at: {
-          x: -40,
+          x: -50,
           y: -10,
         },
         direction: "west",
         presentation: {
           visibility: "visible",
-          leadLength: 20,
+          leadLength: 25,
           showName: true,
           textStyle: "math-symbol",
           textSizeScale: 0.68,
@@ -2107,13 +2141,13 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         name: "CK",
         role: "clock",
         at: {
-          x: -40,
+          x: -50,
           y: 10,
         },
         direction: "west",
         presentation: {
           visibility: "visible",
-          leadLength: 20,
+          leadLength: 25,
           showName: true,
           textStyle: "math-symbol",
           textSizeScale: 0.68,
@@ -2123,13 +2157,13 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         name: "Q",
         role: "output",
         at: {
-          x: 40,
+          x: 50,
           y: -10,
         },
         direction: "east",
         presentation: {
           visibility: "visible",
-          leadLength: 20,
+          leadLength: 25,
           showName: true,
           textStyle: "math-symbol",
           textSizeScale: 0.68,
@@ -2139,13 +2173,13 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         name: "QBAR",
         role: "output-complement",
         at: {
-          x: 40,
+          x: 50,
           y: 10,
         },
         direction: "east",
         presentation: {
           visibility: "visible",
-          leadLength: 20,
+          leadLength: 25,
           showName: true,
           displayName: "Q",
           textStyle: "math-symbol",
@@ -2157,11 +2191,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: -40,
+          x: -50,
           y: -10,
         },
         to: {
-          x: -20.000684,
+          x: -25.000855,
           y: -10,
         },
         style: {
@@ -2173,11 +2207,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: -40,
+          x: -50,
           y: 10,
         },
         to: {
-          x: -20.000684,
+          x: -25.000855,
           y: 10,
         },
         style: {
@@ -2188,7 +2222,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "path",
-        data: "M -20.000684 -20.0 L 20.000684 -20.0 L 20.000684 20.0 L -20.000684 20.0 Z",
+        data: "M -25.000855 -25.0 L 25.000855 -25.0 L 25.000855 25.0 L -25.000855 25.0 Z",
         style: {
           strokeRole: "emphasis",
           lineCap: "butt",
@@ -2199,11 +2233,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 20.000684,
+          x: 25.000855,
           y: -10,
         },
         to: {
-          x: 40,
+          x: 50,
           y: -10,
         },
         style: {
@@ -2215,11 +2249,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 20.000684,
+          x: 25.000855,
           y: 10,
         },
         to: {
-          x: 40,
+          x: 50,
           y: 10,
         },
         style: {
@@ -2231,11 +2265,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 8.687,
+          x: 13.687,
           y: 4.24947,
         },
         to: {
-          x: 17.354168,
+          x: 22.354168,
           y: 4.24947,
         },
         style: {
@@ -2243,6 +2277,198 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           lineCap: "butt",
           lineJoin: "miter",
         },
+      },
+    ],
+    variants: [],
+  },
+  {
+    schemaVersion: 1,
+    id: "delay-cell",
+    name: "Delay Cell",
+    viewBox: {
+      x: -44,
+      y: -24,
+      width: 88,
+      height: 48,
+    },
+    pins: [
+      {
+        name: "A",
+        role: "input",
+        at: {
+          x: -40,
+          y: 0,
+        },
+        direction: "west",
+        presentation: {
+          visibility: "visible",
+          leadLength: 16,
+        },
+      },
+      {
+        name: "Y",
+        role: "output",
+        at: {
+          x: 40,
+          y: 0,
+        },
+        direction: "east",
+        presentation: {
+          visibility: "visible",
+          leadLength: 16,
+        },
+      },
+    ],
+    primitives: [
+      {
+        kind: "line",
+        from: {
+          x: -40,
+          y: 0,
+        },
+        to: {
+          x: -24,
+          y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "path",
+        data: "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
+        style: {
+          strokeRole: "emphasis",
+          lineCap: "butt",
+          lineJoin: "miter",
+          miterLimit: 4,
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 24,
+          y: 0,
+        },
+        to: {
+          x: 40,
+          y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: -0.951005,
+            y: -3.867967,
+          },
+          {
+            x: -1.48366,
+            y: -1.398387,
+          },
+          {
+            x: -4.606953,
+            y: 5.332432,
+          },
+          {
+            x: -5.551205,
+            y: 6.034567,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: -0.951005,
+            y: -3.867967,
+          },
+          {
+            x: 3.092327,
+            y: 6.034567,
+          },
+          {
+            x: 1.300671,
+            y: 5.332432,
+          },
+          {
+            x: -1.48366,
+            y: -1.398387,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: -5.551205,
+            y: 6.034567,
+          },
+          {
+            x: -4.606953,
+            y: 5.332432,
+          },
+          {
+            x: 1.300671,
+            y: 5.332432,
+          },
+          {
+            x: 3.092327,
+            y: 6.034567,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: 6.610361,
+            y: 4.848793,
+          },
+          {
+            x: 4.842916,
+            y: 4.848793,
+          },
+          {
+            x: 6.319823,
+            y: -2.293621,
+          },
+          {
+            x: 3.801819,
+            y: -2.293621,
+          },
+          {
+            x: 4.116569,
+            y: -3.722104,
+          },
+          {
+            x: 10.871599,
+            y: -3.722104,
+          },
+          {
+            x: 10.581059,
+            y: -2.293621,
+          },
+          {
+            x: 8.087267,
+            y: -2.293621,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
       },
     ],
     variants: [],

@@ -56,6 +56,7 @@ export function symbolCategory(symbolId: string): string {
     [
       "inverter",
       "buffer",
+      "delay-cell",
       "d-flip-flop",
       "and-gate",
       "or-gate",

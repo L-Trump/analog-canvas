@@ -70,6 +70,8 @@
     "symbols:razavi-logic:check": "node scripts/generate-razavi-logic-gate-assets.mjs --check",
     "symbols:razavi-buffer-dff": "node scripts/generate-razavi-buffer-dff-assets.mjs",
     "symbols:razavi-buffer-dff:check": "node scripts/generate-razavi-buffer-dff-assets.mjs --check",
+    "symbols:razavi-delay-cell": "node scripts/generate-razavi-delay-cell-asset.mjs",
+    "symbols:razavi-delay-cell:check": "node scripts/generate-razavi-delay-cell-asset.mjs --check",
     "symbols:razavi-common": "node scripts/generate-razavi-common-assets.mjs",
     "symbols:razavi-common:check": "node scripts/generate-razavi-common-assets.mjs --check",
     "visual:golden": "pnpm build && node scripts/visual-golden.mjs",
