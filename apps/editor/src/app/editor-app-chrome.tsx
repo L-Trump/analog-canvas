@@ -139,7 +139,10 @@ export function EditorAppChrome({
           }}
         >
           <div className="menubar-row">
-            <FileCommandMenu {...fileCommands} onCheckAndSave={onCheckAndSave} />
+            <FileCommandMenu
+              {...fileCommands}
+              onCheckAndSave={onCheckAndSave}
+            />
             <details className="command-menu" name="editor-command-menu">
               <summary>Edit</summary>
               <div className="command-popover">
