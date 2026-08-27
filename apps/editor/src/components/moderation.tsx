@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "../gallery.css";
+import "../styles/gallery-entry.css";
 
 import { fetchSessionUser, type SessionUser } from "./account";
 import { GalleryChrome } from "./gallery-chrome";

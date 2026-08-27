@@ -1,0 +1,416 @@
+.context-actions label,
+.property-section label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-sm);
+}
+
+.context-actions input,
+.context-actions select,
+.property-section input,
+.property-section select {
+  min-width: 0;
+  min-height: var(--icm-control-h-lg);
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+  background: var(--icm-surface);
+  color: var(--icm-text);
+  font: inherit;
+}
+
+.property-section {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--icm-border);
+}
+
+.property-card,
+.property-details {
+  min-width: 0;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-md);
+  background: var(--icm-surface);
+}
+
+.property-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.property-identity-card {
+  background: var(--icm-surface-muted);
+}
+
+.property-card > small,
+.property-target-card label > small,
+.additional-parameters > small {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  line-height: var(--icm-line);
+}
+
+.component-parameter-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.component-readonly-fields .property-identity-target {
+  grid-column: 1 / -1;
+}
+
+.property-display-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.1rem;
+  padding: 0.55rem 0 0;
+  border-top: 1px solid var(--icm-border);
+}
+
+.property-display-card .display-toggle-row {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: end;
+  gap: 0.7rem;
+}
+
+.selection-panel .property-display-card .display-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.selection-panel .property-display-card .display-toggle:has(input:checked) {
+  border-color: transparent;
+  background: transparent;
+}
+
+.property-details-inline {
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.property-details-inline summary {
+  min-height: var(--icm-control-h-lg);
+  padding: 0;
+}
+
+.property-details-inline .additional-parameters {
+  padding: 0.55rem 0 0;
+}
+
+.property-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 var(--icm-space-2);
+  cursor: pointer;
+  list-style: none;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.property-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.property-details summary small {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--icm-surface-muted);
+  font-size: var(--icm-font-xs);
+  text-align: center;
+}
+
+.property-details[open] summary {
+  border-bottom: 1px solid var(--icm-border);
+}
+
+.additional-parameters {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem;
+}
+
+.property-placement-card .component-mirror-row {
+  margin-top: 0;
+}
+
+.component-geometry-row.property-placement-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) repeat(
+      3,
+      var(--icm-control-h-lg)
+    );
+  align-items: end;
+}
+
+.property-placement-controls .property-placement-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--icm-control-h-lg);
+  min-width: var(--icm-control-h-lg);
+  height: var(--icm-control-h-lg);
+  min-height: var(--icm-control-h-lg);
+  margin: 0;
+  padding: 0;
+  color: var(--icm-text-muted);
+  background: var(--icm-surface);
+}
+
+.property-placement-controls .property-placement-icon-button:hover {
+  color: var(--icm-accent);
+  border-color: var(--icm-accent);
+  background: color-mix(in srgb, var(--icm-accent) 8%, var(--icm-surface));
+}
+
+.property-return-to-tray {
+  width: 100%;
+  margin-top: 0;
+}
+
+.property-amplifier-actions {
+  margin-top: 0;
+}
+
+.property-amplifier-actions > button:only-child {
+  grid-column: 1 / -1;
+}
+
+.selection-panel > .property-section:first-of-type,
+.component-properties {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.property-section-heading {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.selection-panel .display-toggle-row {
+  gap: 0.45rem;
+}
+
+.selection-panel .display-toggle {
+  gap: 0.4rem;
+  min-height: var(--icm-control-h);
+  padding: 0 0.5rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+  background: var(--icm-surface-muted);
+}
+
+.selection-panel .display-toggle:has(input:checked) {
+  border-color: rgb(var(--icm-accent-rgb) / 45%);
+  background: var(--icm-accent-soft);
+}
+
+.formal-port-properties {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.7rem;
+  padding: 0.65rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-md);
+  background: var(--icm-surface-muted);
+}
+
+.formal-port-properties small {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+}
+
+.component-readonly-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.65rem;
+  margin: 0;
+}
+
+.component-readonly-fields div {
+  min-width: 0;
+}
+
+.component-readonly-fields dt {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+}
+
+.component-readonly-fields dd {
+  overflow: hidden;
+  margin: 0.1rem 0 0;
+  color: var(--icm-text);
+  font-size: var(--icm-font-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-symbol-layout-properties {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.7rem;
+  padding: 0.65rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-md);
+  background: var(--icm-surface-muted);
+}
+
+.cell-symbol-layout-properties > small {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+}
+
+.cell-symbol-layout-toggle {
+  justify-self: start;
+}
+
+.cell-symbol-pin-layout-row {
+  display: grid;
+  grid-template-columns: minmax(4rem, 1fr) repeat(2, minmax(0, 1.15fr));
+  align-items: end;
+  gap: 0.35rem;
+  min-inline-size: 0;
+  padding: 0.45rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+}
+
+.cell-symbol-pin-layout-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-symbol-pin-layout-row label,
+.cell-symbol-pin-layout-row input,
+.cell-symbol-pin-layout-row select {
+  min-width: 0;
+  width: 100%;
+}
+
+.cell-symbol-layout-overlay {
+  pointer-events: none;
+}
+
+.cell-symbol-layout-handle {
+  pointer-events: all;
+  stroke: var(--icm-surface, #fff);
+  stroke-width: 1.5px;
+  cursor: grab;
+}
+
+.cell-symbol-layout-handle:active {
+  cursor: grabbing;
+}
+
+.cell-symbol-layout-handle.body {
+  fill: var(--icm-accent);
+}
+
+.cell-symbol-layout-handle.pin {
+  fill: var(--icm-warning);
+}
+
+.property-parameter-name {
+  color: var(--icm-text);
+  font-weight: 650;
+}
+
+.property-parameter-name em {
+  margin-left: 0.25rem;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.component-geometry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 0.85fr) minmax(0, 1.3fr);
+  gap: 0.35rem;
+  margin-top: -0.15rem;
+}
+
+.component-geometry-row label {
+  min-width: 0;
+}
+
+.component-geometry-row select,
+.component-geometry-row input {
+  width: 100%;
+}
+
+.component-mirror-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-top: -0.15rem;
+}
+
+.component-mirror-row button {
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  font-size: var(--icm-font-sm);
+  white-space: normal;
+}
+
+.more-actions-heading {
+  margin-top: 0.15rem;
+}
+
+.property-discard {
+  justify-self: end;
+  margin-top: -0.1rem;
+  padding: 0.2rem 0;
+  border: 0;
+  color: var(--icm-text-muted);
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--icm-font-sm);
+}
+
+.property-discard:hover:not(:disabled) {
+  color: var(--icm-text);
+  background: transparent;
+}
+
+.property-source-fact {
+  margin: 0.5rem 0 0;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-sm);
+}
+
+.drawing-properties {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.drawing-properties button {
+  margin-top: 0;
+}
+
+.import-review {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--icm-border-strong);
+}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import "../editor.css";
+import "../styles/editor-entry.css";
 import type {
   AgentHostSemanticIntentRequest,
   AgentHostSemanticIntentResult,
