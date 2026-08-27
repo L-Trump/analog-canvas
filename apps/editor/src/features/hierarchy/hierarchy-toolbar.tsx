@@ -70,7 +70,7 @@ export function HierarchyToolbar({
           type="button"
           onClick={onEnter}
           disabled={!canEnter}
-          title="Enter the selected Cell, or create one from a rectangle (E)"
+          title="Enter the selected Cell (E)"
         >
           Enter Cell
         </button>

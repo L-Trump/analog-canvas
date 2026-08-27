@@ -1771,8 +1771,6 @@ export function App({
     setInstanceTableOpen,
     setCellManagerOpen,
     selectedInstance,
-    selectedDrafting,
-    commitProjectStructure,
     setStatus,
   });
   const applyAgentSemanticIntent = createAgentSemanticIntentHandler({
@@ -2462,9 +2460,7 @@ export function App({
           returnToParentDocument();
           return;
         case "hierarchy-selection-required":
-          setStatus(
-            "Select a rectangle or hierarchical block before entering a Cell",
-          );
+          setStatus("Select a hierarchical block before entering a Cell");
           return;
         case "step-drafting-style": {
           if (!selectedDrafting) return;

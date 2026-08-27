@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  circleBoundaryIntersectsRect,
   centerOfBounds,
   closestPointOnSegment,
   normalizedBearing,
@@ -89,6 +90,22 @@ describe("canvas geometry primitives", () => {
         selection,
       ),
     ).toBe(true);
+    expect(
+      circleBoundaryIntersectsRect({ x: 10, y: 10 }, 8, {
+        x: 0,
+        y: 0,
+        width: 20,
+        height: 20,
+      }),
+    ).toBe(true);
+    expect(
+      circleBoundaryIntersectsRect({ x: 10, y: 10 }, 8, {
+        x: 8,
+        y: 8,
+        width: 4,
+        height: 4,
+      }),
+    ).toBe(false);
   });
 
   it("calculates polyline bounds with a visible minimum extent", () => {

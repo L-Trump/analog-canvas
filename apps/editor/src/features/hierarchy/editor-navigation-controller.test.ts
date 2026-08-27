@@ -41,8 +41,6 @@ function dependencies(
     setInstanceTableOpen: vi.fn(),
     setCellManagerOpen: vi.fn(),
     selectedInstance: undefined,
-    selectedDrafting: undefined,
-    commitProjectStructure: vi.fn(),
     setStatus: vi.fn(),
   };
 }

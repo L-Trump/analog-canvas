@@ -136,6 +136,35 @@ export function rectangleBoundaryIntersectsRect(
   );
 }
 
+/**
+ * True when an axis-aligned selection rectangle touches or contains any part
+ * of a circle's outline. A marquee wholly inside the hollow centre does not
+ * select the circle.
+ */
+export function circleBoundaryIntersectsRect(
+  center: Point,
+  radius: number,
+  rect: Rect,
+): boolean {
+  const nearest = {
+    x: clamp(center.x, rect.x, rect.x + rect.width),
+    y: clamp(center.y, rect.y, rect.y + rect.height),
+  };
+  const nearestDistance = Math.hypot(
+    nearest.x - center.x,
+    nearest.y - center.y,
+  );
+  const farthestDistance = Math.max(
+    ...[
+      { x: rect.x, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y },
+      { x: rect.x, y: rect.y + rect.height },
+      { x: rect.x + rect.width, y: rect.y + rect.height },
+    ].map((corner) => Math.hypot(corner.x - center.x, corner.y - center.y)),
+  );
+  return nearestDistance <= radius && radius <= farthestDistance;
+}
+
 export function polylineBounds(points: readonly Point[]): Rect {
   const xs = points.map((point) => point.x);
   const ys = points.map((point) => point.y);
