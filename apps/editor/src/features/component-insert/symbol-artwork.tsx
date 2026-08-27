@@ -1,7 +1,33 @@
-import { renderSymbolDefinitionBody } from "@icm/render-svg";
+import { razaviTextbookProfile } from "@icm/derived";
+import {
+  renderSymbolDefinitionBody,
+  renderVisiblePinNames,
+} from "@icm/render-svg";
 import type { SymbolDefinition } from "@icm/symbols";
 
 import { defaultRazaviSymbolVariantId } from "../../presentation/razavi-presentation";
+
+export function renderSymbolPreviewPinNames(
+  symbol: SymbolDefinition,
+  hiddenPinNames: readonly string[],
+  rotation: 0 | 90 | 180 | 270,
+  mirror: "none" | "x" = "none",
+): string {
+  return renderVisiblePinNames(
+    symbol,
+    hiddenPinNames,
+    {
+      id: "symbol-preview",
+      symbolId: symbol.id,
+      placement: {
+        position: { x: 0, y: 0 },
+        rotation,
+        mirror,
+      },
+    },
+    razaviTextbookProfile,
+  );
+}
 
 export function SymbolArtwork({
   symbol,
@@ -18,6 +44,12 @@ export function SymbolArtwork({
   const variantId = defaultRazaviSymbolVariantId(symbol.id);
   const variant = symbol.variants.find(
     (candidate) => candidate.id === variantId,
+  );
+  const previewRotation = rotation ?? 0;
+  const pinNames = renderSymbolPreviewPinNames(
+    symbol,
+    variant?.hiddenPinNames ?? [],
+    previewRotation,
   );
   const { x, y, width, height } = symbol.viewBox;
   const padding = Math.max(width, height) * paddingRatio;
@@ -60,6 +92,14 @@ export function SymbolArtwork({
           ),
         }}
       />
+      {pinNames ? (
+        <g
+          fill="currentColor"
+          stroke="none"
+          style={{ fontFamily: razaviTextbookProfile.typography.fontFamily }}
+          dangerouslySetInnerHTML={{ __html: pinNames }}
+        />
+      ) : null}
     </svg>
   );
 }
