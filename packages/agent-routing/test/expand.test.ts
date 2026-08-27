@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { expandRouteGraph } from "../src/index.js";
 import type { RouteGraph, ResolvedEndpoint } from "../src/index.js";
-import type { RouteEndpoint, Point } from "@icm/model";
+import { routeEnd, type RouteEndpoint, type Point } from "@icm/model";
 
 function endpoint(
   id: string,
@@ -44,7 +44,7 @@ const baseGraph = (overrides: Partial<RouteGraph>): RouteGraph => ({
 });
 
 describe("expandRouteGraph", () => {
-  it("emits set_route_points (not route_orthogonal) for an aligned escape edge", () => {
+  it("emits set_route_path (not route_orthogonal) for an aligned escape edge", () => {
     // terminal at (100,200) northward; tap at (100,100) — axis-aligned (same x).
     const graph = baseGraph({
       nodes: [
@@ -62,9 +62,9 @@ describe("expandRouteGraph", () => {
       input([term("a", 100, 200, "M1", "D")]),
     );
     expect(result.conflicts).toEqual([]);
-    expect(result.edits).toHaveLength(2); // add_junction + set_route_points
+    expect(result.edits).toHaveLength(2); // add_junction + set_route_path
     expect(result.edits[0]!.kind).toBe("add_junction");
-    expect(result.edits[1]!.kind).toBe("set_route_points");
+    expect(result.edits[1]!.kind).toBe("set_route_path");
     expect(result.metrics.routeCount).toBe(1);
     expect(result.metrics.junctionCount).toBe(1);
   });
@@ -136,7 +136,7 @@ describe("expandRouteGraph", () => {
     expect(junction.position.y % 10).toBe(0);
   });
 
-  it("emits a trunk edge as set_route_points with trunk mode when axis-aligned", () => {
+  it("emits a trunk edge as set_route_path with trunk mode when axis-aligned", () => {
     const graph = baseGraph({
       nodes: [
         { id: "tap0", role: "tap", at: { x: 200, y: 100 } },
@@ -146,11 +146,14 @@ describe("expandRouteGraph", () => {
     });
     const result = expandRouteGraph(graph, input([]));
     expect(result.conflicts).toEqual([]);
-    const route = result.edits.find((e) => e.kind === "set_route_points")!;
-    if (route.kind !== "set_route_points") return;
-    expect(route.segmentModes).toEqual(["trunk"]);
-    expect(route.from).toEqual({ kind: "junction", junctionId: "tap0" });
-    expect(route.to).toEqual({ kind: "junction", junctionId: "tap1" });
+    const route = result.edits.find((e) => e.kind === "set_route_path")!;
+    if (route.kind !== "set_route_path") return;
+    expect(route.route.legs.map((leg) => leg.mode)).toEqual(["trunk"]);
+    expect(route.route.start).toEqual({ kind: "junction", junctionId: "tap0" });
+    expect(routeEnd(route.route)).toEqual({
+      kind: "junction",
+      junctionId: "tap1",
+    });
   });
 
   it("accepts a 45-degree trunk edge through the shared octilinear contract", () => {

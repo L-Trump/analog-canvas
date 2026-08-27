@@ -167,7 +167,7 @@ export function agentEditCategory(
     case "reorder_cell_terminals":
     case "set_cell_formal_parameters":
       return "connectivity";
-    case "set_route_points":
+    case "set_route_path":
     case "route_orthogonal":
     case "add_junction":
     case "attach_endpoint_to_route":
@@ -703,7 +703,7 @@ export function createAgentCircuitService(
         }
         // Surface the actual stored geometry for Routes this transaction
         // touched, so a caller learns the post-normalization polyline (e.g.
-        // after set_route_points collapses collinear waypoints) without a
+        // after set_route_path collapses collinear bends) without a
         // fresh Snapshot. dryRun reports the proposed geometry the same way.
         const resolvedRoutes = collectResolvedRoutes(
           result.document,

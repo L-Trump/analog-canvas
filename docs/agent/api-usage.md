@@ -41,8 +41,8 @@ simulation, waveform data, or design-netlist export.
 
 A successful `transact` returns `resolvedRoutes`: the post-edit resolved
 polyline for each Route in `diff.changedObjectIds`. Read it to learn the actual
-stored geometry — including any normalization (e.g. `set_route_points`
-collapsing collinear waypoints) — without an immediate `snapshot`. A rejected
+stored geometry — including any normalization (e.g. `set_route_path`
+collapsing collinear bends) — without an immediate `snapshot`. A rejected
 `transact` localizes the failure: each diagnostic `path` points at the failing
 edit position (`["edits", index]`) or, for a Route geometry failure, at the
 Route (`["routes", routeId]`), and `objectIds` names the offending object. Read

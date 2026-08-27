@@ -1,8 +1,10 @@
 import { endpointKey, resolveEndpointConnection } from "@icm/derived";
+import { routeBends, routeEnd, routeModes } from "@icm/model";
 import type { RouteEndpoint, SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
 import type { SchematicEdit } from "./edit-schema.js";
+import { rebuildRoutePath } from "./route-leg-mutation.js";
 
 /**
  * Plans the presentation-only transition from canvas to Placement Tray.
@@ -160,7 +162,8 @@ function planRoutedEndpointDetachment(
       const key = endpointKey(endpoint);
       const usedByRoute = document.routes.some(
         (route) =>
-          endpointKey(route.from) === key || endpointKey(route.to) === key,
+          endpointKey(route.start) === key ||
+          endpointKey(routeEnd(route)) === key,
       );
       if (!usedByRoute) continue;
 
@@ -192,13 +195,14 @@ function planRoutedEndpointDetachment(
   }
 
   const routeEdits = document.routes.flatMap((route): SchematicEdit[] => {
-    const fromReplacement = replacements.get(endpointKey(route.from));
-    const toReplacement = replacements.get(endpointKey(route.to));
+    const routeFinal = routeEnd(route);
+    const fromReplacement = replacements.get(endpointKey(route.start));
+    const toReplacement = replacements.get(endpointKey(routeFinal));
     if (!fromReplacement && !toReplacement) return [];
-    const from = fromReplacement?.endpoint ?? route.from;
-    const to = toReplacement?.endpoint ?? route.to;
-    const waypoints = route.waypoints.map((point) => ({ ...point }));
-    const segmentModes = [...route.segmentModes];
+    const from = fromReplacement?.endpoint ?? route.start;
+    const to = toReplacement?.endpoint ?? routeFinal;
+    const waypoints = routeBends(route);
+    const segmentModes = routeModes(route);
     if (
       fromReplacement &&
       waypoints[0]?.x === fromReplacement.gridLanding.x &&
@@ -217,14 +221,15 @@ function planRoutedEndpointDetachment(
     }
     return [
       {
-        kind: "set_route_points",
-        routeId: route.id,
-        netId: route.netId,
-        from,
-        to,
-        waypoints,
-        segmentModes,
-        ...(route.presentation ? { presentation: route.presentation } : {}),
+        kind: "set_route_path",
+        route: rebuildRoutePath(
+          route,
+          from,
+          to,
+          waypoints,
+          segmentModes,
+          `detach-${sequence}`,
+        ),
       },
     ];
   });

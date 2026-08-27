@@ -191,9 +191,19 @@ export const CircuitProjectSchema = z
           }
         }
         for (const [routeIndex, route] of document.routes.entries()) {
-          for (const endpointName of ["from", "to"] as const) {
-            const endpoint = route[endpointName];
+          const finalTarget = route.legs.at(-1)?.to;
+          const routeEndpoints = [
+            ["start", route.start],
+            [
+              "end",
+              finalTarget?.kind === "endpoint"
+                ? finalTarget.endpoint
+                : undefined,
+            ],
+          ] as const;
+          for (const [endpointName, endpoint] of routeEndpoints) {
             if (
+              !endpoint ||
               endpoint.kind !== "terminal" ||
               endpoint.instanceId !== instance.id
             )
@@ -205,7 +215,9 @@ export const CircuitProjectSchema = z
                 documentIndex,
                 "routes",
                 routeIndex,
-                endpointName,
+                ...(endpointName === "start"
+                  ? ["start"]
+                  : ["legs", route.legs.length - 1, "to", "endpoint"]),
                 "pinName",
               ],
             });
@@ -283,9 +295,19 @@ export const CircuitProjectSchema = z
           }
         }
         for (const [routeIndex, route] of document.routes.entries()) {
-          for (const endpointName of ["from", "to"] as const) {
-            const endpoint = route[endpointName];
+          const finalTarget = route.legs.at(-1)?.to;
+          const routeEndpoints = [
+            ["start", route.start],
+            [
+              "end",
+              finalTarget?.kind === "endpoint"
+                ? finalTarget.endpoint
+                : undefined,
+            ],
+          ] as const;
+          for (const [endpointName, endpoint] of routeEndpoints) {
             if (
+              !endpoint ||
               endpoint.kind !== "terminal" ||
               endpoint.instanceId !== instance.id
             ) {
@@ -298,7 +320,9 @@ export const CircuitProjectSchema = z
                 documentIndex,
                 "routes",
                 routeIndex,
-                endpointName,
+                ...(endpointName === "start"
+                  ? ["start"]
+                  : ["legs", route.legs.length - 1, "to", "endpoint"]),
                 "pinName",
               ],
             });

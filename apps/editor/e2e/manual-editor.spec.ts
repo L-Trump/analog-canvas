@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
@@ -826,8 +827,15 @@ test("treats hollow and filled Cell Pins as equivalent interface variants", asyn
     documents: Array<{
       nets: Array<{ terminals: Array<{ instanceId: string }> }>;
       routes: Array<{
-        from: { kind: string; instanceId?: string };
-        to: { kind: string; instanceId?: string };
+        start: { kind: string; instanceId?: string };
+        legs: Array<{
+          to:
+            | { kind: "bend" }
+            | {
+                kind: "endpoint";
+                endpoint: { kind: string; instanceId?: string };
+              };
+        }>;
       }>;
     }>;
   };
@@ -838,7 +846,13 @@ test("treats hollow and filled Cell Pins as equivalent interface variants", asyn
       .map((item) => item.instanceId),
   ).not.toEqual(expect.arrayContaining(["P1", "P2"]));
   expect(
-    document.routes.flatMap((route) => [route.from, route.to]),
+    document.routes.flatMap((route) => {
+      const target = route.legs.at(-1)?.to;
+      return [
+        route.start,
+        ...(target?.kind === "endpoint" ? [target.endpoint] : []),
+      ];
+    }),
   ).not.toEqual(
     expect.arrayContaining([
       expect.objectContaining({ instanceId: "P1" }),
@@ -1049,14 +1063,14 @@ test("physically cuts an imported Route and restores source guidance for every d
     },
   };
   document.routes = [
-    {
+    createRoutePath({
       id: "route-imported-partial",
       netId: "net-h",
-      from: { kind: "terminal", instanceId: "A", pinName: "P" },
-      to: { kind: "terminal", instanceId: "B", pinName: "P" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    },
+      start: { kind: "terminal", instanceId: "A", pinName: "P" },
+      end: { kind: "terminal", instanceId: "B", pinName: "P" },
+      bends: [],
+      modes: ["manual"],
+    }),
   ];
   await page.goto("/editor");
   await page.getByTestId("project-file").setInputFiles({
@@ -1118,14 +1132,16 @@ test("suppresses only the highlighted imported Net guidance", async ({
 }) => {
   const project = createRoutingDemoProject();
   markRoutingDemoNetsImported(project);
-  project.documents[0]!.routes.push({
-    id: "route-imported-h",
-    netId: "net-h",
-    from: { kind: "terminal", instanceId: "A", pinName: "P" },
-    to: { kind: "terminal", instanceId: "B", pinName: "P" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  project.documents[0]!.routes.push(
+    createRoutePath({
+      id: "route-imported-h",
+      netId: "net-h",
+      start: { kind: "terminal", instanceId: "A", pinName: "P" },
+      end: { kind: "terminal", instanceId: "B", pinName: "P" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   project.documents[0]!.sourceBinding = {
     cellName: "routing_demo",
     sourceRef: {
@@ -2999,14 +3015,16 @@ test("keeps the rich-text editor outside its target and shields canvas input", a
 test("deletes imported Net Labels with non-editor ids", async ({ page }) => {
   const project = createRoutingDemoProject();
   const document = project.documents[0]!;
-  document.routes.push({
-    id: "route-imported-h",
-    netId: "net-h",
-    from: { kind: "terminal", instanceId: "A", pinName: "P" },
-    to: { kind: "terminal", instanceId: "B", pinName: "P" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "route-imported-h",
+      netId: "net-h",
+      start: { kind: "terminal", instanceId: "A", pinName: "P" },
+      end: { kind: "terminal", instanceId: "B", pinName: "P" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   document.annotations.push({
     id: "imported-label-horizontal",
     kind: "net-label",
@@ -3161,14 +3179,16 @@ test("places a Ground pin onto a canonical Route and keeps real split topology",
       evidence.powerDomain = "ground";
     }
   }
-  document.routes.push({
-    id: "route-base",
-    netId: "net-h",
-    from: { kind: "terminal", instanceId: "A", pinName: "P" },
-    to: { kind: "terminal", instanceId: "B", pinName: "P" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "route-base",
+      netId: "net-h",
+      start: { kind: "terminal", instanceId: "A", pinName: "P" },
+      end: { kind: "terminal", instanceId: "B", pinName: "P" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   await page.getByTestId("project-file").setInputFiles({
     name: "component-route-contact.icproj.json",
     mimeType: "application/json",
@@ -4059,22 +4079,22 @@ test("recomputes highlighted routed components after a Net Label is deleted", as
     },
   ];
   document.routes = [
-    {
+    createRoutePath({
       id: "route-left-label",
       netId: "net-historically-merged",
-      from: { kind: "junction", junctionId: "left-a" },
-      to: { kind: "junction", junctionId: "left-b" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    },
-    {
+      start: { kind: "junction", junctionId: "left-a" },
+      end: { kind: "junction", junctionId: "left-b" },
+      bends: [],
+      modes: ["manual"],
+    }),
+    createRoutePath({
       id: "route-right-label",
       netId: "net-historically-merged",
-      from: { kind: "junction", junctionId: "right-a" },
-      to: { kind: "junction", junctionId: "right-b" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    },
+      start: { kind: "junction", junctionId: "right-a" },
+      end: { kind: "junction", junctionId: "right-b" },
+      bends: [],
+      modes: ["manual"],
+    }),
   ];
   document.annotations = [
     {

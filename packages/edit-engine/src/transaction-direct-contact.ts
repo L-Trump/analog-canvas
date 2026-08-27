@@ -1,4 +1,4 @@
-import { deriveStableId } from "@icm/model";
+import { createRoutePath, deriveStableId } from "@icm/model";
 import type { RouteEndpoint, SchematicDocument } from "@icm/model";
 import {
   deriveDirectContactDelta,
@@ -116,17 +116,19 @@ export function reconcileTransformDirectContacts(
       { connection: rightConnection },
     );
     const routeId = uniqueDerivedId(draft, transactionId, pair.id);
-    draft.routes.push({
-      id: routeId,
-      netId: leftOwner,
-      from: structuredClone(left),
-      to: structuredClone(right),
-      waypoints: geometry.waypoints,
-      segmentModes: geometry.segmentModes,
-      ...([left, right].some((endpoint) => isMosBulkTerminal(draft, endpoint))
-        ? { presentation: "bulk-dashed" as const }
-        : {}),
-    });
+    draft.routes.push(
+      createRoutePath({
+        id: routeId,
+        netId: leftOwner,
+        start: structuredClone(left),
+        end: structuredClone(right),
+        bends: geometry.waypoints,
+        modes: geometry.segmentModes,
+        ...([left, right].some((endpoint) => isMosBulkTerminal(draft, endpoint))
+          ? { presentation: "bulk-dashed" as const }
+          : {}),
+      }),
+    );
     changedObjectIds.add(routeId);
     changedRouteIds.push(routeId);
     geometryChanged = true;

@@ -33,7 +33,12 @@ import {
 } from "@icm/derived";
 import { snapCoordinate } from "../../snap/engine";
 import type { Flightline } from "@icm/derived";
-import type { Point, RouteEndpoint, SchematicDocument } from "@icm/model";
+import {
+  routeEnd,
+  type Point,
+  type RouteEndpoint,
+  type SchematicDocument,
+} from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
 import {
@@ -616,14 +621,15 @@ export function useWireInteraction(capabilities: UseWireInteractionOptions) {
                 (candidate) => candidate.route.id === routeProposal.routeId,
               );
               if (!routeRecord) continue;
+              const routeEndPoint = routeEnd(routeRecord.route);
               const from =
-                routeRecord.route.from.kind === "junction"
-                  ? (movedJunctions.get(routeRecord.route.from.junctionId) ??
+                routeRecord.route.start.kind === "junction"
+                  ? (movedJunctions.get(routeRecord.route.start.junctionId) ??
                     routeRecord.geometry.centerline[0]!)
                   : routeRecord.geometry.centerline[0]!;
               const to =
-                routeRecord.route.to.kind === "junction"
-                  ? (movedJunctions.get(routeRecord.route.to.junctionId) ??
+                routeEndPoint.kind === "junction"
+                  ? (movedJunctions.get(routeEndPoint.junctionId) ??
                     routeRecord.geometry.centerline.at(-1)!)
                   : routeRecord.geometry.centerline.at(-1)!;
               dragVisual().setObjectPolyline(routeProposal.routeId, [

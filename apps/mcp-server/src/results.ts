@@ -168,10 +168,10 @@ export function inspectObject(
     return {
       id: route.id,
       netId: route.netId,
-      from: route.from,
-      to: route.to,
+      start: route.start,
+      legs: route.legs,
       ...(route.presentation ? { presentation: route.presentation } : {}),
-      waypointCount: route.waypoints.length,
+      bendCount: route.legs.filter((leg) => leg.to.kind === "bend").length,
       polyline: route.polyline,
     };
   }

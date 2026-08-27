@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
@@ -68,14 +69,16 @@ describe("editor document helpers", () => {
 
       terminals: [],
     });
-    document.routes.push({
-      id: "route-ui-12",
-      netId: "net-ui-7",
-      from: { kind: "junction", junctionId: "junction-ui-3" },
-      to: { kind: "junction", junctionId: "junction-ui-3" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-ui-12",
+        netId: "net-ui-7",
+        start: { kind: "junction", junctionId: "junction-ui-3" },
+        end: { kind: "junction", junctionId: "junction-ui-3" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.junctions.push({
       id: "junction-ui-3",
       netId: "net-ui-7",

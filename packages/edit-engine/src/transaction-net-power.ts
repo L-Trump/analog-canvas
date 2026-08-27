@@ -2,6 +2,7 @@ import {
   AnnotationSchema,
   ConnectivityEvidenceSchema,
   JunctionSchema,
+  createRoutePath,
   deriveStableId,
 } from "@icm/model";
 import type { SchematicDocument } from "@icm/model";
@@ -120,15 +121,17 @@ export function applyNetPowerEdit(
           role: "route-anchor",
         }),
       );
-      draft.routes.push({
-        id: edit.routeId,
-        netId: edit.netId,
-        from: { kind: "junction", junctionId: edit.startJunctionId },
-        to: { kind: "junction", junctionId: edit.endJunctionId },
-        waypoints: [],
-        segmentModes: ["manual"],
-        presentation: "power-rail",
-      });
+      draft.routes.push(
+        createRoutePath({
+          id: edit.routeId,
+          netId: edit.netId,
+          start: { kind: "junction", junctionId: edit.startJunctionId },
+          end: { kind: "junction", junctionId: edit.endJunctionId },
+          bends: [],
+          modes: ["manual"],
+          presentation: "power-rail",
+        }),
+      );
       draft.annotations.push(
         AnnotationSchema.parse({
           id: edit.labelId,

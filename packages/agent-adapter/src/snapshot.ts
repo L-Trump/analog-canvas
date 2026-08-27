@@ -339,10 +339,8 @@ function documentSnapshot(
       return {
         id: route.id,
         netId: logicalNets.byBaseNetId.get(route.netId)?.id ?? route.netId,
-        from: structuredClone(route.from),
-        to: structuredClone(route.to),
-        waypoints: structuredClone(route.waypoints),
-        segmentModes: [...route.segmentModes],
+        start: structuredClone(route.start),
+        legs: structuredClone(route.legs),
         ...(route.presentation ? { presentation: route.presentation } : {}),
         polyline: geometry ? [...geometry.centerline] : null,
       };

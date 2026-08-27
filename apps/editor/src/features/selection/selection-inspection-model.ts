@@ -6,7 +6,11 @@ import {
   resolveNetLabelBinding,
 } from "@icm/derived";
 import type { WireSource } from "@icm/edit-engine";
-import type { CircuitProject, SchematicDocument } from "@icm/model";
+import {
+  routeEndpoints,
+  type CircuitProject,
+  type SchematicDocument,
+} from "@icm/model";
 import {
   resolvePdkSymbolMappingForTerminalOrder,
   type SymbolResolver,
@@ -190,7 +194,7 @@ export function deriveSelectionInspectionModel({
     selectedNetLabelBinding?.netId ??
     null;
   const selectedHighlightEndpoint =
-    selectedRoute?.from ??
+    (selectedRoute ? routeEndpoints(selectedRoute)[0] : undefined) ??
     selectedEndpoint?.endpoint ??
     selectedNetLabelBinding?.endpoint;
 

@@ -21,8 +21,11 @@ import type {
 } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 import {
+  createRoutePath,
   flattenRichText,
   inverseTransformPoint,
+  routeBends,
+  routeEnd,
   semanticTextDocument,
   transformPoint,
 } from "@icm/model";
@@ -125,7 +128,7 @@ export function clipboardPlacementAnchor(
     clipboard.instances.find((instance) => instance.placement)?.placement
       ?.position ??
     clipboard.junctions[0]?.position ??
-    clipboard.routes[0]?.waypoints[0] ??
+    (clipboard.routes[0] ? routeBends(clipboard.routes[0])[0] : undefined) ??
     annotationPosition ??
     null
   );
@@ -203,7 +206,16 @@ function fallbackClipboardPreviewDocument(
     nets: structuredClone([...clipboard.nets, ...clipboard.boundaryNets]),
     routes: clipboard.routes.map((route) => ({
       ...structuredClone(route),
-      waypoints: route.waypoints.map((point) => movePoint(point, offset)),
+      legs: route.legs.map((leg) => ({
+        ...structuredClone(leg),
+        to:
+          leg.to.kind === "bend"
+            ? {
+                ...leg.to,
+                position: movePoint(leg.to.position, offset),
+              }
+            : leg.to,
+      })),
     })),
     junctions: clipboard.junctions.map((junction) => ({
       ...structuredClone(junction),
@@ -926,14 +938,16 @@ export function proposePaste(
   );
   edits.push(
     ...clipboard.routes.map((route): SchematicEdit => ({
-      kind: "set_route_points",
-      routeId: routeIds.get(route.id)!,
-      netId: netIds.get(route.netId)!,
-      from: mapEndpoint(route.from, instanceIds, junctionIds),
-      to: mapEndpoint(route.to, instanceIds, junctionIds),
-      waypoints: route.waypoints.map((point) => movePoint(point, offset)),
-      segmentModes: [...route.segmentModes],
-      ...(route.presentation ? { presentation: route.presentation } : {}),
+      kind: "set_route_path",
+      route: createRoutePath({
+        id: routeIds.get(route.id)!,
+        netId: netIds.get(route.netId)!,
+        start: mapEndpoint(route.start, instanceIds, junctionIds),
+        end: mapEndpoint(routeEnd(route), instanceIds, junctionIds),
+        bends: routeBends(route).map((point) => movePoint(point, offset)),
+        modes: route.legs.map((leg) => leg.mode),
+        ...(route.presentation ? { presentation: route.presentation } : {}),
+      }),
     })),
   );
   const sourceInstancesById = new Map(

@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { resolveDocumentRoutingGeometry } from "@icm/derived";
 import { createEmptyProject } from "@icm/model";
 import type { Annotation } from "@icm/model";
@@ -42,14 +43,16 @@ function routedFixture() {
       role: "route-anchor",
     },
   );
-  input.document.routes.push({
-    id: "route",
-    netId: "net",
-    from: { kind: "junction", junctionId: "j1" },
-    to: { kind: "junction", junctionId: "j2" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  input.document.routes.push(
+    createRoutePath({
+      id: "route",
+      netId: "net",
+      start: { kind: "junction", junctionId: "j1" },
+      end: { kind: "junction", junctionId: "j2" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   const routing = resolveDocumentRoutingGeometry(input.document, resolver);
   input.routeGeometryRecords = input.document.routes.flatMap((route) => {
     const geometry = routing.routes.get(route.id);
@@ -68,7 +71,7 @@ describe("property edit planner", () => {
       anchor: {
         kind: "route",
         routeId: "route",
-        segmentIndex: 0,
+        legId: input.document.routes[0]!.legs[0]!.id,
         t: 0.8,
         normalOffset: 20,
         direction: "forward",

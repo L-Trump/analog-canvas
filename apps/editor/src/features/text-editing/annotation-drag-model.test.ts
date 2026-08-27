@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { resolveDocumentRoutingGeometry } from "@icm/derived";
 import { createEmptyDocument } from "@icm/model";
 import type { Annotation } from "@icm/model";
@@ -99,14 +100,16 @@ describe("annotation drag model", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "route",
-      netId: "net",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route",
+        netId: "net",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     const annotation: Annotation = {
       id: "imported-label",
       kind: "net-label",
@@ -114,7 +117,7 @@ describe("annotation drag model", () => {
       anchor: {
         kind: "route",
         routeId: "route",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.1,
         normalOffset: 0,
         direction: "forward",
@@ -134,7 +137,7 @@ describe("annotation drag model", () => {
     expect(dragged.anchor).toMatchObject({
       kind: "route",
       routeId: "route",
-      segmentIndex: 0,
+      legId: document.routes[0]!.legs[0]!.id,
       t: 0.75,
       normalOffset: 20,
       fallbackPosition: { x: 75, y: 20 },

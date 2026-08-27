@@ -1,4 +1,4 @@
-import type { RouteEndpoint } from "@icm/model";
+import { routeBends, routeEnd, type RouteEndpoint } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -55,22 +55,15 @@ describe("wire editing proposals", () => {
     };
     const to = createFreeWireAnchor({ x: 180, y: 140 }, "net-bulk", true, 31);
     const proposal = proposeWireCommit(from, to, [], 32);
-    const route = proposal.edits.find(
-      (edit) => edit.kind === "set_route_points",
-    );
+    const route = proposal.edits.find((edit) => edit.kind === "set_route_path");
 
     expect(route).toMatchObject({
-      kind: "set_route_points",
-      waypoints: [
-        { x: 100, y: 100 },
-        { x: 180, y: 100 },
-      ],
-      segmentModes: ["escape", "manual", "manual"],
-      presentation: "bulk-dashed",
+      kind: "set_route_path",
+      route: expect.objectContaining({ presentation: "bulk-dashed" }),
     });
     expect(
-      route?.kind === "set_route_points" &&
-        route.waypoints.every(
+      route?.kind === "set_route_path" &&
+        routeBends(route.route).every(
           (point) => point.x % 10 === 0 && point.y % 10 === 0,
         ),
     ).toBe(true);
@@ -87,7 +80,7 @@ describe("wire editing proposals", () => {
       "add_junction",
       "merge_nets",
       "connect_endpoints",
-      "set_route_points",
+      "set_route_path",
     ]);
     expect(proposal.edits[2]).toEqual({
       kind: "merge_nets",
@@ -124,19 +117,25 @@ describe("wire editing proposals", () => {
     );
 
     const routed = proposal.edits.filter(
-      (edit) => edit.kind === "set_route_points",
+      (edit) => edit.kind === "set_route_path",
     );
     expect(routed).toHaveLength(2);
     expect(routed).toEqual([
       expect.objectContaining({
-        from: from.endpoint,
-        to: { kind: "terminal", instanceId: "C1", pinName: "1" },
+        route: expect.objectContaining({ start: from.endpoint }),
       }),
       expect.objectContaining({
-        from: { kind: "terminal", instanceId: "C1", pinName: "1" },
-        to: to.endpoint,
+        route: expect.objectContaining({
+          start: { kind: "terminal", instanceId: "C1", pinName: "1" },
+        }),
       }),
     ]);
+    expect(routeEnd(routed[0]!.route)).toEqual({
+      kind: "terminal",
+      instanceId: "C1",
+      pinName: "1",
+    });
+    expect(routeEnd(routed[1]!.route)).toEqual(to.endpoint);
     expect(
       proposal.edits.some(
         (edit) =>

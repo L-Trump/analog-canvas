@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument, createEmptyProject } from "@icm/model";
 import {
@@ -309,15 +310,17 @@ describe("current rendering contract", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "rail",
-      netId: "net-vdd",
-      from: { kind: "junction", junctionId: "rail-left" },
-      to: { kind: "junction", junctionId: "rail-right" },
-      waypoints: [],
-      segmentModes: ["manual"],
-      presentation: "power-rail",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "rail",
+        netId: "net-vdd",
+        start: { kind: "junction", junctionId: "rail-left" },
+        end: { kind: "junction", junctionId: "rail-right" },
+        bends: [],
+        modes: ["manual"],
+        presentation: "power-rail",
+      }),
+    );
     document.annotations.push({
       id: "rail-label",
       kind: "power-label",
@@ -390,15 +393,17 @@ describe("current rendering contract", () => {
     });
     // Older editor builds could persist this presentation solely because the
     // pin happened to be named B. It must now render as an ordinary wire.
-    document.routes.push({
-      id: "base-route",
-      netId: "base-net",
-      from: { kind: "terminal", instanceId: "Q1", pinName: "B" },
-      to: { kind: "junction", junctionId: "base-anchor" },
-      waypoints: [],
-      segmentModes: ["manual"],
-      presentation: "bulk-dashed",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "base-route",
+        netId: "base-net",
+        start: { kind: "terminal", instanceId: "Q1", pinName: "B" },
+        end: { kind: "junction", junctionId: "base-anchor" },
+        bends: [],
+        modes: ["manual"],
+        presentation: "bulk-dashed",
+      }),
+    );
 
     const svg = renderDocumentSvg(document, resolver);
     expect(svg).toContain('data-object-id="base-route"');

@@ -298,7 +298,9 @@ export function physicalContactObjectIdsForTransaction(
       case "align_instances":
         edit.instanceIds.forEach((instanceId) => result.add(instanceId));
         break;
-      case "set_route_points":
+      case "set_route_path":
+        result.add(edit.route.id);
+        break;
       case "route_orthogonal":
         result.add(edit.routeId);
         break;

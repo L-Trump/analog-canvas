@@ -1,3 +1,4 @@
+import { routeEnd } from "@icm/model";
 import type { RouteBranch, SchematicDocument } from "@icm/model";
 
 import { endpointKey } from "./endpoint.js";
@@ -21,7 +22,7 @@ export function derivePowerRailComponent(
   );
   const byJunction = new Map<string, typeof candidates>();
   for (const route of candidates) {
-    for (const endpoint of [route.from, route.to]) {
+    for (const endpoint of [route.start, routeEnd(route)]) {
       if (endpoint.kind !== "junction") continue;
       const incident = byJunction.get(endpoint.junctionId) ?? [];
       incident.push(route);
@@ -32,7 +33,7 @@ export function derivePowerRailComponent(
   const queue = [seed];
   while (queue.length > 0) {
     const route = queue.shift()!;
-    for (const endpoint of [route.from, route.to]) {
+    for (const endpoint of [route.start, routeEnd(route)]) {
       if (endpoint.kind !== "junction") continue;
       for (const incident of byJunction.get(endpoint.junctionId) ?? []) {
         if (visited.has(incident.id)) continue;
@@ -44,7 +45,7 @@ export function derivePowerRailComponent(
   const railRoutes = candidates.filter((route) => visited.has(route.id));
   const degreeByJunction = new Map<string, number>();
   for (const route of railRoutes) {
-    for (const endpoint of [route.from, route.to]) {
+    for (const endpoint of [route.start, routeEnd(route)]) {
       if (endpoint.kind !== "junction") continue;
       degreeByJunction.set(
         endpoint.junctionId,
@@ -97,7 +98,7 @@ export function deriveInternalGroupSelection(
     );
     const routesByEndpoint = new Map<string, typeof netRoutes>();
     for (const route of netRoutes) {
-      for (const endpoint of [route.from, route.to]) {
+      for (const endpoint of [route.start, routeEnd(route)]) {
         const key = endpointKey(endpoint);
         const incident = routesByEndpoint.get(key) ?? [];
         incident.push(route);
@@ -113,7 +114,7 @@ export function deriveInternalGroupSelection(
       while (queue.length > 0) {
         const route = queue.shift()!;
         component.push(route);
-        for (const endpoint of [route.from, route.to]) {
+        for (const endpoint of [route.start, routeEnd(route)]) {
           for (const incident of routesByEndpoint.get(endpointKey(endpoint)) ??
             []) {
             if (!unvisited.delete(incident.id)) continue;
@@ -123,7 +124,7 @@ export function deriveInternalGroupSelection(
       }
       const componentEndpoints = new Map(
         component
-          .flatMap((route) => [route.from, route.to])
+          .flatMap((route) => [route.start, routeEnd(route)])
           .map((endpoint) => [endpointKey(endpoint), endpoint] as const),
       );
       let hasSelectedTerminal = false;

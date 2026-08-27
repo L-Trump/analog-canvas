@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { executeTransaction, planInstanceDeletion } from "@icm/edit-engine";
 import { resolveDocumentLogicalNets } from "@icm/derived";
 import { createEmptyDocument, transformPoint } from "@icm/model";
@@ -362,14 +363,16 @@ describe("component placement electrical contacts", () => {
         { instanceId: "R1", pinName: "1" },
       ],
     });
-    document.routes.push({
-      id: "route-vdd2-r1",
-      netId: "net-power-vdd2",
-      from: { kind: "terminal", instanceId: "VDD2", pinName: "P" },
-      to: { kind: "terminal", instanceId: "R1", pinName: "1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-vdd2-r1",
+        netId: "net-power-vdd2",
+        start: { kind: "terminal", instanceId: "VDD2", pinName: "P" },
+        end: { kind: "terminal", instanceId: "R1", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.connectivityEvidence.push({
       id: "claim-vdd2",
       kind: "name-claim",
@@ -390,7 +393,7 @@ describe("component placement electrical contacts", () => {
     expect(removed.document.instances.map((instance) => instance.id)).toEqual([
       "R1",
     ]);
-    expect(removed.document.routes[0]?.from).toEqual({
+    expect(removed.document.routes[0]?.start).toEqual({
       kind: "junction",
       junctionId: "junction-lifecycle-9-1",
     });

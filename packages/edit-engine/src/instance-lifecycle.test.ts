@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
 import { builtInSymbols, InMemorySymbolResolver } from "@icm/symbols";
 import { describe, expect, it } from "vitest";
@@ -47,14 +48,16 @@ function lifecycleDocument() {
       { instanceId: "R2", pinName: "1" },
     ],
   });
-  document.routes.push({
-    id: "route-1",
-    netId: "net-1",
-    from: { kind: "terminal", instanceId: "R1", pinName: "2" },
-    to: { kind: "terminal", instanceId: "R2", pinName: "1" },
-    waypoints: [{ x: 100, y: 80 }],
-    segmentModes: ["manual", "manual"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "route-1",
+      netId: "net-1",
+      start: { kind: "terminal", instanceId: "R1", pinName: "2" },
+      end: { kind: "terminal", instanceId: "R2", pinName: "1" },
+      bends: [{ x: 100, y: 80 }],
+      modes: ["manual", "manual"],
+    }),
+  );
   document.noConnects.push({
     id: "open-r1-1",
     endpoint: { kind: "terminal", instanceId: "R1", pinName: "1" },
@@ -131,15 +134,17 @@ describe("Instance lifecycle planning", () => {
       netId: "net-body",
       position: { x: 180, y: 100 },
     });
-    document.routes.push({
-      id: "route-body",
-      netId: "net-body",
-      from: { kind: "terminal", instanceId: "M1", pinName: "B" },
-      to: { kind: "junction", junctionId: "J1" },
-      waypoints: [{ x: 100, y: 100 }],
-      segmentModes: ["escape", "manual"],
-      presentation: "bulk-dashed",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-body",
+        netId: "net-body",
+        start: { kind: "terminal", instanceId: "M1", pinName: "B" },
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [{ x: 100, y: 100 }],
+        modes: ["escape", "manual"],
+        presentation: "bulk-dashed",
+      }),
+    );
 
     const edits = planInstanceUnplacement(document, resolver, ["M1"], 9);
     expect(edits[0]).toMatchObject({
@@ -147,9 +152,10 @@ describe("Instance lifecycle planning", () => {
       position: { x: 100, y: 100 },
     });
     expect(edits[1]).toMatchObject({
-      kind: "set_route_points",
-      waypoints: [],
-      segmentModes: ["manual"],
+      kind: "set_route_path",
+      route: expect.objectContaining({
+        legs: [expect.objectContaining({ mode: "manual" })],
+      }),
     });
     expect(
       executeTransaction(document, transaction(document.id, edits), {
@@ -220,7 +226,7 @@ describe("Instance lifecycle planning", () => {
     const edits = planInstanceUnplacement(document, resolver, ["R1"], 3);
     expect(edits.map((edit) => edit.kind)).toEqual([
       "add_junction",
-      "set_route_points",
+      "set_route_path",
       "unplace_instance",
     ]);
 
@@ -253,7 +259,10 @@ describe("Instance lifecycle planning", () => {
         annotations: [{ id: "label-r1" }, { id: "free-value-r1" }],
         routes: [
           {
-            from: { kind: "junction", junctionId: "junction-lifecycle-3-1" },
+            start: {
+              kind: "junction",
+              junctionId: "junction-lifecycle-3-1",
+            },
           },
         ],
       },
@@ -300,8 +309,23 @@ describe("Instance lifecycle planning", () => {
         constraints: [],
         routes: [
           {
-            from: { kind: "junction", junctionId: "junction-lifecycle-5-1" },
-            to: { kind: "terminal", instanceId: "R2", pinName: "1" },
+            start: {
+              kind: "junction",
+              junctionId: "junction-lifecycle-5-1",
+            },
+            legs: [
+              expect.any(Object),
+              expect.objectContaining({
+                to: {
+                  kind: "endpoint",
+                  endpoint: {
+                    kind: "terminal",
+                    instanceId: "R2",
+                    pinName: "1",
+                  },
+                },
+              }),
+            ],
           },
         ],
       },

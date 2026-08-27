@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyProject } from "@icm/model";
 import type { SchematicDocument } from "@icm/model";
 import { InMemorySymbolResolver } from "@icm/symbols";
@@ -37,7 +38,7 @@ function document(id: string): SchematicDocument {
 }
 
 describe("resolved route geometry", () => {
-  it("characterizes the schema-25 route contract before stable-leg migration", () => {
+  it("characterizes the canonical stable-leg route contract", () => {
     const project = createEmptyProject(
       "route-contract",
       "Route contract",
@@ -49,17 +50,19 @@ describe("resolved route geometry", () => {
       { id: "j1", netId: "n", position: { x: 0, y: 0 } },
       { id: "j2", netId: "n", position: { x: 100, y: 100 } },
     );
-    schematic.routes.push({
-      id: "route-contract",
-      netId: "n",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [
-        { x: 40, y: 0 },
-        { x: 40, y: 100 },
-      ],
-      segmentModes: ["escape", "manual", "trunk"],
-    });
+    schematic.routes.push(
+      createRoutePath({
+        id: "route-contract",
+        netId: "n",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [
+          { x: 40, y: 0 },
+          { x: 40, y: 100 },
+        ],
+        modes: ["escape", "manual", "trunk"],
+      }),
+    );
 
     const topologyBefore = electricalTopologyHash(project);
     const serializedRoute = JSON.parse(
@@ -71,17 +74,19 @@ describe("resolved route geometry", () => {
       schematic.routes[0]!,
     );
 
-    expect(serializedRoute).toEqual({
-      id: "route-contract",
-      netId: "n",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [
-        { x: 40, y: 0 },
-        { x: 40, y: 100 },
-      ],
-      segmentModes: ["escape", "manual", "trunk"],
-    });
+    expect(serializedRoute).toEqual(
+      createRoutePath({
+        id: "route-contract",
+        netId: "n",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [
+          { x: 40, y: 0 },
+          { x: 40, y: 100 },
+        ],
+        modes: ["escape", "manual", "trunk"],
+      }),
+    );
     expect(geometry?.centerline).toEqual([
       { x: 0, y: 0 },
       { x: 40, y: 0 },
@@ -97,7 +102,7 @@ describe("resolved route geometry", () => {
       geometry &&
         resolveRouteAttachment(geometry, {
           routeId: "route-contract",
-          segmentIndex: 1,
+          legId: schematic.routes[0]!.legs[1]!.id,
           t: 0.25,
           direction: "forward",
           normalOffset: 10,
@@ -108,10 +113,10 @@ describe("resolved route geometry", () => {
       rotation: 90,
     });
 
-    schematic.routes[0]!.waypoints = [
-      { x: 60, y: 0 },
-      { x: 60, y: 100 },
-    ];
+    const firstTarget = schematic.routes[0]!.legs[0]!.to;
+    const secondTarget = schematic.routes[0]!.legs[1]!.to;
+    if (firstTarget.kind === "bend") firstTarget.position.x = 60;
+    if (secondTarget.kind === "bend") secondTarget.position.x = 60;
     expect(electricalTopologyHash(project)).toBe(topologyBefore);
   });
 
@@ -121,17 +126,19 @@ describe("resolved route geometry", () => {
       { id: "j1", netId: "n", position: { x: 0, y: 0 } },
       { id: "j2", netId: "n", position: { x: 100, y: 100 } },
     );
-    schematic.routes.push({
-      id: "route-1",
-      netId: "n",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [
-        { x: 50, y: 0 },
-        { x: 50, y: 100 },
-      ],
-      segmentModes: ["manual", "auto", "escape"],
-    });
+    schematic.routes.push(
+      createRoutePath({
+        id: "route-1",
+        netId: "n",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [
+          { x: 50, y: 0 },
+          { x: 50, y: 100 },
+        ],
+        modes: ["manual", "auto", "escape"],
+      }),
+    );
 
     expect(
       resolveRouteGeometry(schematic, resolver, schematic.routes[0]!),
@@ -180,14 +187,16 @@ describe("resolved route geometry", () => {
       netId: "n",
       position: { x: 100, y: 0 },
     });
-    schematic.routes.push({
-      id: "route-missing",
-      netId: "n",
-      from: { kind: "junction", junctionId: "missing" },
-      to: { kind: "junction", junctionId: "present" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    schematic.routes.push(
+      createRoutePath({
+        id: "route-missing",
+        netId: "n",
+        start: { kind: "junction", junctionId: "missing" },
+        end: { kind: "junction", junctionId: "present" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     expect(
       resolveRouteGeometry(schematic, resolver, schematic.routes[0]!),
@@ -210,14 +219,16 @@ describe("resolved route geometry", () => {
       netId: "n",
       position: { x: 200, y: 100 },
     });
-    schematic.routes.push({
-      id: "route-terminal",
-      netId: "n",
-      from: { kind: "terminal", instanceId: "I1", pinName: "R" },
-      to: { kind: "junction", junctionId: "j1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    schematic.routes.push(
+      createRoutePath({
+        id: "route-terminal",
+        netId: "n",
+        start: { kind: "terminal", instanceId: "I1", pinName: "R" },
+        end: { kind: "junction", junctionId: "j1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     expect(
       resolveRouteGeometry(schematic, resolver, schematic.routes[0]!)
@@ -246,22 +257,22 @@ describe("resolved route geometry", () => {
       { id: "right", netId: "n", position: { x: 200, y: 0 } },
     );
     schematic.routes.push(
-      {
+      createRoutePath({
         id: "z-right",
         netId: "n",
-        from: { kind: "junction", junctionId: "anchor" },
-        to: { kind: "junction", junctionId: "right" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: { kind: "junction", junctionId: "anchor" },
+        end: { kind: "junction", junctionId: "right" },
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "a-left",
         netId: "n",
-        from: { kind: "junction", junctionId: "left" },
-        to: { kind: "junction", junctionId: "anchor" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "left" },
+        end: { kind: "junction", junctionId: "anchor" },
+        bends: [],
+        modes: ["manual"],
+      }),
     );
 
     const geometry = resolveDocumentRoutingGeometry(schematic, resolver);

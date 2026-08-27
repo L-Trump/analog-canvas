@@ -6,6 +6,7 @@ import type {
   RouteEndpoint,
   SchematicDocument,
 } from "@icm/model";
+import { routeEnd } from "@icm/model";
 
 export type MosBulkKind = "nmos" | "pmos";
 export type MosBulkResolution =
@@ -51,7 +52,7 @@ function bulkFamilyContactKeys(
   document: SchematicDocument,
   route: RouteBranch,
 ): string[] {
-  return [route.from, route.to].flatMap((endpoint) => {
+  return [route.start, routeEnd(route)].flatMap((endpoint) => {
     if (endpoint.kind === "junction")
       return [`junction:${endpoint.junctionId}`];
     return isMosBulkTerminal(document, endpoint)
@@ -92,7 +93,7 @@ export function deriveMosBulkRouteFamily(
   );
   const instanceIds = new Set(
     familyRoutes.flatMap((route) =>
-      [route.from, route.to].flatMap((endpoint) =>
+      [route.start, routeEnd(route)].flatMap((endpoint) =>
         isMosBulkTerminal(document, endpoint) && endpoint.kind === "terminal"
           ? [endpoint.instanceId]
           : [],
@@ -117,7 +118,7 @@ export function hasExplicitMosBulkRoute(
   return document.routes.some(
     (route) =>
       route.presentation === "bulk-dashed" &&
-      [route.from, route.to].some(
+      [route.start, routeEnd(route)].some(
         (endpoint) =>
           endpoint.kind === "terminal" &&
           endpoint.instanceId === instanceId &&

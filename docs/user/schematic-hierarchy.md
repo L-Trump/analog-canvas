@@ -78,7 +78,7 @@ the Properties values remain the precise fallback. These are definition operatio
 not top-level drawing tools.
 
 Hierarchy presentation is saved as definition-level size and pin-placement
-intent in current Project schema 25. Schema-24 projects open through the
+intent in current Project schema 26. Schema-25 projects open through the
 bounded upgrade; schema-23 and older files remain unsupported. The block uses
 a closed polygon body and the shared Razavi rich-text renderer for pin and Cell
 names; it is compatible with that visual grammar rather than a pixel-for-pixel

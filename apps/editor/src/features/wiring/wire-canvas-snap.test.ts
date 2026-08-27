@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { resolveDocumentRoutingGeometry } from "@icm/derived";
 import type { WireSource } from "@icm/edit-engine";
 import { createEmptyDocument } from "@icm/model";
@@ -69,14 +70,16 @@ describe("wire canvas snap", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "route",
-      netId: "net",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route",
+        netId: "net",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     const routing = resolveDocumentRoutingGeometry(document, resolver);
     const geometry = routing.routes.get("route")!;
 

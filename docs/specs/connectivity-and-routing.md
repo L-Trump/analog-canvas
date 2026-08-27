@@ -9,10 +9,11 @@ Primary owners: `packages/model`, `packages/edit-engine`, `packages/derived`
 the same terminal endpoint for those Instances and every other component.
 
 A Route belongs to one Net and connects terminal or Junction endpoints. Its
-editable centerline is endpoint, zero or more waypoints, endpoint;
-`segmentModes.length` is always `waypoints.length + 1`. Junctions are explicit
-branch/route anchors. Geometric crossing or overlap does not create electrical
-contact.
+canonical path is one `start` endpoint followed by ordered legs. Non-final
+legs end at stable, dot-free bends; the final leg ends at the other endpoint.
+Each leg owns its mode and stable `legId`, so geometry and behavior cannot
+drift as parallel arrays. Junctions are explicit branch/route anchors.
+Geometric crossing or overlap does not create electrical contact.
 
 Route centerlines are one geometry protocol. Normal interactive Routes may use
 horizontal, vertical, or ±45-degree segments; orthogonal is the default
@@ -27,7 +28,7 @@ Route transaction.
   joins real Net membership through one atomic Edit Engine transaction.
 - Every terminal resolves through one `EndpointConnection`. Exact artwork
   contact and outward escape are derived presentation geometry; the Wire
-  compiler persists only grid landings and ordinary grid waypoints. An offset
+  compiler persists only grid landings and ordinary grid bends. An offset
   MOS B anchor therefore uses the same Route transaction as every other pin;
   `bulk-dashed` changes only presentation.
 - Exact visible endpoint coincidence is a zero-length physical contact. After
@@ -132,7 +133,7 @@ movement, stretch, and the `RouteEditPlan` preview/commit boundary belong to
 
 For explicit same-Net endpoints at the same page coordinate, contact evidence
 records terminals/Junctions, independently authored Route arms, and incident
-directions. Route waypoints are not implicit contacts. A visible dot represents
+directions. Route bends are not implicit contacts. A visible dot represents
 authored branch topology, not line intersection: Route arms and terminal stems
 count by distinct visible direction, so collinear incidents paint as one
 conductor and do not justify a dot. Three distinct visible directions require a

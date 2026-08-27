@@ -16,6 +16,7 @@ import {
   type RoutedComponent,
 } from "@icm/derived";
 import {
+  routeEndpoints,
   snapGridPoint,
   type DerivedPoint,
   type Point,
@@ -289,7 +290,7 @@ export function createSelectionMoveController({
             y: moving.point.y + rawDelta.y,
           };
           return sourceRouteGeometryRecords.flatMap(({ route, geometry }) => {
-            const belongsToMovingInstance = [route.from, route.to].some(
+            const belongsToMovingInstance = routeEndpoints(route).some(
               (endpoint) =>
                 endpoint.kind === "terminal" &&
                 movingIds.has(endpoint.instanceId),

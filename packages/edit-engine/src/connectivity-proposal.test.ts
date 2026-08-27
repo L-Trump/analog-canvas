@@ -1,4 +1,4 @@
-import { createEmptyDocument } from "@icm/model";
+import { createEmptyDocument, createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -20,13 +20,15 @@ describe("ConnectivityProposal", () => {
           newNetId: "net-1",
         },
         {
-          kind: "set_route_points",
-          routeId: "route-1",
-          netId: "net-1",
-          from: { kind: "terminal", instanceId: "M1", pinName: "D" },
-          to: { kind: "junction", junctionId: "J1" },
-          waypoints: [],
-          segmentModes: ["manual"],
+          kind: "set_route_path",
+          route: createRoutePath({
+            id: "route-1",
+            netId: "net-1",
+            start: { kind: "terminal", instanceId: "M1", pinName: "D" },
+            end: { kind: "junction", junctionId: "J1" },
+            bends: [],
+            modes: ["manual"],
+          }),
         },
       ],
     });

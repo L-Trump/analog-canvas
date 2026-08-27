@@ -24,7 +24,7 @@ import {
   type SchematicEdit,
   type WireSource,
 } from "@icm/edit-engine";
-import type { Point, SchematicDocument } from "@icm/model";
+import { routeEndpoints, type Point, type SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 import type { SnapGuideLine, SnapResult } from "../../snap/engine";
 
@@ -906,10 +906,10 @@ export function useSelectionInteraction(
     if (!endpoint || endpoint.kind === "junction") return;
     const routeEdits = removeRoutes
       ? options.document.routes
-          .filter(
-            (route) =>
-              endpointKey(route.from) === endpointKey(endpoint) ||
-              endpointKey(route.to) === endpointKey(endpoint),
+          .filter((route) =>
+            routeEndpoints(route).some(
+              (candidate) => endpointKey(candidate) === endpointKey(endpoint),
+            ),
           )
           .map((route): SchematicEdit => ({
             kind: "remove_route_geometry",

@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -142,22 +143,22 @@ describe("derived connectivity and route geometry", () => {
   it("treats geometric crossing as separate explicit graph components", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-v",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
     expect(deriveCrossings(document, resolver)).toEqual([
       {
@@ -213,14 +214,14 @@ describe("derived connectivity and route geometry", () => {
 
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
     expect(
       proposeLocalStretch(document, resolver, "A", { x: 140, y: 360 }),
@@ -236,14 +237,14 @@ describe("derived connectivity and route geometry", () => {
   it("rejects local stretch beside a protected segment", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["locked"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["locked"],
+      }),
     ];
     expect(() =>
       proposeLocalStretch(document, resolver, "A", { x: 140, y: 360 }),
@@ -253,19 +254,19 @@ describe("derived connectivity and route geometry", () => {
   it("changes only endpoint-adjacent geometry during a local stretch", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [
           { x: 180, y: 300 },
           { x: 180, y: 260 },
           { x: 420, y: 260 },
           { x: 420, y: 300 },
         ],
-        segmentModes: ["manual", "manual", "manual", "manual", "manual"],
-      },
+        modes: ["manual", "manual", "manual", "manual", "manual"],
+      }),
     ];
 
     expect(

@@ -96,11 +96,13 @@ export function createConnectivityProposal(
       case "remove_connectivity_evidence":
         affectedObjectIds.push(edit.evidenceId);
         break;
-      case "set_route_points":
+      case "set_route_path":
+        routeIds.push(edit.route.id);
+        netIds.push(edit.route.netId);
+        break;
       case "cut_connection":
       case "remove_route_geometry":
         routeIds.push(edit.routeId);
-        if (edit.kind === "set_route_points") netIds.push(edit.netId);
         break;
       case "add_power_rail":
         netIds.push(edit.netId);

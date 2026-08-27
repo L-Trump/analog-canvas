@@ -1,4 +1,4 @@
-import { JunctionSchema, deriveStableId } from "@icm/model";
+import { JunctionSchema, deriveStableId, routeEndpoints } from "@icm/model";
 import type { SchematicDocument } from "@icm/model";
 import {
   endpointKey,
@@ -139,6 +139,15 @@ export function applyRouteTopologyEdit(
           draft,
           resolver,
         ).filter((anchor) => anchor.routeId === route.id);
+        const splitIndex = route.legs.findIndex(
+          (leg) => leg.id === edit.split!.legId,
+        );
+        if (splitIndex < 0) {
+          return rejectAt(
+            "EDIT_PRECONDITION",
+            `Route leg does not exist: ${edit.split.legId}`,
+          );
+        }
         const split = splitRoute(
           draft,
           route,
@@ -146,7 +155,7 @@ export function applyRouteTopologyEdit(
           edit.position,
           edit.split.firstRouteId,
           edit.split.secondRouteId,
-          edit.split.segmentIndex,
+          splitIndex,
           resolver,
         );
         if (typeof split === "string") {
@@ -234,6 +243,13 @@ export function applyRouteTopologyEdit(
       const markerAnchors = captureRouteMarkerAnchors(draft, resolver).filter(
         (anchor) => anchor.routeId === route.id,
       );
+      const splitIndex = route.legs.findIndex((leg) => leg.id === edit.legId);
+      if (splitIndex < 0) {
+        return rejectAt(
+          "EDIT_PRECONDITION",
+          `Route leg does not exist: ${edit.legId}`,
+        );
+      }
       const split = splitRoute(
         draft,
         route,
@@ -241,7 +257,7 @@ export function applyRouteTopologyEdit(
         edit.point,
         edit.firstRouteId,
         edit.secondRouteId,
-        edit.segmentIndex,
+        splitIndex,
         resolver,
       );
       if (typeof split === "string") {
@@ -284,12 +300,12 @@ export function applyRouteTopologyEdit(
         );
       }
       if (
-        draft.routes.some(
-          (route) =>
-            (route.from.kind === "junction" &&
-              route.from.junctionId === edit.junctionId) ||
-            (route.to.kind === "junction" &&
-              route.to.junctionId === edit.junctionId),
+        draft.routes.some((route) =>
+          routeEndpoints(route).some(
+            (endpoint) =>
+              endpoint.kind === "junction" &&
+              endpoint.junctionId === edit.junctionId,
+          ),
         )
       ) {
         return rejectAt(
@@ -321,11 +337,11 @@ export function applyRouteTopologyEdit(
           `Junction does not exist: ${edit.junctionId}`,
         );
       }
-      const incidentRoutes = draft.routes.filter(
-        (route) =>
-          (route.from.kind === "junction" &&
-            route.from.junctionId === junction.id) ||
-          (route.to.kind === "junction" && route.to.junctionId === junction.id),
+      const incidentRoutes = draft.routes.filter((route) =>
+        routeEndpoints(route).some(
+          (endpoint) =>
+            endpoint.kind === "junction" && endpoint.junctionId === junction.id,
+        ),
       );
       const routeWithoutGeometry = incidentRoutes.find(
         (route) => !explicitlyAuthoredRouteIds.has(route.id),
@@ -340,11 +356,11 @@ export function applyRouteTopologyEdit(
       }
       const protectedRoute = draft.routes.find(
         (route) =>
-          ((route.from.kind === "junction" &&
-            route.from.junctionId === junction.id) ||
-            (route.to.kind === "junction" &&
-              route.to.junctionId === junction.id)) &&
-          routeIsProtected(route),
+          routeEndpoints(route).some(
+            (endpoint) =>
+              endpoint.kind === "junction" &&
+              endpoint.junctionId === junction.id,
+          ) && routeIsProtected(route),
       );
       if (protectedRoute) {
         return rejectAt(
@@ -414,7 +430,7 @@ export function applyRouteTopologyEdit(
             }
           : undefined;
       const candidateOrphanJunctionIds = new Set(
-        [route.from, route.to].flatMap((endpoint) =>
+        routeEndpoints(route).flatMap((endpoint) =>
           endpoint.kind === "junction" ? [endpoint.junctionId] : [],
         ),
       );
@@ -430,7 +446,7 @@ export function applyRouteTopologyEdit(
 
       const referencedJunctionIds = new Set(
         draft.routes.flatMap((candidate) =>
-          [candidate.from, candidate.to].flatMap((endpoint) =>
+          routeEndpoints(candidate).flatMap((endpoint) =>
             endpoint.kind === "junction" ? [endpoint.junctionId] : [],
           ),
         ),
@@ -489,7 +505,7 @@ export function applyRouteTopologyEdit(
         // retains the original Base-Net identity and non-owner Evidence.
         // Every detached component receives a new Base Net; logical/global/
         // imported Evidence is never allowed to suppress physical splitting.
-        const primaryIndex = [route.from, route.to]
+        const primaryIndex = routeEndpoints(route)
           .map((endpoint) => endpointKey(endpoint))
           .map((key) => groups.findIndex((group) => group.includes(key)))
           .find((index) => index >= 0);
@@ -584,9 +600,11 @@ export function applyRouteTopologyEdit(
           (candidate) => candidate.netId === net.id,
         )) {
           const fromNetId = netIdByEndpoint.get(
-            endpointKey(remainingRoute.from),
+            endpointKey(remainingRoute.start),
           );
-          const toNetId = netIdByEndpoint.get(endpointKey(remainingRoute.to));
+          const toNetId = netIdByEndpoint.get(
+            endpointKey(routeEndpoints(remainingRoute)[1]),
+          );
           if (!fromNetId || fromNetId !== toNetId) {
             return rejectAt(
               "INVALID_RESULT",
@@ -689,10 +707,10 @@ export function applyRouteTopologyEdit(
         );
       }
       if (
-        draft.routes.some(
-          (route) =>
-            endpointKey(route.from) === endpointKey(edit.endpoint) ||
-            endpointKey(route.to) === endpointKey(edit.endpoint),
+        draft.routes.some((route) =>
+          routeEndpoints(route).some(
+            (endpoint) => endpointKey(endpoint) === endpointKey(edit.endpoint),
+          ),
         )
       ) {
         return rejectAt(

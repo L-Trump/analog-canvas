@@ -1,5 +1,5 @@
-import { flattenRichText, transformPoint } from "@icm/model";
-import type { Point, Rect, SchematicDocument } from "@icm/model";
+import { flattenRichText, routeEnd, transformPoint } from "@icm/model";
+import type { Point, Rect, RouteEndpoint, SchematicDocument } from "@icm/model";
 import type {
   ResolvedSymbol,
   SymbolPrimitive,
@@ -396,7 +396,7 @@ function pushRoutingQualityMetrics(
   // 1. Wire-through-symbol: a Route segment passes through an instance
   //    silhouette that is not one of its terminal endpoints.
   for (const { route, centerline } of routeCenterlines) {
-    const contactTerminalInstances = (endpoint: typeof route.from) =>
+    const contactTerminalInstances = (endpoint: RouteEndpoint) =>
       new Set(
         (
           contactEvidence.byEndpointKey.get(endpointKey(endpoint))
@@ -410,8 +410,8 @@ function pushRoutingQualityMetrics(
           )
           .map((candidate) => candidate.instanceId),
       );
-    const fromTerminalInstances = contactTerminalInstances(route.from);
-    const toTerminalInstances = contactTerminalInstances(route.to);
+    const fromTerminalInstances = contactTerminalInstances(route.start);
+    const toTerminalInstances = contactTerminalInstances(routeEnd(route));
     for (let index = 1; index < centerline.length; index += 1) {
       const from = centerline[index - 1]!;
       const to = centerline[index]!;
@@ -480,12 +480,12 @@ function pushRoutingQualityMetrics(
   // 3. Terminal departure: the first segment of a terminal-anchored Route
   //    should leave along the pin's outward direction. Reported as evidence.
   for (const { route, centerline } of routeCenterlines) {
-    if (route.from.kind !== "terminal") continue;
+    if (route.start.kind !== "terminal") continue;
     if (centerline.length < 2) continue;
     const outward = resolveEndpointOutwardDirection(
       document,
       resolver,
-      route.from,
+      route.start,
     );
     if (!outward) continue;
     const first = centerline[0]!;

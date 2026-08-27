@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument } from "@icm/model";
 
@@ -56,14 +57,16 @@ describe("VisualSelection", () => {
 
   it("prunes transient IDs after their model objects are removed", () => {
     const document = createEmptyDocument("main", "Main");
-    document.routes.push({
-      id: "route-1",
-      netId: "net-1",
-      from: { kind: "junction", junctionId: "junction-1" },
-      to: { kind: "junction", junctionId: "junction-2" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-1",
+        netId: "net-1",
+        start: { kind: "junction", junctionId: "junction-1" },
+        end: { kind: "junction", junctionId: "junction-2" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.annotations.push({
       id: "label-1",
       kind: "net-label",

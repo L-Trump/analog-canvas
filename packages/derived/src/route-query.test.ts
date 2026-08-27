@@ -11,7 +11,11 @@ function geometry(
     netId: "net-1",
     centerline: points,
     segments: points.slice(0, -1).map((from, segmentIndex) => ({
-      address: { routeId: "route-1", segmentIndex },
+      address: {
+        routeId: "route-1",
+        legId: `route-1-leg-${segmentIndex}`,
+        segmentIndex,
+      },
       from,
       to: points[segmentIndex + 1]!,
       mode: "manual" as const,
@@ -108,6 +112,10 @@ describe("route queries", () => {
         { x: 75, y: 0 },
         30,
       )?.address,
-    ).toEqual({ routeId: "route-1", segmentIndex: 0 });
+    ).toEqual({
+      routeId: "route-1",
+      legId: "route-1-leg-0",
+      segmentIndex: 0,
+    });
   });
 });

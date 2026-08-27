@@ -6,7 +6,7 @@ import type {
   ExternalSubcircuitDefinition,
   SchematicDocument,
 } from "@icm/model";
-import { deriveStableId, projectCellInterface } from "@icm/model";
+import { deriveStableId, projectCellInterface, routeEnd } from "@icm/model";
 import {
   createReferenceIndex,
   hierarchyReferencePolicy,
@@ -119,7 +119,7 @@ function instanceReferencesPin(
       ),
     ) ||
     document.routes.some((route) =>
-      [route.from, route.to].some(
+      [route.start, routeEnd(route)].some(
         (endpoint) =>
           endpoint.kind === "terminal" &&
           endpoint.instanceId === instanceId &&
@@ -153,12 +153,14 @@ function gapDetachedCallerJunctions(
     { instanceId: string; pinName: string }
   >();
   for (const edit of edits) {
-    if (edit.kind !== "set_route_points") continue;
-    const original = document.routes.find((route) => route.id === edit.routeId);
+    if (edit.kind !== "set_route_path") continue;
+    const original = document.routes.find(
+      (route) => route.id === edit.route.id,
+    );
     if (!original) continue;
     for (const [before, after] of [
-      [original.from, edit.from],
-      [original.to, edit.to],
+      [original.start, edit.route.start],
+      [routeEnd(original), routeEnd(edit.route)],
     ] as const) {
       if (before.kind !== "terminal" || after.kind !== "junction") continue;
       terminalByJunctionId.set(after.junctionId, {
@@ -754,7 +756,7 @@ export function proposeUpsertExternalSubcircuitDefinition(
         }
       }
       for (const route of document.routes) {
-        for (const endpoint of [route.from, route.to]) {
+        for (const endpoint of [route.start, routeEnd(route)]) {
           if (
             endpoint.kind === "terminal" &&
             endpoint.instanceId === instance.id
@@ -847,7 +849,7 @@ export function planRenameExternalSubcircuitTerminal(
           ),
         ) ||
         document.routes.some((route) =>
-          [route.from, route.to].some(
+          [route.start, routeEnd(route)].some(
             (endpoint) =>
               endpoint.kind === "terminal" &&
               endpoint.instanceId === instance.id &&

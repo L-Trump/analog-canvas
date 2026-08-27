@@ -5,7 +5,7 @@ Status: `accepted`
 Primary owner: `packages/model`
 
 The Project contains Documents; each Document owns revisioned electrical,
-geometric, and presentation facts. The current model is strict schema 25 and has
+geometric, and presentation facts. The current model is strict schema 26 and has
 no compatibility shape.
 
 ## Coordinate domains
@@ -13,7 +13,7 @@ no compatibility shape.
 ADR 0021 separates persisted grid coordinates from transient and derived
 geometry. Every persisted page Point in a Document is a finite integer multiple
 of that Document's `presentation.grid`: Instance placements, Junctions, Route
-waypoints, persisted VisualAnchor point fields, and drafting points/controls/
+Route bends, persisted VisualAnchor point fields, and drafting points/controls/
 centers. This is a complete-Document invariant, not merely an editor snap
 preference.
 
@@ -121,8 +121,9 @@ two explicit placements may occupy the same side/offset slot.
 ## Core invariants
 
 - IDs are unique within their object class and every reference resolves.
-- A Route's Net agrees with both endpoints and its segment count agrees with
-  its waypoints.
+- A Route's Net agrees with both endpoints. Its non-final legs end at stable
+  bend IDs and its final leg ends at the Route endpoint; every leg owns its
+  own mode and stable ID.
 - Net membership and NoConnect are mutually exclusive.
 - Layout groups and constraints reference existing objects.
 - Cell-Pin declarations reference existing Nets and connected Port Instances
@@ -161,7 +162,7 @@ ordinary Schematic edits inside one Project structural transaction. The
 Project's `structureRevision` protects this cross-Document boundary and the
 editor records it as one undoable structural commit.
 
-Persistence writes only schema 25. The rolling reader accepts schema 24 at the
-file boundary, splits legacy multi-marker terminals without changing physical
-topology, then supplies the current model only; no
-compatibility shape enters runtime electrical derivation.
+Persistence writes only schema 26. The rolling reader accepts schema 25 at the
+file boundary, migrates parallel Route arrays and positional attachments to
+stable legs without changing physical topology, then supplies the current
+model only; no compatibility shape enters runtime electrical derivation.

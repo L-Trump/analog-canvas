@@ -1,3 +1,4 @@
+import { createRoutePath, routeBends, routeEnd } from "@icm/model";
 import { executeTransaction } from "@icm/edit-engine";
 import { resolveDocumentLogicalNets } from "@icm/derived";
 import type { Annotation, Instance } from "@icm/model";
@@ -205,14 +206,16 @@ describe("schematic clipboard", () => {
       scope: "local",
       owner: { kind: "explicit-net-property" },
     });
-    document.routes.push({
-      id: "route-signal",
-      netId: "net-signal",
-      from: { kind: "terminal", instanceId: "R1", pinName: "2" },
-      to: { kind: "terminal", instanceId: "R2", pinName: "1" },
-      waypoints: [{ x: 100, y: 80 }],
-      segmentModes: ["manual", "manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-signal",
+        netId: "net-signal",
+        start: { kind: "terminal", instanceId: "R1", pinName: "2" },
+        end: { kind: "terminal", instanceId: "R2", pinName: "1" },
+        bends: [{ x: 100, y: 80 }],
+        modes: ["manual", "manual"],
+      }),
+    );
 
     const copied = copySelection(document, ["R1", "R2"]);
     expect(copied?.routes).toHaveLength(1);
@@ -239,10 +242,14 @@ describe("schematic clipboard", () => {
     expect(resolveDocumentLogicalNets(result.document).groups).toHaveLength(1);
     expect(result.document.routes[1]).toMatchObject({
       netId: "net-signal-copy-1",
-      from: { instanceId: "R3" },
-      to: { instanceId: "R4" },
+      start: { instanceId: "R3" },
     });
-    expect(result.document.routes[1]?.waypoints).toEqual([{ x: 120, y: 100 }]);
+    expect(routeEnd(result.document.routes[1]!)).toMatchObject({
+      instanceId: "R4",
+    });
+    expect(routeBends(result.document.routes[1]!)).toEqual([
+      { x: 120, y: 100 },
+    ]);
   });
 
   it("creates an isolated translated document for a copy-placement ghost", () => {
@@ -795,15 +802,17 @@ describe("copyWholeDocument", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "rail-vdd",
-      netId: "net-vdd",
-      from: { kind: "junction", junctionId: "junction-vdd-start" },
-      to: { kind: "junction", junctionId: "junction-vdd-end" },
-      waypoints: [],
-      segmentModes: ["manual"],
-      presentation: "power-rail",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "rail-vdd",
+        netId: "net-vdd",
+        start: { kind: "junction", junctionId: "junction-vdd-start" },
+        end: { kind: "junction", junctionId: "junction-vdd-end" },
+        bends: [],
+        modes: ["manual"],
+        presentation: "power-rail",
+      }),
+    );
 
     // A selection copy keeps only Nets whose every terminal is selected, so a
     // rail with no device on it yet is not part of any selection.

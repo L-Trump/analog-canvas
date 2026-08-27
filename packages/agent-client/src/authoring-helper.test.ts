@@ -191,7 +191,7 @@ describe("authoring helper compilation", () => {
     expect(transaction?.wireIntent?.to).toEqual({
       kind: "route-segment",
       routeId: "route-1",
-      segmentIndex: 1,
+      legId: testSnapshot().document.routes[0]!.legs[1]!.id,
       point: { x: 460, y: 160 },
     });
   });
@@ -240,7 +240,9 @@ describe("authoring helper compilation", () => {
       // R1 pin 2 sits at (460,180); nearest point on the polyline is the
       // (460,160) corner reached on segment index 1.
       expect(intent.to.point).toEqual({ x: 460, y: 160 });
-      expect(intent.to.segmentIndex).toBe(1);
+      expect(intent.to.legId).toBe(
+        testSnapshot().document.routes[0]!.legs[1]!.id,
+      );
     }
   });
 

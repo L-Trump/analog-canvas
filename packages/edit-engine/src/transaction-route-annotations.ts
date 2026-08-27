@@ -83,7 +83,7 @@ function routeMarkerAttachment(annotation: Annotation) {
   if (annotation.anchor.kind === "route") {
     return {
       routeId: annotation.anchor.routeId,
-      segmentIndex: annotation.anchor.segmentIndex,
+      legId: annotation.anchor.legId,
       t: annotation.anchor.t,
       direction: annotation.anchor.direction,
       normalOffset: annotation.anchor.normalOffset,
@@ -203,8 +203,12 @@ export function captureRouteMarkerAnchors(
     if (!route) return [];
     const polyline = resolveRouteEditPath(document, resolver, route);
     if (!polyline) return [];
-    const from = polyline.points[attachment.segmentIndex];
-    const to = polyline.points[attachment.segmentIndex + 1];
+    const segmentIndex = route.legs.findIndex(
+      (leg) => leg.id === attachment.legId,
+    );
+    if (segmentIndex < 0) return [];
+    const from = polyline.points[segmentIndex];
+    const to = polyline.points[segmentIndex + 1];
     const routeStart = polyline.points[0];
     const routeEnd = polyline.points.at(-1);
     if (!from || !to || !routeStart || !routeEnd) return [];
@@ -212,7 +216,7 @@ export function captureRouteMarkerAnchors(
       {
         annotationId: annotation.id,
         routeId: route.id,
-        segmentIndex: attachment.segmentIndex,
+        segmentIndex,
         segmentCount: polyline.points.length - 1,
         t: attachment.t,
         position: {

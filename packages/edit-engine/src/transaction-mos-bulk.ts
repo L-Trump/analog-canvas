@@ -1,3 +1,4 @@
+import { routeEndpoints } from "@icm/model";
 import type { SchematicDocument } from "@icm/model";
 import {
   hasExplicitMosBulkRoute,
@@ -208,7 +209,7 @@ export function applyMosBulkEdit(
         draft.routes.some(
           (route) =>
             isMosBulkRoute(draft, route) &&
-            [route.from, route.to].some(
+            routeEndpoints(route).some(
               (endpoint) =>
                 endpoint.kind === "terminal" &&
                 endpoint.instanceId === instance.id &&

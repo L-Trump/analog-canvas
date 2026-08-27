@@ -49,6 +49,9 @@ export type ConnectivityEvidence = z.infer<
 >;
 export type NetPowerDomain = z.infer<typeof Schema.NetPowerDomainSchema>;
 export type RouteEndpoint = z.infer<typeof Schema.RouteEndpointSchema>;
+export type SegmentMode = z.infer<typeof Schema.SegmentModeSchema>;
+export type RouteLegTarget = z.infer<typeof Schema.RouteLegTargetSchema>;
+export type RouteLeg = z.infer<typeof Schema.RouteLegSchema>;
 export type RouteBranch = z.infer<typeof Schema.RouteBranchSchema>;
 export type RoutePresentation = z.infer<typeof Schema.RoutePresentationSchema>;
 export type Junction = z.infer<typeof Schema.JunctionSchema>;

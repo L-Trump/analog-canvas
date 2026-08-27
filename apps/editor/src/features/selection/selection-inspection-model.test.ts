@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument, createEmptyProject } from "@icm/model";
 import { builtInSymbols, InMemorySymbolResolver } from "@icm/symbols";
 import { describe, expect, it } from "vitest";
@@ -98,14 +99,16 @@ describe("selection inspection model", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "route-1",
-      netId: "net-signal",
-      from: { kind: "junction", junctionId: "j1" },
-      to: { kind: "junction", junctionId: "j2" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-1",
+        netId: "net-signal",
+        start: { kind: "junction", junctionId: "j1" },
+        end: { kind: "junction", junctionId: "j2" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.annotations.push({
       id: "imported-label-42",
       kind: "net-label",
@@ -113,7 +116,7 @@ describe("selection inspection model", () => {
       anchor: {
         kind: "route",
         routeId: "route-1",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: 0,
         direction: "forward",
