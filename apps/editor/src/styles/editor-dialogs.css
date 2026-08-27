@@ -1,3 +1,5 @@
+/* Editor dialog owner: modal editor workflows and their responsive layout contracts. */
+
 .insert-dialog-backdrop {
   position: fixed;
   z-index: 80;
@@ -109,12 +111,15 @@
   gap: 0.5rem;
 }
 
+/* The Insert dialog is deliberately a compact setup surface: discovery and
+   parameters remain in the left column, while the right preview never reflows
+   when the component picker opens. */
 .insert-component-dialog {
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0.9rem;
-  width: min(46rem, calc(100vw - 2.5rem));
-  height: min(42rem, calc(100dvh - 2.5rem));
+  width: min(54rem, calc(100vw - 2.5rem));
+  height: min(38rem, calc(100dvh - 2.5rem));
   padding: 1rem;
   overflow: hidden;
   border: 1px solid var(--icm-border-strong);
@@ -173,12 +178,12 @@
 
 .insert-search-field input {
   width: 100%;
-  min-height: 2.7rem;
-  padding: 0.65rem 0.8rem;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.6rem;
   border: 1px solid var(--icm-border-strong);
   border-radius: var(--icm-radius-md);
   color: var(--icm-text);
-  background: var(--icm-surface-muted);
+  background: var(--icm-surface);
   font: inherit;
   font-size: var(--icm-font-lg);
 }
@@ -191,7 +196,7 @@
 
 .insert-dialog-body {
   display: grid;
-  grid-template-columns: minmax(14rem, 0.9fr) minmax(18rem, 1.1fr);
+  grid-template-columns: minmax(17rem, 0.85fr) minmax(24rem, 1.15fr);
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--icm-border);
@@ -773,19 +778,6 @@
   font-size: var(--icm-font-sm);
 }
 
-/* The Insert dialog is deliberately a compact setup surface: discovery and
-   parameters remain in the left column, while the right preview never reflows
-   when the component picker opens. */
-.insert-component-dialog {
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(54rem, calc(100vw - 2.5rem));
-  height: min(38rem, calc(100dvh - 2.5rem));
-}
-
-.insert-dialog-body {
-  grid-template-columns: minmax(17rem, 0.85fr) minmax(24rem, 1.15fr);
-}
-
 .insert-control-column {
   display: flex;
   flex-direction: column;
@@ -946,12 +938,6 @@
   gap: 0.35rem;
 }
 
-.insert-search-field input {
-  min-height: 2.35rem;
-  padding: 0.45rem 0.6rem;
-  background: var(--icm-surface);
-}
-
 .insert-picker-toggle {
   padding: 0;
   border-color: var(--icm-border-strong);
@@ -1086,4 +1072,37 @@
   font-size: var(--icm-font-xs);
   font-style: normal;
   font-weight: 500;
+}
+
+@media (max-width: 860px) {
+  .insert-component-dialog {
+    width: min(40rem, calc(100vw - 2rem));
+  }
+
+  .insert-dialog-body {
+    grid-template-columns: minmax(12rem, 0.85fr) minmax(15rem, 1.15fr);
+  }
+
+  .cell-manager-dialog {
+    width: calc(100vw - 1rem);
+    height: calc(100dvh - 1rem);
+  }
+
+  .cell-manager-body {
+    grid-template-columns: 11.5rem minmax(0, 1fr);
+  }
+
+  .cell-manager-detail {
+    padding: var(--icm-space-3);
+  }
+
+  .cell-manager-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cell-interface-grid,
+  .cell-external-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

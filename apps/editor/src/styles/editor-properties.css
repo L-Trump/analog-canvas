@@ -1,3 +1,5 @@
+/* Editor properties owner: editable property controls and their derived read-only context. */
+
 .context-actions label,
 .property-section label {
   display: grid;
@@ -413,4 +415,12 @@
   margin-top: 1rem;
   padding-top: 0.8rem;
   border-top: 1px solid var(--icm-border-strong);
+}
+
+/* Derived, never stored: the panel states the identity it was computed from
+   so the number cannot be mistaken for a second editable field. */
+.property-derived-note {
+  margin: var(--icm-space-1) 0 0;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
 }
