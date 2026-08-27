@@ -2,13 +2,16 @@ import type { CircuitProject } from "@icm/model";
 import { serializeProject } from "@icm/project-protocol";
 
 /**
- * The signed-in account's scratch shelf: the last few circuits it checked.
+ * The signed-in account's cloud recovery snapshots: the newest three
+ * circuits it saved, restorable from the File menu.
  *
- * This is not the Gallery and not a save. The `.icproj.json` file stays
- * canonical, and nothing here is visible to anyone else — the shelf exists so
- * a check does not leave the day's work living only in one browser tab. The
- * session cookie is the whole credential, so this handles no secret, and the
- * fetch seam keeps the mapping testable offline.
+ * This is deliberately NOT a personal library — the Gallery is where
+ * circuits are meant to live — and not a save: the `.icproj.json` file
+ * stays canonical. The snapshots exist so a crash, an accidental close,
+ * or a device switch cannot strand the day's work in one browser tab.
+ * Nothing here is visible to anyone else. The session cookie is the
+ * whole credential, so this handles no secret, and the fetch seam keeps
+ * the mapping testable offline.
  */
 
 /** How many circuits the shelf keeps; the server enforces the same number. */
