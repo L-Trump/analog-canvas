@@ -16,10 +16,8 @@ import {
   createRoutingOperationPlan,
   executeTransaction,
   gateRoutingOperationPlan,
+  planRoutingTransform,
   proposeVisualRouteDeletion,
-  proposeGroupMoveEdits,
-  proposeGroupReflectionEdits,
-  proposeGroupRotationEdits,
   type RoutingOperationIntent,
   type SchematicEdit,
   type WireSource,
@@ -289,8 +287,30 @@ export function useSelectionInteraction(
   const projectInstanceMove = (
     sourceDocument: SchematicDocument,
     moves: readonly { instanceId: string; position: Point }[],
+    movePlan?: SelectionMovePlan,
   ): SchematicDocument => {
-    const plan = proposeGroupMoveEdits(sourceDocument, options.resolver, moves);
+    const first = moves[0];
+    const original = first
+      ? sourceDocument.instances.find((item) => item.id === first.instanceId)
+          ?.placement?.position
+      : undefined;
+    const delta =
+      first && original
+        ? { x: first.position.x - original.x, y: first.position.y - original.y }
+        : { x: 0, y: 0 };
+    const plan = planRoutingTransform(
+      sourceDocument,
+      options.resolver,
+      {
+        instanceIds:
+          movePlan?.instanceIds ?? moves.map((move) => move.instanceId),
+        routeIds: movePlan?.translatedRouteIds ?? [],
+        junctionIds: movePlan?.translatedJunctionIds ?? [],
+      },
+      { kind: "translate", delta },
+    );
+    const blocking = plan.diagnostics.find((item) => item.severity === "error");
+    if (blocking) throw new Error(blocking.message);
     const result = executeTransaction(
       sourceDocument,
       {
@@ -299,7 +319,7 @@ export function useSelectionInteraction(
         expectedRevision: sourceDocument.revision,
         actor: { kind: "human", id: "selection-move-preview" },
         dryRun: true,
-        edits: plan.edits,
+        edits: [...plan.edits],
       },
       { symbolResolver: options.resolver },
     );
@@ -428,7 +448,11 @@ export function useSelectionInteraction(
       try {
         const projectedDocument =
           cached?.document ??
-          projectInstanceMove(session.projectedDocument, resolved.moves);
+          projectInstanceMove(
+            session.projectedDocument,
+            resolved.moves,
+            session.movePlan,
+          );
         session.lastProjection = {
           screenPoint: { ...screenPoint },
           suppressSnap,
@@ -481,20 +505,28 @@ export function useSelectionInteraction(
     }
     const session = commandMoveSessionRef.current!;
     try {
-      const plan =
+      const plan = planRoutingTransform(
+        session.projectedDocument,
+        options.resolver,
+        {
+          instanceIds: session.movePlan.instanceIds,
+          routeIds: session.movePlan.translatedRouteIds,
+          junctionIds: session.movePlan.translatedJunctionIds,
+        },
         transform.kind === "rotate"
-          ? proposeGroupRotationEdits(
-              session.projectedDocument,
-              options.resolver,
-              session.movePlan.instanceIds,
-              transform.deltaDegrees,
-            )
-          : proposeGroupReflectionEdits(
-              session.projectedDocument,
-              options.resolver,
-              session.movePlan.instanceIds,
-              transform.direction,
-            );
+          ? {
+              kind: "rotate",
+              degrees: transform.deltaDegrees === -90 ? 270 : 90,
+            }
+          : {
+              kind: "mirror",
+              axis: transform.direction === "left-right" ? "y" : "x",
+            },
+      );
+      const blocking = plan.diagnostics.find(
+        (item) => item.severity === "error",
+      );
+      if (blocking) throw new Error(blocking.message);
       const result = executeTransaction(
         session.projectedDocument,
         {
@@ -682,7 +714,11 @@ export function useSelectionInteraction(
         suppressSnap,
         lastSnap,
       );
-      const document = projectInstanceMove(options.document, resolved.moves);
+      const document = projectInstanceMove(
+        options.document,
+        resolved.moves,
+        preview.movePlan,
+      );
       lastSnap = resolved.snap;
       lastProjection = {
         screenPoint: { ...screenPoint },

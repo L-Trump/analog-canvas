@@ -751,6 +751,8 @@ export function proposeGroupMove(
   document: SchematicDocument,
   resolver: SymbolResolver,
   moves: readonly InstanceMoveProposal[],
+  additionalJunctionIds: readonly string[] = [],
+  explicitDelta?: Point,
 ): GroupMoveProposal {
   const moveByInstance = new Map(
     moves.map((move) => [move.instanceId, move.position]),
@@ -770,7 +772,7 @@ export function proposeGroupMove(
   }
 
   const deltas = [...deltaByInstance.values()];
-  const groupDelta = deltas[0] ?? { x: 0, y: 0 };
+  const groupDelta = deltas[0] ?? explicitDelta ?? { x: 0, y: 0 };
   if (
     deltas.some((delta) => delta.x !== groupDelta.x || delta.y !== groupDelta.y)
   ) {
@@ -781,6 +783,11 @@ export function proposeGroupMove(
   ]);
   const internalNetIds = new Set(internalSelection.netIds);
   const movableJunctionIds = new Set(internalSelection.junctionIds);
+  for (const junctionId of additionalJunctionIds) {
+    if (document.junctions.some((junction) => junction.id === junctionId)) {
+      movableJunctionIds.add(junctionId);
+    }
+  }
   const routingGeometry = resolveDocumentRoutingGeometry(document, resolver);
 
   const proposals = new Map<string, RouteStretchProposal>();
@@ -919,13 +926,13 @@ export interface GroupRotationProposal {
   pivot: Point;
 }
 
-/** Screen-space quarter turn: +90 turns clockwise, as SVG rotate() does. */
-function turn(point: Point, pivot: Point, deltaDegrees: 90 | -90): Point {
+/** Screen-space turn: positive angles turn clockwise, as SVG rotate() does. */
+function turn(point: Point, pivot: Point, deltaDegrees: 90 | -90 | 180): Point {
   const dx = point.x - pivot.x;
   const dy = point.y - pivot.y;
-  return deltaDegrees === 90
-    ? { x: pivot.x - dy, y: pivot.y + dx }
-    : { x: pivot.x + dy, y: pivot.y - dx };
+  if (deltaDegrees === 90) return { x: pivot.x - dy, y: pivot.y + dx };
+  if (deltaDegrees === -90) return { x: pivot.x + dy, y: pivot.y - dx };
+  return { x: pivot.x - dx, y: pivot.y - dy };
 }
 
 /**
@@ -949,16 +956,23 @@ export function proposeGroupRotation(
   document: SchematicDocument,
   resolver: SymbolResolver,
   instanceIds: readonly string[],
-  deltaDegrees: 90 | -90,
+  deltaDegrees: 90 | -90 | 180,
+  center?: Point,
 ): GroupRotationProposal {
-  return proposeRigidBodyMove(document, resolver, instanceIds, (pivot) => ({
-    point: (point) => turn(point, pivot, deltaDegrees),
-    placement: (placement) => ({
-      rotation: ((((placement.rotation + deltaDegrees) % 360) + 360) % 360) as
-        0 | 90 | 180 | 270,
-      mirror: placement.mirror,
+  return proposeRigidBodyMove(
+    document,
+    resolver,
+    instanceIds,
+    (pivot) => ({
+      point: (point) => turn(point, pivot, deltaDegrees),
+      placement: (placement) => ({
+        rotation: ((((placement.rotation + deltaDegrees) % 360) + 360) %
+          360) as 0 | 90 | 180 | 270,
+        mirror: placement.mirror,
+      }),
     }),
-  }));
+    center,
+  );
 }
 
 /**
@@ -975,12 +989,19 @@ export function proposeGroupReflection(
   resolver: SymbolResolver,
   instanceIds: readonly string[],
   direction: ScreenFlip,
+  center?: Point,
 ): GroupRotationProposal {
   const axis = direction === "left-right" ? "x" : "y";
-  return proposeRigidBodyMove(document, resolver, instanceIds, (pivot) => ({
-    point: (point) => ({ ...point, [axis]: 2 * pivot[axis] - point[axis] }),
-    placement: (placement) => reflectOrientation(placement, direction),
-  }));
+  return proposeRigidBodyMove(
+    document,
+    resolver,
+    instanceIds,
+    (pivot) => ({
+      point: (point) => ({ ...point, [axis]: 2 * pivot[axis] - point[axis] }),
+      placement: (placement) => reflectOrientation(placement, direction),
+    }),
+    center,
+  );
 }
 
 interface RigidBodyTransform {
@@ -993,6 +1014,7 @@ function proposeRigidBodyMove(
   resolver: SymbolResolver,
   instanceIds: readonly string[],
   transformFor: (pivot: Point) => RigidBodyTransform,
+  center?: Point,
 ): GroupRotationProposal {
   const selected = new Set(instanceIds);
   const placed = document.instances.filter(
@@ -1013,10 +1035,12 @@ function proposeRigidBodyMove(
   const ys = placed.map((instance) => instance.placement!.position.y);
   const snap = (value: number): number =>
     grid > 0 ? Math.round(value / grid) * grid : value;
-  const pivot = {
-    x: snap((Math.min(...xs) + Math.max(...xs)) / 2),
-    y: snap((Math.min(...ys) + Math.max(...ys)) / 2),
-  };
+  const pivot = center
+    ? { x: snap(center.x), y: snap(center.y) }
+    : {
+        x: snap((Math.min(...xs) + Math.max(...xs)) / 2),
+        y: snap((Math.min(...ys) + Math.max(...ys)) / 2),
+      };
 
   const transform = transformFor(pivot);
   const instances = placed

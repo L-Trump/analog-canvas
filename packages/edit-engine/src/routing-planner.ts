@@ -203,8 +203,16 @@ export function proposeGroupMoveEdits(
   document: SchematicDocument,
   resolver: SymbolResolver,
   moves: readonly { instanceId: string; position: Point }[],
+  additionalJunctionIds: readonly string[] = [],
+  explicitDelta?: Point,
 ): GroupMoveEditProposal {
-  const proposal = proposeGroupMove(document, resolver, moves);
+  const proposal = proposeGroupMove(
+    document,
+    resolver,
+    moves,
+    additionalJunctionIds,
+    explicitDelta,
+  );
   return {
     preview: {
       routes: proposal.routes,
@@ -254,10 +262,11 @@ export function proposeGroupReflectionEdits(
   resolver: SymbolResolver,
   instanceIds: readonly string[],
   direction: ScreenFlip,
+  center?: Point,
 ): GroupMoveEditProposal {
   return rigidBodyEdits(
     document,
-    proposeGroupReflection(document, resolver, instanceIds, direction),
+    proposeGroupReflection(document, resolver, instanceIds, direction, center),
   );
 }
 
@@ -265,11 +274,12 @@ export function proposeGroupRotationEdits(
   document: SchematicDocument,
   resolver: SymbolResolver,
   instanceIds: readonly string[],
-  deltaDegrees: 90 | -90,
+  deltaDegrees: 90 | -90 | 180,
+  center?: Point,
 ): GroupMoveEditProposal {
   return rigidBodyEdits(
     document,
-    proposeGroupRotation(document, resolver, instanceIds, deltaDegrees),
+    proposeGroupRotation(document, resolver, instanceIds, deltaDegrees, center),
   );
 }
 

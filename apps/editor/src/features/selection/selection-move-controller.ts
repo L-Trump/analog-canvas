@@ -1,7 +1,6 @@
 import {
   proposeEndpointRouteAttachment,
-  proposeGroupMoveEdits,
-  proposeLooseRouteTranslation,
+  planRoutingTransform,
   type RoutingOperationIntent,
   type SchematicEdit,
   type WireSource,
@@ -127,11 +126,25 @@ export function createSelectionMoveController({
     delta: Point,
   ): void => {
     if (delta.x === 0 && delta.y === 0) return;
-    const looseRouteEdits = movePlan.looseRouteIds.flatMap(
-      (routeId) => proposeLooseRouteTranslation(document, routeId, delta).edits,
+    const routingPlan = planRoutingTransform(
+      document,
+      resolver,
+      {
+        instanceIds: movePlan.instanceIds,
+        routeIds: movePlan.translatedRouteIds,
+        junctionIds: movePlan.translatedJunctionIds,
+      },
+      { kind: "translate", delta },
     );
+    const blocking = routingPlan.diagnostics.find(
+      (item) => item.severity === "error",
+    );
+    if (blocking) {
+      setStatus(blocking.message);
+      return;
+    }
     const result = transactConnectivity("transform", [
-      ...looseRouteEdits,
+      ...routingPlan.edits,
       ...visualMoveEdits(movePlan, delta),
     ]);
     if (result?.ok && movePlan.fixedObjectIds.length > 0) {
@@ -434,14 +447,20 @@ export function createSelectionMoveController({
     };
     if (delta.x === 0 && delta.y === 0 && prefixEdits.length === 0) return;
     try {
-      const groupMove =
-        delta.x !== 0 || delta.y !== 0
-          ? proposeGroupMoveEdits(sourceDocument, resolver, moves)
-          : { edits: [] };
-      const looseRouteEdits = preview.movePlan.looseRouteIds.flatMap(
-        (routeId) =>
-          proposeLooseRouteTranslation(sourceDocument, routeId, delta).edits,
+      const groupMove = planRoutingTransform(
+        sourceDocument,
+        resolver,
+        {
+          instanceIds: preview.movePlan.instanceIds,
+          routeIds: preview.movePlan.translatedRouteIds,
+          junctionIds: preview.movePlan.translatedJunctionIds,
+        },
+        { kind: "translate", delta },
       );
+      const blocking = groupMove.diagnostics.find(
+        (item) => item.severity === "error",
+      );
+      if (blocking) throw new Error(blocking.message);
       const movingElectrical = electricalMatch?.moving.electrical;
       const targetElectrical = electricalMatch?.target.electrical;
       const projected = structuredClone(sourceDocument);
@@ -473,7 +492,6 @@ export function createSelectionMoveController({
         [
           ...prefixEdits,
           ...groupMove.edits,
-          ...looseRouteEdits,
           ...visualMoveEdits(preview.movePlan, delta, sourceDocument),
           ...contactEdits,
         ],

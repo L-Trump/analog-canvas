@@ -1,5 +1,5 @@
-import { deriveInternalGroupSelection } from "@icm/derived";
-import type { Annotation, SchematicDocument } from "@icm/model";
+import { deriveRoutingAffectedClosure } from "@icm/derived";
+import { routeEnd, type Annotation, type SchematicDocument } from "@icm/model";
 
 import {
   effectiveRouteAttachment,
@@ -79,25 +79,44 @@ export function planSelectionMove(
       ),
     ),
   );
-  const internal = deriveInternalGroupSelection(document, instanceIds);
-  const translatedRouteIds = new Set(internal.routeIds);
-  const translatedJunctionIds = new Set(internal.junctionIds);
+  const closure = deriveRoutingAffectedClosure(document, {
+    instanceIds,
+    routeIds: selection.routeIds,
+    junctionIds: selection.junctionIds,
+    annotationIds: selection.annotationIds,
+  });
+  const translatedRouteIds = new Set(closure.internalRoutes);
+  // Direct Junction drag remains its own established gesture. A marquee/group
+  // move carries a Junction only when every incident Route is already inside
+  // the moving conductor closure; otherwise it is a boundary anchor.
+  const translatedJunctionIds = new Set(
+    closure.internalJunctions.filter((junctionId) => {
+      const incident = document.routes.filter((route) =>
+        [route.start, routeEnd(route)].some(
+          (endpoint) =>
+            endpoint.kind === "junction" && endpoint.junctionId === junctionId,
+        ),
+      );
+      return (
+        incident.length > 0 &&
+        incident.every((route) => translatedRouteIds.has(route.id))
+      );
+    }),
+  );
   const looseRouteIds = new Set<string>();
   const fixedObjectIds = new Set<string>();
 
   for (const routeId of selection.routeIds) {
-    if (translatedRouteIds.has(routeId)) continue;
     const route = document.routes.find((candidate) => candidate.id === routeId);
     if (!route) continue;
     const anchors = looseRouteAnchorIds(document, route);
-    if (!anchors) {
-      fixedObjectIds.add(routeId);
+    if (anchors && translatedRouteIds.has(routeId)) {
+      looseRouteIds.add(routeId);
       continue;
     }
-    looseRouteIds.add(routeId);
-    translatedRouteIds.add(routeId);
-    translatedJunctionIds.add(anchors[0]);
-    translatedJunctionIds.add(anchors[1]);
+    if (!translatedRouteIds.has(routeId)) {
+      fixedObjectIds.add(routeId);
+    }
   }
 
   for (const junctionId of selection.junctionIds) {

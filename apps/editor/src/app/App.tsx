@@ -20,7 +20,7 @@ import {
 } from "@icm/edit-engine";
 import {
   deriveNetConnectivity,
-  deriveInternalGroupSelection,
+  deriveRoutingAffectedClosure,
   resolveDraftingObjectGeometry,
   displayableInstanceValue,
   resolveMosBulkConnection,
@@ -1405,13 +1405,27 @@ export function App({
       : null;
   const textEditingLocked = Boolean(textEditingTarget?.object.locked);
 
-  const internalSelection = deriveInternalGroupSelection(document, selectedIds);
-  const selectedInternalRouteIds = new Set(internalSelection.routeIds);
-  const selectedInternalJunctionIds = new Set(internalSelection.junctionIds);
+  const internalSelection = deriveRoutingAffectedClosure(document, {
+    instanceIds: selectedIds,
+    routeIds: visualSelection.routeIds,
+    junctionIds: visualSelection.junctionIds,
+    annotationIds: visualSelection.annotationIds,
+  });
+  const selectedInternalRouteIds = new Set(internalSelection.internalRoutes);
+  const selectedInternalJunctionIds = new Set(
+    internalSelection.internalJunctions,
+  );
+  const selectedInternalNetIds = new Set(
+    document.routes
+      .filter((route) => selectedInternalRouteIds.has(route.id))
+      .map((route) => route.netId),
+  );
   const selectedInternalObjectIds = new Set([
-    ...internalSelection.netIds,
-    ...internalSelection.routeIds,
-    ...internalSelection.junctionIds,
+    ...selectedInternalNetIds,
+    ...internalSelection.instances,
+    ...internalSelection.internalRoutes,
+    ...internalSelection.internalJunctions,
+    ...internalSelection.electricalAnnotationIds,
   ]);
   const wireFixedPoints = wireSource
     ? compileWireDraft(wireSource, wireSource, wireDraftSteps).points
@@ -2740,7 +2754,7 @@ export function App({
         }}
         telemetry={{
           snapshot: {
-            selectedInternalRouteCount: internalSelection.routeIds.length,
+            selectedInternalRouteCount: internalSelection.internalRoutes.length,
             revision: document.revision,
             sourceStatus: document.sourceStatus,
             documentCount: project.documents.length,
@@ -3439,7 +3453,7 @@ export function App({
                       selectedIds.length > 0
                         ? selectedIds.join(", ")
                         : (selectedRouteId ?? selectedAnnotationId ?? "None"),
-                    internalRouteCount: internalSelection.routeIds.length,
+                    internalRouteCount: internalSelection.internalRoutes.length,
                     revision: document.revision,
                     sourceStatus: document.sourceStatus,
                     documentCount: project.documents.length,

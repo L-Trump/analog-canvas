@@ -4,6 +4,7 @@ import {
   endpointKey,
   resolveDocumentLogicalNets,
   type ElectricalTopologyProjection,
+  type RoutingAffectedClosure,
 } from "@icm/derived";
 
 import type { SchematicEdit } from "./edit-schema.js";
@@ -24,17 +25,6 @@ export type RoutingOperationIntent =
   | "delete"
   | "rename-marker"
   | "rename-net";
-
-export interface RoutingAffectedClosure {
-  readonly instances: readonly string[];
-  readonly internalRoutes: readonly string[];
-  readonly boundaryRoutes: readonly string[];
-  readonly externalRoutes: readonly string[];
-  readonly internalJunctions: readonly string[];
-  readonly boundaryJunctions: readonly string[];
-  readonly electricalAnnotationIds: readonly string[];
-  readonly protectedObjectIds: readonly string[];
-}
 
 export interface OperationIdRemap {
   readonly instances: Readonly<Record<string, string>>;
