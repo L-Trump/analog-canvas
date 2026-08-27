@@ -999,6 +999,37 @@ export function useSelectionInteraction(
         ]),
       ],
     };
+    const existingSelectionCounts = {
+      instances: deletionSeed.instanceIds.filter((id) =>
+        options.document.instances.some((item) => item.id === id),
+      ).length,
+      routes: deletionSeed.routeIds.filter((id) =>
+        options.document.routes.some((item) => item.id === id),
+      ),
+      junctions: deletionSeed.junctionIds.filter((id) =>
+        options.document.junctions.some((item) => item.id === id),
+      ).length,
+      annotations: deletionSeed.annotationIds.filter((id) =>
+        options.document.annotations.some((item) => item.id === id),
+      ).length,
+      drafting: deletionSeed.draftingIds.filter((id) =>
+        options.document.drafting?.objects.some((item) => item.id === id),
+      ).length,
+    };
+    const deletionStatus =
+      existingSelectionCounts.routes.length === 1 &&
+      existingSelectionCounts.instances === 0 &&
+      existingSelectionCounts.junctions === 0 &&
+      existingSelectionCounts.annotations === 0 &&
+      existingSelectionCounts.drafting === 0
+        ? `Deleted wire ${existingSelectionCounts.routes[0]}`
+        : existingSelectionCounts.instances > 0 &&
+            existingSelectionCounts.routes.length === 0 &&
+            existingSelectionCounts.junctions === 0 &&
+            existingSelectionCounts.annotations === 0 &&
+            existingSelectionCounts.drafting === 0
+          ? "Deleted component selection; connected wires remain dangling"
+          : "Deleted selected schematic objects";
     let deletionPlan;
     try {
       deletionPlan = planRoutingDeletion(
@@ -1028,7 +1059,7 @@ export function useSelectionInteraction(
       ) {
         options.resetSelection();
         options.setSelectedEndpoint(null);
-        options.setStatus("Deleted selected schematic objects");
+        options.setStatus(deletionStatus);
       }
       return;
     }
@@ -1043,7 +1074,7 @@ export function useSelectionInteraction(
     if (result.ok) {
       options.resetSelection();
       options.setSelectedEndpoint(null);
-      options.setStatus("Deleted selected schematic objects");
+      options.setStatus(deletionStatus);
     }
   };
 

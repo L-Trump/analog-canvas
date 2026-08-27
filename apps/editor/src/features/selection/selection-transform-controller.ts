@@ -99,7 +99,9 @@ export function createSelectionTransformController({
     const edits = [...plan.edits];
     if (edits.length > 0 && transact(edits).ok)
       setStatus(
-        `Flipped the selection ${direction === "left-right" ? "left to right" : "top to bottom"}`,
+        placedSelection.length > 1
+          ? `Flipped ${placedSelection.length} parts as one group, ${direction === "left-right" ? "left to right" : "top to bottom"}`
+          : `Flipped the selection ${direction === "left-right" ? "left to right" : "top to bottom"}`,
       );
   };
 
