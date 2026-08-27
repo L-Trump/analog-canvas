@@ -77,6 +77,8 @@ function draftingPoints(object: DraftingObject): LocatedPoint[] {
       ];
     case "rectangle":
       return [...points, { point: object.center, path: ["object", "center"] }];
+    case "circle":
+      return [...points, { point: object.center, path: ["object", "center"] }];
   }
 }
 

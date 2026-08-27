@@ -121,6 +121,13 @@ describe("editor shortcut contract", () => {
     expect(resolve("v", { canRotate: true }, { shiftKey: true })).toBeNull();
   });
 
+  it("does not replace a selected non-rotatable drawing with a rectangle", () => {
+    expect(resolve("r", { hasDraftingSelection: true })).toEqual({
+      kind: "blocked-interaction-command",
+      command: "Rotate",
+    });
+  });
+
   it("opens insertion with I and gives placement rotation priority", () => {
     expect(resolve("i")).toEqual(command({ id: "insert.open" }));
     expect(
@@ -163,6 +170,9 @@ describe("editor shortcut contract", () => {
     );
     expect(resolve("k")).toEqual(
       command({ id: "tool.activate", tool: "construction-line" }),
+    );
+    expect(resolve("o")).toEqual(
+      command({ id: "tool.activate", tool: "circle" }),
     );
     expect(resolve("p")).toEqual(command({ id: "insert.cell-pin" }));
     expect(resolve("m")).toEqual(command({ id: "selection.move" }));

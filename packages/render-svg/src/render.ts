@@ -867,6 +867,12 @@ function renderDraftingLayer(
             >,
             profile,
           );
+        case "circle":
+          return renderDraftCircle(
+            object,
+            geometry as Extract<ResolvedDraftingGeometry, { kind: "circle" }>,
+            profile,
+          );
         case "arrow":
           return renderDraftArrow(
             object,
@@ -1014,6 +1020,23 @@ function renderDraftRectangle(
     .map((point) => `${point.x},${point.y}`)
     .join(" ");
   return `<polygon data-object-id="${object.id}" data-kind="draft-rectangle" points="${points}" fill="none" stroke="${profile.foreground}" stroke-width="${strokeWidth}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${dash}/>`;
+}
+
+function renderDraftCircle(
+  object: Extract<DraftingObject, { kind: "circle" }>,
+  geometry: Extract<ResolvedDraftingGeometry, { kind: "circle" }>,
+  profile: SchematicStyleProfile,
+): string {
+  const lineStyle = object.styleOverride?.lineStyle ?? object.lineStyle;
+  const dash =
+    lineStyle === "dashed"
+      ? ' stroke-dasharray="6 4"'
+      : lineStyle === "dotted"
+        ? ' stroke-dasharray="2 3"'
+        : "";
+  const strokeWidth =
+    profile.strokes.annotation * (object.styleOverride?.strokeScale ?? 1);
+  return `<circle data-object-id="${object.id}" data-kind="draft-circle" cx="${geometry.center.x}" cy="${geometry.center.y}" r="${geometry.radius}" fill="none" stroke="${profile.foreground}" stroke-width="${strokeWidth}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${dash}/>`;
 }
 
 function draftingPathData(

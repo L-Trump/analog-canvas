@@ -344,7 +344,9 @@
    screen-space tolerance as other drafting strokes, but let its empty interior
    pass clicks through to the canvas and any components placed underneath. */
 .annotation-hit.drafting-rectangle-hit,
-.annotation-hit.drafting-rectangle-hit.selected {
+.annotation-hit.drafting-rectangle-hit.selected,
+.annotation-hit.drafting-circle-hit,
+.annotation-hit.drafting-circle-hit.selected {
   fill: none;
   stroke: transparent;
   pointer-events: stroke;

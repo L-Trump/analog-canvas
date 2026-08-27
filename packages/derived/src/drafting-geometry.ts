@@ -100,6 +100,13 @@ export type ResolvedDraftingGeometry =
       diagnostics: [];
     }
   | {
+      kind: "circle";
+      center: DerivedPoint;
+      radius: number;
+      bounds: DerivedRect;
+      diagnostics: [];
+    }
+  | {
       kind: "floating-symbol";
       position: DerivedPoint;
       rotation: 0 | 90 | 180 | 270;
@@ -131,6 +138,8 @@ export function resolveDraftingObjectGeometry(
       return resolveConstructionLine(object);
     case "rectangle":
       return resolveRectangle(object);
+    case "circle":
+      return resolveCircle(object);
     case "floating-symbol":
       return resolveFloatingSymbol(document, resolver, object, routingGeometry);
   }
@@ -425,6 +434,24 @@ function resolveRectangle(
     rotation: object.rotation,
     corners,
     bounds: paddedBounds(unionBounds(corners), STROKE_PADDING),
+    diagnostics: [] as [],
+  };
+}
+
+function resolveCircle(object: Extract<DraftingObject, { kind: "circle" }>) {
+  return {
+    kind: "circle" as const,
+    center: { ...object.center },
+    radius: object.radius,
+    bounds: paddedBounds(
+      {
+        x: object.center.x - object.radius,
+        y: object.center.y - object.radius,
+        width: object.radius * 2,
+        height: object.radius * 2,
+      },
+      STROKE_PADDING,
+    ),
     diagnostics: [] as [],
   };
 }

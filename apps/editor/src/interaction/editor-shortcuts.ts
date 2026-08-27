@@ -155,6 +155,12 @@ export function resolveEditorShortcut(
         command: { id: "tool.activate", tool: "construction-line" },
       };
     }
+    if (plain && key === "o") {
+      return {
+        kind: "run-command",
+        command: { id: "tool.activate", tool: "circle" },
+      };
+    }
     if (plain && event.shiftKey && key === "r" && context.canMirror) {
       return {
         kind: "run-command",
@@ -261,10 +267,12 @@ export function resolveEditorShortcut(
           kind: "run-command",
           command: { id: "transform.rotate", deltaDegrees: 90 },
         }
-      : {
-          kind: "run-command",
-          command: { id: "tool.activate", tool: "rectangle" },
-        };
+      : context.hasDraftingSelection
+        ? { kind: "blocked-interaction-command", command: "Rotate" }
+        : {
+            kind: "run-command",
+            command: { id: "tool.activate", tool: "rectangle" },
+          };
   }
   if (plain && key === "w") {
     return {
@@ -293,6 +301,12 @@ export function resolveEditorShortcut(
     return {
       kind: "run-command",
       command: { id: "tool.activate", tool: "construction-line" },
+    };
+  }
+  if (plain && key === "o") {
+    return {
+      kind: "run-command",
+      command: { id: "tool.activate", tool: "circle" },
     };
   }
   if (plain && key === "q") {

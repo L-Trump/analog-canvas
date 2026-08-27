@@ -51,31 +51,41 @@ export function DraftingPropertiesPanel({
   if (
     geometry.kind !== "arrow" &&
     geometry.kind !== "construction-line" &&
-    geometry.kind !== "rectangle"
+    geometry.kind !== "rectangle" &&
+    geometry.kind !== "circle"
   ) {
     return null;
   }
   const lineStyle =
     object.styleOverride?.lineStyle ??
-    (object.kind === "construction-line" || object.kind === "rectangle"
+    (object.kind === "construction-line" ||
+    object.kind === "rectangle" ||
+    object.kind === "circle"
       ? object.lineStyle
       : "solid");
   const isRectangle = geometry.kind === "rectangle";
-  const points = isRectangle ? geometry.corners : geometry.points;
-  const curveControls = isRectangle
-    ? points.slice(0, -1).map(() => null)
-    : geometry.curveControls;
+  const isCircle = geometry.kind === "circle";
+  const points = isRectangle
+    ? geometry.corners
+    : isCircle
+      ? []
+      : geometry.points;
+  const curveControls =
+    isRectangle || isCircle
+      ? points.slice(0, -1).map(() => null)
+      : geometry.curveControls;
   const segmentIndex =
     inspectorSegment?.objectId === object.id
       ? inspectorSegment.index
       : Math.max(0, curveControls.findIndex(Boolean));
-  const tangentAngle = isRectangle
-    ? 0
-    : quadraticTangentAngle(
-        points[segmentIndex]!,
-        curveControls[segmentIndex] ?? null,
-        points[segmentIndex + 1]!,
-      );
+  const tangentAngle =
+    isRectangle || isCircle
+      ? 0
+      : quadraticTangentAngle(
+          points[segmentIndex]!,
+          curveControls[segmentIndex] ?? null,
+          points[segmentIndex + 1]!,
+        );
   const tangentInputKey = `${object.id}:${segmentIndex}`;
   const realizedAngleText = String(Math.round(tangentAngle * 10) / 10);
   const tangentInputValue =
@@ -84,7 +94,9 @@ export function DraftingPropertiesPanel({
       : realizedAngleText;
   const bearing = isRectangle
     ? geometry.rotation
-    : normalizedBearing(points[0]!, points[1]!);
+    : isCircle
+      ? 0
+      : normalizedBearing(points[0]!, points[1]!);
   const realizedBearingText = String(Math.round(bearing * 10) / 10);
   const bearingInputValue =
     bearingInput?.objectId === object.id
@@ -158,7 +170,7 @@ export function DraftingPropertiesPanel({
           </select>
         </label>
       ) : null}
-      {!isRectangle ? (
+      {!isRectangle && !isCircle ? (
         <label>
           Tangent angle (°)
           <input
@@ -185,31 +197,33 @@ export function DraftingPropertiesPanel({
           />
         </label>
       ) : null}
-      <label>
-        Bearing (°)
-        <input
-          aria-label="Drawing bearing"
-          type="number"
-          min="0"
-          max="359"
-          step="1"
-          value={bearingInputValue}
-          disabled={object.locked}
-          placeholder={realizedBearingText}
-          onFocus={() =>
-            onBearingInputChange({ objectId: object.id, value: "" })
-          }
-          onChange={(event) => {
-            const value = event.currentTarget.value;
-            onBearingInputChange({ objectId: object.id, value });
-            const nextBearing = Number(value);
-            if (value !== "" && Number.isFinite(nextBearing)) {
-              onBearingChange(nextBearing);
+      {!isCircle ? (
+        <label>
+          Bearing (°)
+          <input
+            aria-label="Drawing bearing"
+            type="number"
+            min="0"
+            max="359"
+            step="1"
+            value={bearingInputValue}
+            disabled={object.locked}
+            placeholder={realizedBearingText}
+            onFocus={() =>
+              onBearingInputChange({ objectId: object.id, value: "" })
             }
-          }}
-          onBlur={() => onBearingInputChange(null)}
-        />
-      </label>
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+              onBearingInputChange({ objectId: object.id, value });
+              const nextBearing = Number(value);
+              if (value !== "" && Number.isFinite(nextBearing)) {
+                onBearingChange(nextBearing);
+              }
+            }}
+            onBlur={() => onBearingInputChange(null)}
+          />
+        </label>
+      ) : null}
       {object.kind === "arrow" ? (
         <>
           <label>
@@ -254,10 +268,12 @@ export function DraftingPropertiesPanel({
           </button>
         </>
       ) : null}
-      <button type="button" disabled={object.locked} onClick={onRotate}>
-        <ToolIcon name="rotate" />
-        Rotate
-      </button>
+      {!isCircle ? (
+        <button type="button" disabled={object.locked} onClick={onRotate}>
+          <ToolIcon name="rotate" />
+          Rotate
+        </button>
+      ) : null}
       <button type="button" onClick={onToggleLock}>
         <ToolIcon name="lock" />
         {object.locked ? "Unlock" : "Lock"}

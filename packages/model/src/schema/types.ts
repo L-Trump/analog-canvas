@@ -73,6 +73,7 @@ export type DraftConstructionLine = z.infer<
   typeof Schema.DraftConstructionLineSchema
 >;
 export type DraftRectangle = z.infer<typeof Schema.DraftRectangleSchema>;
+export type DraftCircle = z.infer<typeof Schema.DraftCircleSchema>;
 export type DraftFloatingSymbol = z.infer<
   typeof Schema.DraftFloatingSymbolSchema
 >;

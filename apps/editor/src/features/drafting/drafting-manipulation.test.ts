@@ -64,6 +64,17 @@ const rectangle = (): Extract<DraftingObject, { kind: "rectangle" }> => ({
   lineStyle: "solid",
 });
 
+const circle = (): Extract<DraftingObject, { kind: "circle" }> => ({
+  id: "circle-1",
+  kind: "circle",
+  locked: false,
+  zIndex: 0,
+  anchor: { kind: "free", position: { x: 50, y: 50 } },
+  center: { x: 50, y: 50 },
+  radius: 20,
+  lineStyle: "solid",
+});
+
 describe("drafting manipulation", () => {
   it("translates every free geometry point without detaching anchors", () => {
     const moved = translateDraftingObject(arrow(), { x: 10, y: 20 }, 10);
@@ -141,6 +152,31 @@ describe("drafting manipulation", () => {
       width: 50,
       height: 30,
       anchor: { position: { x: 50, y: 50 } },
+    });
+  });
+
+  it("moves and resizes a circle while keeping it orientation-free", () => {
+    const object = circle();
+    const geometry = resolveDraftingObjectGeometry(document, resolver, object);
+    const resized = applyDraftingHandle(
+      object,
+      { kind: "circle-radius", index: 0 },
+      { x: 90, y: 50 },
+      geometry,
+      10,
+    );
+    expect(resized).toMatchObject({ radius: 40 });
+    expect(
+      translateDraftingObject(object, { x: 20, y: -10 }, 10),
+    ).toMatchObject({
+      center: { x: 70, y: 40 },
+      anchor: { kind: "free", position: { x: 70, y: 40 } },
+    });
+    expect(rotateDraftingObject(object, geometry, 90, 10)).toBeNull();
+    expect(
+      applyDraftingStylePatch(object, { lineStyle: "dotted" }),
+    ).toMatchObject({
+      styleOverride: { lineStyle: "dotted" },
     });
   });
 

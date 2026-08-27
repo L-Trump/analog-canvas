@@ -134,6 +134,19 @@ export function EditorDraftingHitTargets({
         />
       );
     }
+    if (object.kind === "circle" && geometry.kind === "circle") {
+      return (
+        <circle
+          key={object.id}
+          {...common}
+          className={`${selectedClass} drafting-circle-hit`}
+          cx={geometry.center.x}
+          cy={geometry.center.y}
+          r={geometry.radius}
+          fill="none"
+        />
+      );
+    }
     if (object.kind === "leader" && geometry.kind === "leader") {
       return (
         <line
@@ -322,6 +335,29 @@ export function EditorDraftingHandles({
             }
           />
         ))}
+      </g>
+    );
+  }
+  if (object.kind === "circle" && geometry.kind === "circle") {
+    const point = {
+      x: geometry.center.x + geometry.radius,
+      y: geometry.center.y,
+    };
+    return (
+      <g data-testid={`drafting-handles-${object.id}`}>
+        <circle
+          className="draft-handle"
+          data-testid={`draft-handle-radius-${object.id}`}
+          cx={point.x}
+          cy={point.y}
+          r="5"
+          onPointerDown={(event) =>
+            onHandlePointerDown(event, object, {
+              kind: "circle-radius",
+              index: 0,
+            })
+          }
+        />
       </g>
     );
   }

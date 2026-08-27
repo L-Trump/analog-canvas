@@ -328,7 +328,8 @@ export function createCanvasGestureController({
     if (
       (tool === "arrow" ||
         tool === "construction-line" ||
-        tool === "rectangle") &&
+        tool === "rectangle" ||
+        tool === "circle") &&
       draftingSource !== null
     ) {
       const snapped = snapDraftingPoint(

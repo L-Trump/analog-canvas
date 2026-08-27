@@ -18,11 +18,11 @@ import {
 export type { WireSource } from "@icm/edit-engine";
 
 export type EditorTool =
-  "pointer" | "wire" | "construction-line" | "arrow" | "rectangle";
+  "pointer" | "wire" | "construction-line" | "arrow" | "rectangle" | "circle";
 
 export type DrawingTool = Extract<
   EditorTool,
-  "construction-line" | "arrow" | "rectangle"
+  "construction-line" | "arrow" | "rectangle" | "circle"
 >;
 
 export type InteractionMode = InteractionState<unknown>["kind"];
@@ -167,6 +167,7 @@ export function activateInteractionTool<TClipboard>(
     case "arrow":
     case "construction-line":
     case "rectangle":
+    case "circle":
       return drawingState(tool);
   }
 }

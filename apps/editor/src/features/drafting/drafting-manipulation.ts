@@ -17,7 +17,8 @@ import {
 export type DraftingHandle =
   | { kind: "from" | "to" }
   | {
-      kind: "waypoint" | "vertex" | "curve" | "rectangle-corner";
+      kind:
+        "waypoint" | "vertex" | "curve" | "rectangle-corner" | "circle-radius";
       index: number;
     };
 
@@ -31,6 +32,7 @@ export type DraftingStylePatch = Partial<{
 export function draftingDragOrigin(object: DraftingObject): GridPoint | null {
   if (object.kind === "construction-line") return object.points[0] ?? null;
   if (object.kind === "rectangle") return object.center;
+  if (object.kind === "circle") return object.center;
   if (object.kind === "arrow") {
     return object.from.kind === "free" && object.to.kind === "free"
       ? object.from.position
@@ -93,6 +95,10 @@ export function translateDraftingObject(
     const center = translatePoint(object.center, delta, grid);
     return { ...object, center, anchor: { kind: "free", position: center } };
   }
+  if (object.kind === "circle") {
+    const center = translatePoint(object.center, delta, grid);
+    return { ...object, center, anchor: { kind: "free", position: center } };
+  }
   return {
     ...object,
     anchor: translateFreeAnchor(object.anchor, delta, grid),
@@ -146,7 +152,11 @@ export function applyDraftingHandle(
       );
       return { ...object, curveControls: controls };
     }
-    if (handle.kind === "vertex" || handle.kind === "rectangle-corner") {
+    if (
+      handle.kind === "vertex" ||
+      handle.kind === "rectangle-corner" ||
+      handle.kind === "circle-radius"
+    ) {
       return object;
     }
     const anchor = handle.kind === "from" ? object.from : object.to;
@@ -204,6 +214,19 @@ export function applyDraftingHandle(
       width: Math.max(grid, Math.round(Math.abs(localWidth) / grid) * grid),
       height: Math.max(grid, Math.round(Math.abs(localHeight) / grid) * grid),
     };
+  }
+  if (
+    object.kind === "circle" &&
+    handle.kind === "circle-radius" &&
+    originalGeometry.kind === "circle"
+  ) {
+    const radius = Math.max(
+      grid,
+      Math.round(
+        Math.hypot(point.x - object.center.x, point.y - object.center.y) / grid,
+      ) * grid,
+    );
+    return { ...object, radius };
   }
   return object;
 }
@@ -304,7 +327,8 @@ export function applyDraftingStylePatch(
     object.locked ||
     (object.kind !== "arrow" &&
       object.kind !== "construction-line" &&
-      object.kind !== "rectangle")
+      object.kind !== "rectangle" &&
+      object.kind !== "circle")
   ) {
     return null;
   }

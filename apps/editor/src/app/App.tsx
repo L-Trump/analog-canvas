@@ -2085,11 +2085,13 @@ export function App({
         ? "Wire: choose a pin, junction, route segment, or blank grid point"
         : nextTool === "rectangle"
           ? "Rectangle: click the first corner"
-          : nextTool === "arrow"
-            ? "Arrow: click the start point"
-            : nextTool === "construction-line"
-              ? "Construction line: click the start point"
-              : "Pointer ready",
+          : nextTool === "circle"
+            ? "Circle: click the center"
+            : nextTool === "arrow"
+              ? "Arrow: click the start point"
+              : nextTool === "construction-line"
+                ? "Construction line: click the start point"
+                : "Pointer ready",
     );
   }
 
@@ -2193,7 +2195,8 @@ export function App({
       hasClearableDraftingSelection:
         selectedDrafting?.kind === "arrow" ||
         selectedDrafting?.kind === "construction-line" ||
-        selectedDrafting?.kind === "rectangle",
+        selectedDrafting?.kind === "rectangle" ||
+        selectedDrafting?.kind === "circle",
     }),
     operations: {
       closeHelp,
@@ -2407,7 +2410,8 @@ export function App({
         draftingReadyToFinish:
           (tool === "arrow" ||
             tool === "construction-line" ||
-            tool === "rectangle") &&
+            tool === "rectangle" ||
+            tool === "circle") &&
           draftingSource !== null,
         hasRemovableWireWaypoint: Boolean(
           wireSource && wireDraftSteps.length > 0,
@@ -3493,7 +3497,8 @@ export function App({
               : "",
             tool === "arrow" ||
             tool === "construction-line" ||
-            tool === "rectangle"
+            tool === "rectangle" ||
+            tool === "circle"
               ? "drawing-mode"
               : "",
             projectedMovePreviewDocument ? "semantic-move-preview" : "",
