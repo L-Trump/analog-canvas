@@ -55,6 +55,24 @@ Route transaction.
   real disconnection.
 - A Route-anchored label or marker is part of the Route deletion closure and is
   removed through its typed annotation edit before the Route is cut.
+- Transform, `C` copy-placement, graph deletion, marker rename, and whole-Net
+  rename first compile one transient `RoutingOperationPlan`. The plan carries
+  a stable-ID affected closure, expected electrical effect, typed edits and ID
+  remap; an independent before/after projection validates the effect before
+  the same edits commit. It is not Project data or an Agent protocol.
+- Transform classifies selected conductors once: internal Routes move rigidly,
+  boundary Routes stretch only at the inside endpoint, and external Routes do
+  not move. Unsafe protected geometry rejects atomically; no transform invokes
+  rerouting.
+- `C` clones the selected internal electrical subgraph. Ordinary boundary
+  Routes and terminal membership are not copied, so copied boundary pins are
+  open. A selected Cell Pin, supply marker, or Net-label owner retains its own
+  naming evidence and rejoins a Logical Net only through `name + scope`.
+  Implicit MOS bulk binding remains the explicit Cell-policy exception.
+- Delete is one graph operation: selected Route geometry dominates incidental
+  marquee Junction dots; Junction-only deletion owns its incident arms; Route
+  attachments, orphan anchors, layout references and unreferenced local Nets
+  are cleaned in the same transaction.
 - `NoConnect` and Net membership are mutually exclusive.
 - Snap, selection, highlight, clipboard, undo, Agent Snapshot, and formal render
   consume the same resolved endpoint geometry.
@@ -111,6 +129,25 @@ Net at both endpoints, so clicking it uses the ordinary Wire merge path. Net
 highlight suppresses guides incident to the highlighted Net. Unplaced
 endpoints remain in the Placement Tray and do not receive invented page
 coordinates.
+
+## Net naming and lifecycle
+
+Base Nets remain physical connectivity; Logical Nets are derived from
+owner-addressed `name-claim` evidence. Reusing a spelling never merges Route
+geometry.
+
+- Renaming one marker detaches only that owner from its old Base Net, creates
+  or joins its requested name semantics, and rebinds its own label. Other
+  markers, Ports, rails and labels keep their names and physical Nets.
+- Renaming a whole Logical Net updates that Logical Net's editable owner
+  claims. A matching name may join compatible logical semantics but does not
+  merge Base Nets; incompatible scope or power domain rejects atomically.
+- Multiple same-name Ports, supply markers and power rails are legal. `VDD`,
+  `AVDD`, and `DVDD` are distinct names; `powerDomain: vdd` is a role, not a
+  singleton object or reserved Net ID.
+- MOS bulk defaults are explicit Cell policy and do not imply a globally
+  unique VDD. Deleting the last marker or owner cannot leave a ghost Net that
+  blocks later reuse of the same visible name or designator.
 
 ## Derived read models
 

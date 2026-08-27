@@ -1,5 +1,6 @@
 import {
   planDirectEndpointConnection,
+  planElectricalMarkerRename,
   planEnsurePowerNet,
   proposeEndpointRouteAttachment,
   type SchematicEdit,
@@ -379,83 +380,18 @@ export function proposedSupplyPortRename(
   instance: Instance,
   name: string,
 ): { edits: SchematicEdit[]; netId?: string; rejected?: string } {
-  const power = powerConnectionForSymbol(instance.symbolId);
-  if (!power) return { edits: [], rejected: "Not a supply marker" };
-  const requested = name.trim();
-  if (!requested) return { edits: [], rejected: "A supply needs a name" };
-
-  const endpoint: RouteEndpoint = {
-    kind: "terminal",
-    instanceId: instance.id,
-    pinName: power.pinName,
-  };
-  // A fresh Net per name, so renaming twice cannot land back on a Net the
-  // marker already left behind.
-  const candidateNetId = deriveStableId(
-    "net",
-    document.id,
-    "power",
-    instance.id,
-    requested.toLowerCase(),
-  );
-  const plan = planEnsurePowerNet(document, {
-    candidateNetId,
-    candidateState: "pending-connection",
-    domain: power.domain,
-    name: requested,
-    scope: power.scope,
-    evidenceId: deriveStableId(
-      "connectivity-evidence",
-      document.id,
-      "power-marker",
-      instance.id,
-      candidateNetId,
-    ),
-    owner: { kind: "power-marker", objectId: instance.id },
-  });
-  if (!plan.ok) return { edits: [], rejected: plan.message };
-
-  // The claim this marker used to make on its old supply has to go, or it
-  // keeps that Net named after a marker that is no longer on it.
-  const staleClaims = document.connectivityEvidence.filter(
-    (evidence) =>
-      evidence.kind === "name-claim" &&
-      evidence.owner.kind === "power-marker" &&
-      evidence.owner.objectId === instance.id,
-  );
-
-  // The marker's own label reads the Net it names. Left pointing at the Net
-  // the marker just left, it resolves to nothing and the label goes blank.
-  const boundLabels = document.annotations.filter(
-    (annotation) =>
-      annotation.binding?.kind === "net-name" &&
-      annotation.anchor.kind === "object" &&
-      annotation.anchor.objectId === instance.id,
-  );
-
+  const result = planElectricalMarkerRename(document, instance.id, name);
+  if (result.status === "rejected") {
+    return { edits: [], rejected: result.message };
+  }
+  if (result.status === "noop") return { edits: [] };
+  const netId = result.plan.edits
+    .flatMap((edit) =>
+      edit.kind === "connect_endpoints" && edit.newNetId ? [edit.newNetId] : [],
+    )
+    .at(-1);
   return {
-    edits: [
-      { kind: "disconnect_endpoint", endpoint },
-      ...staleClaims.map((evidence): SchematicEdit => ({
-        kind: "remove_connectivity_evidence",
-        evidenceId: evidence.id,
-      })),
-      {
-        kind: "connect_endpoints",
-        from: endpoint,
-        to: endpoint,
-        newNetId: candidateNetId,
-      },
-      ...plan.edits,
-      ...boundLabels.map((annotation): SchematicEdit => ({
-        kind: "upsert_schematic_annotation",
-        annotation: {
-          ...annotation,
-          netId: plan.netId,
-          binding: { kind: "net-name", netId: plan.netId },
-        },
-      })),
-    ],
-    netId: plan.netId,
+    edits: [...result.plan.edits],
+    ...(netId ? { netId } : {}),
   };
 }

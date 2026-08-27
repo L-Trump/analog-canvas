@@ -220,11 +220,11 @@ create contact.
 
 ## Movement closure
 
-Every direct-manipulation selection move first derives one transient,
-editor-only `SelectionMovePlan`. It is neither Project data nor an Edit Engine
-or Agent API payload. The plan is the shared authority for the live preview and
-the typed edits committed on pointer release; no pointer handler may invent an
-independent follow set.
+Every direct-manipulation selection move first derives one transient stable-ID
+routing closure. The editor keeps only gesture state; the Edit Engine's
+`planRoutingTransform()` is the shared authority for the semantic preview and
+the typed edits committed on pointer release. Neither object is Project data or
+an Agent API payload, and no pointer handler invents an independent follow set.
 
 The visual marquee is the user's explicit intent. Electrical closure then
 classifies that intent without changing connectivity:
@@ -242,6 +242,14 @@ classifies that intent without changing connectivity:
 - object- and route-anchored annotations follow their resolved target; free
   annotations and free drafting objects translate only when explicitly
   selected.
+
+The same boundary applies to `C` and Delete. `C` remains the existing modal
+copy-placement gesture (not Ctrl+C/Paste): its preview and commit use one
+preallocated clone mapping, internal routing is copied, and ordinary boundary
+pins are left open. Delete converts the complete visual selection to one graph
+deletion plan, so Route/Junction/attachment cleanup does not require a second
+Delete press. Formal Cell Pins retain their Project-level interface update,
+but its Document edits come from that same deletion plan.
 
 The planner authors the resulting geometry for every planned Route in the
 same transaction. Engine instance-follow remains the safe single-instance

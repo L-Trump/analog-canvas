@@ -50,9 +50,8 @@ ordinary typed transaction directly.
   common evaluation boundary;
 - source revision changes reject the plan rather than silently recalculating
   it at click time;
-- connect, cut, and topology-preserving operations gain deterministic effect
-  checks first; clone, graph delete, and naming planners add their stricter
-  effect declarations as their dedicated work packages land;
+- connect, cut, transform, clone, graph delete, marker rename, and whole-Net
+  rename all declare and validate their bounded electrical effect;
 - the command router, shortcuts, pointer gestures, and visible UI do not
   change.
 

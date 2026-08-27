@@ -1027,6 +1027,7 @@ export function App({
     updateNetLabelDraft,
   } = usePropertiesEditor({
     document,
+    resolver,
     selectedRoute,
     selectedRouteNetLabel: selectedRouteNetLabel ?? null,
     selectedRouteNetLabels,

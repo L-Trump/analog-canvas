@@ -246,9 +246,10 @@ function validateExpectedEffect(
         : `Routing rename did not rebind ${expected.ownerKey}`;
     }
     case "rename-logical-net": {
-      const group = resolveDocumentLogicalNets(afterDocument).byId.get(
-        expected.logicalNetId,
-      );
+      const resolved = resolveDocumentLogicalNets(afterDocument);
+      const group =
+        resolved.byId.get(expected.logicalNetId) ??
+        resolved.byBaseNetId.get(expected.logicalNetId);
       return group?.name === expected.requestedName &&
         group.scope === expected.scope
         ? null

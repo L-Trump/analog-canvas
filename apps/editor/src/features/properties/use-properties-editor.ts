@@ -14,6 +14,7 @@ import type {
   RichTextDocument,
   SchematicDocument,
 } from "@icm/model";
+import type { SymbolResolver } from "@icm/symbols";
 
 import {
   componentParameters,
@@ -92,6 +93,7 @@ type Instance = SchematicDocument["instances"][number];
 
 export interface UsePropertiesEditorOptions {
   document: SchematicDocument;
+  resolver: SymbolResolver;
   selectedRoute: Route | undefined;
   selectedRouteNetLabel: Annotation | null;
   selectedRouteNetLabels: readonly Annotation[];
@@ -172,6 +174,7 @@ export function usePropertiesEditor(options: UsePropertiesEditorOptions) {
         diagnostics: [],
         edits,
       }),
+      { symbolResolver: options.resolver },
     );
     if (!gate.ok) {
       options.setStatus(gate.message);
@@ -194,7 +197,16 @@ export function usePropertiesEditor(options: UsePropertiesEditorOptions) {
       options.setStatus(plan.message);
       return;
     }
-    if (options.transact([...plan.edits]).ok) options.setStatus(plan.message);
+    const gate = gateRoutingOperationPlan(
+      options.document,
+      plan.operationPlan,
+      { symbolResolver: options.resolver },
+    );
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
+    if (options.transact([...gate.edits]).ok) options.setStatus(plan.message);
   };
 
   const draftForInstance = (instance: Instance): InstancePropertyDraft => ({

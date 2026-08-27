@@ -9,6 +9,14 @@ import {
   recoveryProjectTexts,
 } from "./editor-fixtures.js";
 
+async function openSelectionShelf(page: import("@playwright/test").Page) {
+  const shelf = page.getByTestId("selection-shelf");
+  await expect(shelf).toBeVisible();
+  if ((await shelf.getAttribute("aria-expanded")) !== "true") {
+    await shelf.click();
+  }
+}
+
 test("blocks destructive browser refresh shortcuts and uses the stronger grid", async ({
   page,
 }) => {
@@ -457,6 +465,31 @@ test("places the VDD power-port device as the default VDD entry", async ({
       .filter((annotation) => annotation.kind === "power-label")
       .map((annotation) => annotation.id),
   ).toEqual(["power-label-vdd1", "power-label-vdd2"]);
+});
+
+test("renames one supply marker without changing its same-name peer", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await chooseComponent(page, "vdd-port");
+  const canvas = page.getByTestId("schematic-canvas");
+  await canvas.click({ position: { x: 300, y: 180 } });
+  await canvas.click({ position: { x: 500, y: 180 } });
+  await page.keyboard.press("Escape");
+
+  await page.getByTestId("hit-VDD1").click();
+  await openSelectionShelf(page);
+  const name = page.getByRole("textbox", { name: "Supply name" });
+  await name.fill("AVDD");
+  await name.press("Tab");
+
+  await expect(page.getByTestId("status")).toContainText("Supply named AVDD");
+  await expect(
+    canvas.locator('[data-object-id="power-label-vdd1"]'),
+  ).toContainText("AVDD");
+  await expect(
+    canvas.locator('[data-object-id="power-label-vdd2"]'),
+  ).toContainText("VDD");
 });
 
 test("reopens I and starts Copy from retained selection without stacking modes", async ({
