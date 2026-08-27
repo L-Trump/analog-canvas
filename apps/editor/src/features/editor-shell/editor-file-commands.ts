@@ -95,22 +95,22 @@ export function createEditorFileCommands({
     const prefix = notes.length > 0 ? `${notes.join("; ")} — ` : "";
 
     if (!publishSessionPresent) {
-      setStatus(`${prefix}sign in to keep a copy on your shelf`);
+      setStatus(`${prefix}sign in to keep a cloud snapshot`);
       return;
     }
     const currentProject = getCurrentProject();
     const outcome = await saveToWorkspaceShelf(currentProject);
     if (outcome.status === "saved") {
       setWorkspaceSlots(outcome.slots);
-      setStatus(`${prefix}saved "${currentProject.name}" to your shelf`);
+      setStatus(`${prefix}kept a cloud snapshot of "${currentProject.name}"`);
       return;
     }
     setStatus(
       outcome.status === "signed-out"
-        ? `${prefix}sign in again to keep a copy on your shelf`
+        ? `${prefix}sign in again to keep a cloud snapshot`
         : outcome.status === "too-large"
-          ? `${prefix}the circuit is too large for the shelf`
-          : `${prefix}the shelf could not be reached (${outcome.message})`,
+          ? `${prefix}the circuit is too large for a cloud snapshot`
+          : `${prefix}the snapshot server could not be reached (${outcome.message})`,
     );
   };
 
