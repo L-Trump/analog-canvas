@@ -890,7 +890,7 @@ test("a mistaken click beside the publish form keeps what was written", async ({
   await expect(dialog.getByTestId("publish-tag-cascode")).toBeVisible();
 });
 
-test("Check and Save shelves the circuit from the File menu", async ({
+test("Save cloud snapshot keeps and relists the newest copy", async ({
   page,
 }) => {
   await page.route("**/api/auth/me", (route) =>
@@ -940,20 +940,18 @@ test("Check and Save shelves the circuit from the File menu", async ({
   // A lone transistor is not a netlistable circuit, and that is not an error:
   // a schematic is allowed to be abbreviated. Saving neither judges it nor
   // interrupts with a report.
-  await expect(page.getByTestId("status")).toContainText("to your shelf");
+  await expect(page.getByTestId("status")).toContainText("cloud snapshot");
   await expect(page.getByRole("dialog", { name: "Check Report" })).toHaveCount(
     0,
   );
   expect(shelf).toHaveLength(1);
   expect(shelf[0]!.projectText).toContain("nmos");
 
-  // The private save remains available to the save flow, but recent scratch
-  // copies do not belong among formal Project file commands.
+  // The recovery snapshots list the newest copies right in File, so a
+  // crash or a device switch can restore them.
   const fileMenu = await openMenu(page, "File");
-  await expect(fileMenu.getByText("Your shelf", { exact: true })).toHaveCount(
-    0,
-  );
-  await expect(fileMenu.getByTestId("shelf-slot-slot-0")).toHaveCount(0);
+  await expect(fileMenu.getByText(/Cloud snapshots/u)).toBeVisible();
+  await expect(fileMenu.getByTestId("shelf-slot-slot-0")).toBeVisible();
 });
 
 test("keeps newest-first order and stops after the last circuit", async ({

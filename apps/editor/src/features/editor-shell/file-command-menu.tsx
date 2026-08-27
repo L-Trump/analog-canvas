@@ -24,6 +24,8 @@ export interface FileCommandMenuProps {
 }
 
 export function FileCommandMenu({
+  workspaceSlots,
+  onOpenShelfSlot,
   previousProjectName,
   canRevert,
   hasRecoverySessions,
@@ -61,12 +63,30 @@ export function FileCommandMenu({
         <button
           type="button"
           data-testid="check-and-save-button"
-          title="Check the circuit and save it to your shelf"
+          title="Run a quick check and keep a recovery snapshot on the server (newest 3)"
           onClick={onCheckAndSave}
         >
           <span className="toolbar-check-glyph" aria-hidden="true" />
-          Check and Save
+          Save cloud snapshot
         </button>
+        {workspaceSlots.length > 0 ? (
+          <>
+            <span className="command-group-label">
+              Cloud snapshots (newest {workspaceSlots.length})
+            </span>
+            {workspaceSlots.map((slot) => (
+              <button
+                key={slot.id}
+                type="button"
+                data-testid={`shelf-slot-${slot.id}`}
+                title="Restore this snapshot into the editor"
+                onClick={() => onOpenShelfSlot(slot)}
+              >
+                {slot.name} — {new Date(slot.savedAt).toLocaleString()}
+              </button>
+            ))}
+          </>
+        ) : null}
         <button type="button" onClick={onRefresh}>
           Refresh app
         </button>
