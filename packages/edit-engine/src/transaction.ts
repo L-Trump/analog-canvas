@@ -20,7 +20,10 @@ import {
   type NetLabelRouteAnchor,
   type RouteMarkerAnchor,
 } from "./transaction-route-annotations.js";
-import { splitRoute } from "./transaction-route-follow.js";
+import {
+  applyInstancesRouteFollow,
+  splitRoute,
+} from "./transaction-route-follow.js";
 import { reconcileTransformDirectContacts } from "./transaction-direct-contact.js";
 import { nextPhysicalContactOperation } from "./transaction-connectivity-normalizer.js";
 import { applyCellResetEdit } from "./transaction-cell-reset.js";
@@ -150,6 +153,15 @@ export function executeTransaction(
     ? captureRouteMarkerAnchors(document, resolver)
     : [];
   const changedRouteIds = new Set<string>();
+  const transformedInstanceIds = new Set(
+    transaction.edits.flatMap((edit) =>
+      edit.kind === "move_instance" ||
+      edit.kind === "rotate_instance" ||
+      edit.kind === "mirror_instance"
+        ? [edit.instanceId]
+        : [],
+    ),
+  );
   let geometryChanged = false;
   let connectivityChanged = false;
 
@@ -243,7 +255,6 @@ export function executeTransaction(
         const outcome = applyInstanceTransformEdit(edit, {
           draft,
           resolver,
-          explicitlyAuthoredRouteIds,
           changedObjectIds,
           reject: rejectAt,
         });
@@ -401,6 +412,57 @@ export function executeTransaction(
       }
     }
     geometryChanged = true;
+  }
+
+  if (resolver && transformedInstanceIds.size > 0) {
+    // One user-visible transform may require several persisted orientation
+    // edits (for example a top-bottom screen reflection is mirror + rotate).
+    // Follow Routes once from the transaction's original geometry to the
+    // final placement, never through invalid intermediate orientations.
+    const followedRouteIds = applyInstancesRouteFollow(
+      draft,
+      document,
+      resolver,
+      resolver,
+      transformedInstanceIds,
+      explicitlyAuthoredRouteIds,
+    );
+    for (const routeId of followedRouteIds) {
+      const collapsed = !draft.routes.some((route) => route.id === routeId);
+      if (collapsed) {
+        const anchoredAnnotation = draft.annotations.find(
+          (annotation) =>
+            annotation.anchor.kind === "route" &&
+            annotation.anchor.routeId === routeId,
+        );
+        const layoutReference = [
+          ...draft.layoutGroups,
+          ...draft.constraints,
+        ].find((item) => item.objectIds.includes(routeId));
+        const evidenceReference = draft.connectivityEvidence.find(
+          (evidence) =>
+            evidence.kind === "name-claim" &&
+            evidence.owner.kind === "power-marker" &&
+            evidence.owner.objectId === routeId,
+        );
+        const referenceId =
+          anchoredAnnotation?.id ??
+          layoutReference?.id ??
+          evidenceReference?.id ??
+          null;
+        if (referenceId) {
+          return rejectTransaction(
+            document,
+            "EDIT_PRECONDITION",
+            `Transform would collapse Route ${routeId} into direct contact while ${referenceId} still references it`,
+            [],
+            [routeId, referenceId],
+          );
+        }
+      }
+      changedObjectIds.add(routeId);
+      changedRouteIds.add(routeId);
+    }
   }
 
   if (

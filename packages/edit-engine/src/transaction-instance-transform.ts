@@ -4,7 +4,6 @@ import type { SymbolResolver } from "@icm/symbols";
 import type { EditTransaction } from "./edit-schema.js";
 import type { EditMutationOutcome, RejectEdit } from "./transaction-domain.js";
 import { followAttachedAnnotations } from "./transaction-instance-annotations.js";
-import { applyInstanceRouteFollow } from "./transaction-route-follow.js";
 import { lockedLayoutOwner } from "./transaction-routing.js";
 
 type InstanceTransformEdit = Extract<
@@ -22,7 +21,6 @@ type InstanceTransformEdit = Extract<
 export interface InstanceTransformEditContext {
   draft: SchematicDocument;
   resolver: SymbolResolver | undefined;
-  explicitlyAuthoredRouteIds: ReadonlySet<string>;
   changedObjectIds: Set<string>;
   reject: RejectEdit;
 }
@@ -33,13 +31,7 @@ export function applyInstanceTransformEdit(
   edit: InstanceTransformEdit,
   context: InstanceTransformEditContext,
 ): InstanceTransformEditOutcome {
-  const {
-    draft,
-    resolver,
-    explicitlyAuthoredRouteIds,
-    changedObjectIds,
-    reject,
-  } = context;
+  const { draft, resolver, changedObjectIds, reject } = context;
   const instance = draft.instances.find(
     (candidate) => candidate.id === edit.instanceId,
   );
@@ -121,7 +113,6 @@ export function applyInstanceTransformEdit(
           ),
         };
       }
-      const beforeTransform = structuredClone(draft);
       const oldPlacement = structuredClone(instance.placement);
       if (edit.kind === "move_instance") {
         instance.placement.position = structuredClone(edit.position);
@@ -140,17 +131,6 @@ export function applyInstanceTransformEdit(
         changedObjectIds,
         resolver,
       );
-      if (resolver) {
-        for (const routeId of applyInstanceRouteFollow(
-          draft,
-          beforeTransform,
-          resolver,
-          edit.instanceId,
-          explicitlyAuthoredRouteIds,
-        )) {
-          changedObjectIds.add(routeId);
-        }
-      }
       changedObjectIds.add(edit.instanceId);
       return { ok: true };
     }
