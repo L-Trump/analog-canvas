@@ -19,7 +19,11 @@ import {
   buildOrthogonalEscapeRoute,
   normalizeRouteGeometry,
 } from "./route-geometry-edit.js";
-import { proposeLocalStretch } from "./route-operations.js";
+import {
+  proposeGroupReflection,
+  proposeGroupRotation,
+  proposeLocalStretch,
+} from "./route-operations.js";
 
 const resolver = new InMemorySymbolResolver(builtInSymbols);
 
@@ -249,6 +253,36 @@ describe("derived connectivity and route geometry", () => {
     expect(() =>
       proposeLocalStretch(document, resolver, "A", { x: 140, y: 360 }),
     ).toThrow(/protected adjacent segment/u);
+  });
+
+  it("rebuilds a wrapped boundary path after a far move", () => {
+    const document = documentFixture();
+    document.routes = [
+      createRoutePath({
+        id: "route-hook",
+        netId: "net-h",
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [
+          { x: 160, y: 220 },
+          { x: 440, y: 220 },
+        ],
+        modes: ["manual", "manual", "manual"],
+      }),
+    ];
+
+    // Moved far past B, the slid up-and-over would wrap around the whole
+    // page; the boundary Route is rebuilt as the minimal orthogonal path
+    // instead. Endpoints and Net stay untouched.
+    expect(
+      proposeLocalStretch(document, resolver, "A", { x: 480, y: 160 }),
+    ).toEqual([
+      {
+        routeId: "route-hook",
+        waypoints: [{ x: 450, y: 160 }],
+        segmentModes: ["manual", "manual"],
+      },
+    ]);
   });
 
   it("changes only endpoint-adjacent geometry during a local stretch", () => {
