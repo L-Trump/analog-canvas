@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import { createEmptyDocument, createEmptyProject } from "@icm/model";
@@ -144,14 +145,16 @@ describe("EditorDocumentController", () => {
         })),
       ),
     );
-    document.routes.push({
-      id: "wire-ports",
-      netId: "net-ports",
-      from: { kind: "terminal", instanceId: "M1", pinName: "D" },
-      to: { kind: "terminal", instanceId: "M2", pinName: "D" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "wire-ports",
+        netId: "net-ports",
+        start: { kind: "terminal", instanceId: "M1", pinName: "D" },
+        end: { kind: "terminal", instanceId: "M2", pinName: "D" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     const controller = new EditorDocumentController(project);
     const unconnectedCount = () =>
       diagnoseProjectSnapshot(

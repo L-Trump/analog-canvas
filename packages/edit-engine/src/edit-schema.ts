@@ -15,6 +15,7 @@ import {
   PlacementSchema,
   PointSchema,
   RichTextDocumentSchema,
+  RouteBranchSchema,
   RouteEndpointSchema,
   RoutePresentationSchema,
   RotationSchema,
@@ -174,15 +175,9 @@ export const SetCellFormalParametersEditSchema = z.strictObject({
     )
     .max(128),
 });
-export const SetRoutePointsEditSchema = z.strictObject({
-  kind: z.literal("set_route_points"),
-  routeId: StableIdSchema,
-  netId: StableIdSchema,
-  from: RouteEndpointSchema,
-  to: RouteEndpointSchema,
-  waypoints: z.array(PointSchema),
-  segmentModes: z.array(SegmentModeSchema),
-  presentation: RoutePresentationSchema.optional(),
+export const SetRoutePathEditSchema = z.strictObject({
+  kind: z.literal("set_route_path"),
+  route: RouteBranchSchema,
 });
 export const RouteOrthogonalEditSchema = z.strictObject({
   kind: z.literal("route_orthogonal"),
@@ -205,7 +200,7 @@ export const AddJunctionEditSchema = z.strictObject({
       routeId: StableIdSchema,
       firstRouteId: StableIdSchema,
       secondRouteId: StableIdSchema,
-      segmentIndex: z.number().int().nonnegative(),
+      legId: StableIdSchema,
     })
     .optional(),
 });
@@ -214,7 +209,7 @@ export const AttachEndpointToRouteEditSchema = z.strictObject({
   endpoint: RouteEndpointSchema,
   routeId: StableIdSchema,
   point: PointSchema,
-  segmentIndex: z.number().int().nonnegative(),
+  legId: StableIdSchema,
   firstRouteId: StableIdSchema,
   secondRouteId: StableIdSchema,
 });
@@ -383,7 +378,7 @@ export const SchematicEditSchema = z.discriminatedUnion("kind", [
   RemoveCellTerminalEditSchema,
   ReorderCellTerminalsEditSchema,
   SetCellFormalParametersEditSchema,
-  SetRoutePointsEditSchema,
+  SetRoutePathEditSchema,
   RouteOrthogonalEditSchema,
   AddJunctionEditSchema,
   AttachEndpointToRouteEditSchema,

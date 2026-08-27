@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import type { WireSource } from "@icm/edit-engine";
 import {
   resolveDocumentRoutingGeometry,
@@ -63,14 +64,16 @@ describe("editor canvas hit layer", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "route",
-      netId: "net",
-      from: { kind: "junction", junctionId: "a" },
-      to: { kind: "junction", junctionId: "b" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route",
+        netId: "net",
+        start: { kind: "junction", junctionId: "a" },
+        end: { kind: "junction", junctionId: "b" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     const selection = emptySelectionProps(document);
     const geometry = resolveDocumentRoutingGeometry(
       document,
@@ -132,14 +135,16 @@ describe("editor canvas hit layer", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "route",
-      netId: "net",
-      from: { kind: "junction", junctionId: "a" },
-      to: { kind: "junction", junctionId: "b" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route",
+        netId: "net",
+        start: { kind: "junction", junctionId: "a" },
+        end: { kind: "junction", junctionId: "b" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.annotations.push({
       id: "note",
       kind: "route-marker",
@@ -148,7 +153,7 @@ describe("editor canvas hit layer", () => {
       anchor: {
         kind: "route",
         routeId: "route",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: -14,
         direction: "forward",

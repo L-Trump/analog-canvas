@@ -13,18 +13,16 @@ import {
 import type { SchematicClipboard } from "../clipboard/clipboard";
 import { endpointKey } from "@icm/derived";
 import {
-  createConnectivityProposal,
+  createRoutingOperationPlan,
   executeTransaction,
-  gateConnectivityProposal,
-  proposeVisualRouteDeletion,
-  proposeGroupMoveEdits,
-  proposeGroupReflectionEdits,
-  proposeGroupRotationEdits,
-  type ConnectivityIntent,
+  gateRoutingOperationPlan,
+  planRoutingDeletion,
+  planRoutingTransform,
+  type RoutingOperationIntent,
   type SchematicEdit,
   type WireSource,
 } from "@icm/edit-engine";
-import type { Point, SchematicDocument } from "@icm/model";
+import { routeEndpoints, type Point, type SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 import type { SnapGuideLine, SnapResult } from "../../snap/engine";
 
@@ -35,11 +33,6 @@ import {
 } from "../../canvas/canvas-drag-session";
 import { startCanvasDragVisual } from "../../canvas/canvas-drag-visual";
 import type { ScreenFlip } from "../../interaction/shortcut-orientation";
-import {
-  explicitAnnotationRemovals,
-  proposeConnectedInstanceDeletion,
-  proposeVisualSelectionDeletion,
-} from "./delete-selection";
 import type { VisualSelection } from "./visual-selection";
 import {
   planSelectionMove,
@@ -154,6 +147,7 @@ export interface UseSelectionInteractionOptions {
     anchor: Point,
   ) => void;
   setCopyPreviewPoint: (point: Point) => void;
+  advanceCopyPlacement: () => void;
   nextUniqueSuffix: () => number;
   endpointTestId: (endpoint: WireSource["endpoint"]) => string;
   tool: string;
@@ -202,22 +196,20 @@ export interface UseSelectionInteractionOptions {
 export function useSelectionInteraction(
   options: UseSelectionInteractionOptions,
 ) {
-  const copyCounter = useRef(0);
   const commandMoveSessionRef = useRef<CommandMoveSession | null>(null);
   const transactConnectivity = (
-    intent: ConnectivityIntent,
+    intent: RoutingOperationIntent,
     edits: readonly SchematicEdit[],
-    preview?: unknown,
     options_: { preserveInteraction?: boolean } = {},
   ): TransactionResult => {
-    const gate = gateConnectivityProposal(
+    const gate = gateRoutingOperationPlan(
       options.document,
-      createConnectivityProposal(options.document, {
+      createRoutingOperationPlan(options.document, {
         intent,
         diagnostics: [],
         edits,
-        ...(preview === undefined ? {} : { preview }),
       }),
+      { symbolResolver: options.resolver },
     );
     if (!gate.ok) {
       options.setStatus(gate.message);
@@ -290,8 +282,30 @@ export function useSelectionInteraction(
   const projectInstanceMove = (
     sourceDocument: SchematicDocument,
     moves: readonly { instanceId: string; position: Point }[],
+    movePlan?: SelectionMovePlan,
   ): SchematicDocument => {
-    const plan = proposeGroupMoveEdits(sourceDocument, options.resolver, moves);
+    const first = moves[0];
+    const original = first
+      ? sourceDocument.instances.find((item) => item.id === first.instanceId)
+          ?.placement?.position
+      : undefined;
+    const delta =
+      first && original
+        ? { x: first.position.x - original.x, y: first.position.y - original.y }
+        : { x: 0, y: 0 };
+    const plan = planRoutingTransform(
+      sourceDocument,
+      options.resolver,
+      {
+        instanceIds:
+          movePlan?.instanceIds ?? moves.map((move) => move.instanceId),
+        routeIds: movePlan?.translatedRouteIds ?? [],
+        junctionIds: movePlan?.translatedJunctionIds ?? [],
+      },
+      { kind: "translate", delta },
+    );
+    const blocking = plan.diagnostics.find((item) => item.severity === "error");
+    if (blocking) throw new Error(blocking.message);
     const result = executeTransaction(
       sourceDocument,
       {
@@ -300,7 +314,7 @@ export function useSelectionInteraction(
         expectedRevision: sourceDocument.revision,
         actor: { kind: "human", id: "selection-move-preview" },
         dryRun: true,
-        edits: plan.edits,
+        edits: [...plan.edits],
       },
       { symbolResolver: options.resolver },
     );
@@ -429,7 +443,11 @@ export function useSelectionInteraction(
       try {
         const projectedDocument =
           cached?.document ??
-          projectInstanceMove(session.projectedDocument, resolved.moves);
+          projectInstanceMove(
+            session.projectedDocument,
+            resolved.moves,
+            session.movePlan,
+          );
         session.lastProjection = {
           screenPoint: { ...screenPoint },
           suppressSnap,
@@ -482,20 +500,28 @@ export function useSelectionInteraction(
     }
     const session = commandMoveSessionRef.current!;
     try {
-      const plan =
+      const plan = planRoutingTransform(
+        session.projectedDocument,
+        options.resolver,
+        {
+          instanceIds: session.movePlan.instanceIds,
+          routeIds: session.movePlan.translatedRouteIds,
+          junctionIds: session.movePlan.translatedJunctionIds,
+        },
         transform.kind === "rotate"
-          ? proposeGroupRotationEdits(
-              session.projectedDocument,
-              options.resolver,
-              session.movePlan.instanceIds,
-              transform.deltaDegrees,
-            )
-          : proposeGroupReflectionEdits(
-              session.projectedDocument,
-              options.resolver,
-              session.movePlan.instanceIds,
-              transform.direction,
-            );
+          ? {
+              kind: "rotate",
+              degrees: transform.deltaDegrees === -90 ? 270 : 90,
+            }
+          : {
+              kind: "mirror",
+              axis: transform.direction === "left-right" ? "y" : "x",
+            },
+      );
+      const blocking = plan.diagnostics.find(
+        (item) => item.severity === "error",
+      );
+      if (blocking) throw new Error(blocking.message);
       const result = executeTransaction(
         session.projectedDocument,
         {
@@ -683,7 +709,11 @@ export function useSelectionInteraction(
         suppressSnap,
         lastSnap,
       );
-      const document = projectInstanceMove(options.document, resolved.moves);
+      const document = projectInstanceMove(
+        options.document,
+        resolved.moves,
+        preview.movePlan,
+      );
       lastSnap = resolved.snap;
       lastProjection = {
         screenPoint: { ...screenPoint },
@@ -828,20 +858,24 @@ export function useSelectionInteraction(
   const deleteSelectedJunction = (): void => {
     if (options.selectedEndpoint?.endpoint.kind !== "junction") return;
     const junctionId = options.selectedEndpoint.endpoint.junctionId;
-    const proposal = proposeVisualRouteDeletion(
+    const plan = planRoutingDeletion(
       options.document,
-      [],
-      [junctionId],
+      options.resolver,
+      { instanceIds: [], routeIds: [], junctionIds: [junctionId] },
+      options.nextUniqueSuffix(),
     );
-    const result = transactConnectivity(
-      "remove_wire_geometry",
-      proposal.edits,
-      proposal,
-    );
+    const gate = gateRoutingOperationPlan(options.document, plan, {
+      symbolResolver: options.resolver,
+    });
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
+    const result = options.transact([...gate.edits]);
     if (result.ok) {
       options.setSelectedEndpoint(null);
       options.setStatus(
-        `Deleted junction and ${proposal.routeIds.length} attached routes`,
+        `Deleted junction and ${plan.affected.boundaryRoutes.length + plan.affected.internalRoutes.length} attached routes`,
       );
     }
   };
@@ -850,7 +884,7 @@ export function useSelectionInteraction(
     const endpoint = options.selectedEndpoint?.endpoint;
     if (!endpoint || endpoint.kind === "junction") return;
     if (options.selectedNoConnect) {
-      const result = transactConnectivity("add_or_remove_no_connect", [
+      const result = options.transact([
         {
           kind: "remove_no_connect",
           noConnectId: options.selectedNoConnect.id,
@@ -869,7 +903,7 @@ export function useSelectionInteraction(
       );
       return;
     }
-    const result = transactConnectivity("add_or_remove_no_connect", [
+    const result = options.transact([
       {
         kind: "add_no_connect",
         noConnect: { id: nextNoConnectId(), endpoint },
@@ -906,21 +940,20 @@ export function useSelectionInteraction(
     if (!endpoint || endpoint.kind === "junction") return;
     const routeEdits = removeRoutes
       ? options.document.routes
-          .filter(
-            (route) =>
-              endpointKey(route.from) === endpointKey(endpoint) ||
-              endpointKey(route.to) === endpointKey(endpoint),
+          .filter((route) =>
+            routeEndpoints(route).some(
+              (candidate) => endpointKey(candidate) === endpointKey(endpoint),
+            ),
           )
           .map((route): SchematicEdit => ({
             kind: "remove_route_geometry",
             routeId: route.id,
           }))
       : [];
-    const result = transactConnectivity(
-      "disconnect_endpoint",
-      [...routeEdits, { kind: "disconnect_endpoint", endpoint }],
-      { removeRoutes },
-    );
+    const result = transactConnectivity("cut", [
+      ...routeEdits,
+      { kind: "disconnect_endpoint", endpoint },
+    ]);
     if (result.ok) {
       options.setSelectedEndpoint(null);
       options.setStatus(
@@ -930,162 +963,118 @@ export function useSelectionInteraction(
   };
 
   const deleteSelection = (): void => {
-    const formalTerminals = (options.document.netlist?.terminals ?? []).filter(
-      (terminal) =>
-        terminal.interfaceInstanceIds.some((instanceId) =>
-          options.visualSelection.instanceIds.includes(instanceId),
-        ),
-    );
-    if (formalTerminals.length > 0) {
-      try {
-        const deletionEdits = proposeVisualSelectionDeletion(
-          options.document,
-          options.resolver,
-          options.visualSelection,
-          options.nextUniqueSuffix(),
-        );
-        if (
-          options.commitCellTerminalSelection(
-            formalTerminals.map((terminal) => terminal.id),
-            deletionEdits,
-          )
-        ) {
-          options.resetSelection();
-          options.setSelectedEndpoint(null);
-          options.setStatus("Deleted selected schematic objects");
-        }
-      } catch (error) {
-        options.setStatus(
-          error instanceof Error ? error.message : "Delete failed",
-        );
-      }
-      return;
-    }
-    const initialRouteIds = new Set(options.visualSelection.routeIds);
-    const selectedAnnotationIds = new Set(
-      options.visualSelection.annotationIds,
-    );
-    const selectedDraftingIds = new Set(options.visualSelection.draftingIds);
-    const selectedJunctionIds = new Set([
-      ...options.visualSelection.junctionIds,
-      ...(options.selectedEndpoint?.endpoint.kind === "junction"
-        ? [options.selectedEndpoint.endpoint.junctionId]
-        : []),
-    ]);
-    const hasMixedSelection =
-      initialRouteIds.size > 0 ||
-      selectedAnnotationIds.size > 0 ||
-      selectedDraftingIds.size > 0 ||
-      selectedJunctionIds.size > 0;
-    if (
-      initialRouteIds.size === 1 &&
-      selectedAnnotationIds.size === 0 &&
-      selectedDraftingIds.size === 0 &&
-      selectedJunctionIds.size === 0 &&
-      options.selectedIds.length === 0
-    ) {
-      options.deleteSelectedRouteConnection();
-      return;
-    }
-    if (hasMixedSelection) {
-      const visualRouteDeletion = proposeVisualRouteDeletion(
-        options.document,
-        [...initialRouteIds],
-        [...selectedJunctionIds],
-        { instanceIdsScheduledForDeletion: options.selectedIds },
-      );
-      try {
-        const instanceEdits =
-          options.selectedIds.length > 0
-            ? proposeConnectedInstanceDeletion(
-                options.document,
-                options.resolver,
-                options.selectedIds,
-                options.nextUniqueSuffix(),
-              )
-            : [];
-        const explicitAnnotationIds = explicitAnnotationRemovals(
-          options.document,
-          options.selectedIds,
-          [...selectedAnnotationIds].filter(
-            (annotationId) =>
-              !visualRouteDeletion.annotationIds.includes(annotationId),
-          ),
-        );
-        const result = transactConnectivity(
-          "delete_connection_intent",
-          [
-            ...instanceEdits,
-            ...visualRouteDeletion.edits,
-            ...explicitAnnotationIds.map((annotationId): SchematicEdit => ({
-              kind: "remove_schematic_annotation",
-              annotationId,
-            })),
-            ...[...selectedDraftingIds].map((objectId): SchematicEdit => ({
-              kind: "remove_drafting_object",
-              objectId,
-            })),
-          ],
-          visualRouteDeletion,
-        );
-        if (result.ok) {
-          options.resetSelection();
-          options.setSelectedEndpoint(null);
-          options.setStatus("Deleted selected schematic objects");
-        }
-      } catch (error) {
-        options.setStatus(
-          error instanceof Error ? error.message : "Delete failed",
-        );
-      }
-      return;
-    }
-    if (options.selectedEndpoint?.endpoint.kind === "junction") {
-      deleteSelectedJunction();
-      return;
-    }
-    if (options.selectedAnnotationId) {
-      options.deleteSelectedAnnotation();
-      return;
-    }
-    if (options.selectedDraftingId) {
-      const result = options.transact([
-        {
-          kind: "remove_drafting_object",
-          objectId: options.selectedDraftingId,
-        },
-      ]);
-      if (result.ok) {
-        options.replaceSelectionKind("drafting", []);
-        options.setStatus(
-          `Deleted drafting object ${options.selectedDraftingId}`,
-        );
-      }
-      return;
-    }
-    if (options.selectedRouteId) {
-      options.deleteSelectedRouteConnection();
-      return;
-    }
-    if (options.selectedIds.length === 0) return;
+    const deletionSeed = {
+      instanceIds: [
+        ...new Set([
+          ...options.visualSelection.instanceIds,
+          ...options.selectedIds,
+        ]),
+      ],
+      routeIds: [
+        ...new Set([
+          ...options.visualSelection.routeIds,
+          ...(options.selectedRouteId ? [options.selectedRouteId] : []),
+        ]),
+      ],
+      junctionIds: [
+        ...new Set([
+          ...options.visualSelection.junctionIds,
+          ...(options.selectedEndpoint?.endpoint.kind === "junction"
+            ? [options.selectedEndpoint.endpoint.junctionId]
+            : []),
+        ]),
+      ],
+      annotationIds: [
+        ...new Set([
+          ...options.visualSelection.annotationIds,
+          ...(options.selectedAnnotationId
+            ? [options.selectedAnnotationId]
+            : []),
+        ]),
+      ],
+      draftingIds: [
+        ...new Set([
+          ...options.visualSelection.draftingIds,
+          ...(options.selectedDraftingId ? [options.selectedDraftingId] : []),
+        ]),
+      ],
+    };
+    const existingSelectionCounts = {
+      instances: deletionSeed.instanceIds.filter((id) =>
+        options.document.instances.some((item) => item.id === id),
+      ).length,
+      routes: deletionSeed.routeIds.filter((id) =>
+        options.document.routes.some((item) => item.id === id),
+      ),
+      junctions: deletionSeed.junctionIds.filter((id) =>
+        options.document.junctions.some((item) => item.id === id),
+      ).length,
+      annotations: deletionSeed.annotationIds.filter((id) =>
+        options.document.annotations.some((item) => item.id === id),
+      ).length,
+      drafting: deletionSeed.draftingIds.filter((id) =>
+        options.document.drafting?.objects.some((item) => item.id === id),
+      ).length,
+    };
+    const deletionStatus =
+      existingSelectionCounts.routes.length === 1 &&
+      existingSelectionCounts.instances === 0 &&
+      existingSelectionCounts.junctions === 0 &&
+      existingSelectionCounts.annotations === 0 &&
+      existingSelectionCounts.drafting === 0
+        ? `Deleted wire ${existingSelectionCounts.routes[0]}`
+        : existingSelectionCounts.instances > 0 &&
+            existingSelectionCounts.routes.length === 0 &&
+            existingSelectionCounts.junctions === 0 &&
+            existingSelectionCounts.annotations === 0 &&
+            existingSelectionCounts.drafting === 0
+          ? "Deleted component selection; connected wires remain dangling"
+          : "Deleted selected schematic objects";
+    let deletionPlan;
     try {
-      const deletion = proposeConnectedInstanceDeletion(
+      deletionPlan = planRoutingDeletion(
         options.document,
         options.resolver,
-        options.selectedIds,
+        deletionSeed,
         options.nextUniqueSuffix(),
       );
-      const result = transactConnectivity("delete_connection_intent", deletion);
-      if (result.ok) {
-        options.replaceSelectionKind("instance", []);
-        options.setStatus(
-          "Deleted component selection; connected wires remain dangling",
-        );
-      }
     } catch (error) {
       options.setStatus(
         error instanceof Error ? error.message : "Delete failed",
       );
+      return;
+    }
+    const formalTerminals = (options.document.netlist?.terminals ?? []).filter(
+      (terminal) =>
+        terminal.interfaceInstanceIds.some((instanceId) =>
+          deletionSeed.instanceIds.includes(instanceId),
+        ),
+    );
+    if (formalTerminals.length > 0) {
+      if (
+        options.commitCellTerminalSelection(
+          formalTerminals.map((terminal) => terminal.id),
+          [...deletionPlan.edits],
+        )
+      ) {
+        options.resetSelection();
+        options.setSelectedEndpoint(null);
+        options.setStatus(deletionStatus);
+      }
+      return;
+    }
+    const gate = gateRoutingOperationPlan(options.document, deletionPlan, {
+      symbolResolver: options.resolver,
+    });
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
+    const result = options.transact([...gate.edits]);
+    if (result.ok) {
+      options.resetSelection();
+      options.setSelectedEndpoint(null);
+      options.setStatus(deletionStatus);
     }
   };
 
@@ -1122,7 +1111,6 @@ export function useSelectionInteraction(
     const interaction = options.getInteractionState();
     if (interaction.kind !== "copy-placement") return;
     const copyPlacement = interaction.copy;
-    copyCounter.current += 1;
     const proposal = proposePaste(
       options.document,
       copyPlacement.clipboard,
@@ -1130,10 +1118,9 @@ export function useSelectionInteraction(
         x: point.x - copyPlacement.anchor.x,
         y: point.y - copyPlacement.anchor.y,
       },
-      copyCounter.current,
+      copyPlacement.sequence,
     );
     if (proposal.errors.length > 0) {
-      copyCounter.current -= 1;
       options.setStatus(proposal.errors[0]!);
       options.cancelAllTransientInteraction();
       return;
@@ -1144,6 +1131,21 @@ export function useSelectionInteraction(
       copyPlacement.orientationOperations,
     );
     const edits = [...proposal.edits, ...orientationEdits];
+    const copyPlan = createRoutingOperationPlan(options.document, {
+      intent: "clone",
+      affected: proposal.operationPlan.affected,
+      expectedElectricalEffect: proposal.operationPlan.expectedElectricalEffect,
+      idRemap: proposal.idRemap,
+      diagnostics: proposal.operationPlan.diagnostics,
+      edits,
+    });
+    const gate = gateRoutingOperationPlan(options.document, copyPlan, {
+      symbolResolver: options.resolver,
+    });
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
     const editsCellInterface = edits.some(
       (edit) =>
         edit.kind === "add_cell_terminal" ||
@@ -1151,27 +1153,14 @@ export function useSelectionInteraction(
     );
     let result: TransactionResult;
     if (editsCellInterface) {
-      const gate = gateConnectivityProposal(
-        options.document,
-        createConnectivityProposal(options.document, {
-          intent: "connect_without_wire",
-          diagnostics: [],
-          edits,
-          preview: proposal,
-        }),
-      );
-      if (!gate.ok) {
-        options.setStatus(gate.message);
-        result = { ok: false, revision: options.document.revision };
-      } else {
-        result = options.transactProjectDocument("copy-cell-pin", gate.edits);
-      }
+      result = options.transactProjectDocument("copy-cell-pin", gate.edits);
     } else {
-      result = transactConnectivity("connect_without_wire", edits, proposal, {
+      result = options.transact([...gate.edits], {
         preserveInteraction: true,
       });
     }
     if (result.ok) {
+      options.advanceCopyPlacement();
       options.selectOnly("instance", proposal.instanceIds);
       options.setCopyPreviewPoint(point);
       options.setStatus(

@@ -1,10 +1,11 @@
-import { foldNetName, projectCellInterface } from "@icm/model";
+import { foldNetName, projectCellInterface, routeEndpoints } from "@icm/model";
 import {
   directObjectLocator,
   resolveDocumentLogicalNets,
   type ResolvedLogicalNet,
 } from "@icm/derived";
 import type {
+  RouteEndpoint,
   CircuitProject,
   ExternalSubcircuitDefinition,
   Instance,
@@ -559,7 +560,7 @@ function extractExternalSubcircuitInstance(
     }
   }
   for (const route of document.routes) {
-    for (const endpoint of [route.from, route.to]) {
+    for (const endpoint of routeEndpoints(route)) {
       if (endpoint.kind === "terminal" && endpoint.instanceId === instance.id) {
         referencedPins.add(endpoint.pinName);
       }

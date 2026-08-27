@@ -1,5 +1,6 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
-import type { SchematicDocument } from "@icm/model";
+import type { RouteEndpoint, SchematicDocument } from "@icm/model";
 import { InMemorySymbolResolver, builtInSymbols } from "@icm/symbols";
 import { describe, expect, it } from "vitest";
 
@@ -55,9 +56,7 @@ function documentWith(
     }
   }
   let anchorSuffix = 0;
-  const endpointFor = (
-    end: RouteSpec["from"],
-  ): SchematicDocument["routes"][number]["from"] => {
+  const endpointFor = (end: RouteSpec["from"]): RouteEndpoint => {
     if ("instanceId" in end) {
       return {
         kind: "terminal",
@@ -76,14 +75,16 @@ function documentWith(
     return { kind: "junction", junctionId: id };
   };
   for (const route of routes) {
-    document.routes.push({
-      id: route.id,
-      netId: net.id,
-      from: endpointFor(route.from),
-      to: endpointFor(route.to),
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: route.id,
+        netId: net.id,
+        start: endpointFor(route.from),
+        end: endpointFor(route.to),
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
   }
   return document;
 }

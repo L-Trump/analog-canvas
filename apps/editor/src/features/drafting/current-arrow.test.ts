@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
@@ -34,14 +35,16 @@ describe("route-attached current arrows", () => {
         { instanceId: "R2", pinName: "1" },
       ],
     });
-    document.routes.push({
-      id: "route-signal",
-      netId: "net-signal",
-      from: { kind: "terminal", instanceId: "R1", pinName: "2" },
-      to: { kind: "terminal", instanceId: "R2", pinName: "1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-signal",
+        netId: "net-signal",
+        start: { kind: "terminal", instanceId: "R1", pinName: "2" },
+        end: { kind: "terminal", instanceId: "R2", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.annotations.push({
       id: "current-1",
       kind: "route-marker",
@@ -50,7 +53,7 @@ describe("route-attached current arrows", () => {
       anchor: {
         kind: "route",
         routeId: "route-signal",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: -14,
         direction: "forward",
@@ -110,14 +113,16 @@ describe("route-attached current arrows", () => {
         { instanceId: "R2", pinName: "1" },
       ],
     });
-    document.routes.push({
-      id: "route-signal",
-      netId: "net-signal",
-      from: { kind: "terminal", instanceId: "R1", pinName: "2" },
-      to: { kind: "terminal", instanceId: "R2", pinName: "1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-signal",
+        netId: "net-signal",
+        start: { kind: "terminal", instanceId: "R1", pinName: "2" },
+        end: { kind: "terminal", instanceId: "R2", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.annotations.push({
       id: "current-1",
       kind: "route-marker",
@@ -126,7 +131,7 @@ describe("route-attached current arrows", () => {
       anchor: {
         kind: "route",
         routeId: "route-signal",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: -14,
         direction: "forward",

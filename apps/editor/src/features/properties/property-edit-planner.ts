@@ -150,7 +150,7 @@ export function createPropertyEditPlanner({
           : {
               kind: "route",
               routeId: route.id,
-              segmentIndex: segment,
+              legId: route.legs[segment]!.id,
               t: 0.5,
               normalOffset: -8,
               direction: "forward",

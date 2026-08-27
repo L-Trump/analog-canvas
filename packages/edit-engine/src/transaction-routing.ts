@@ -5,6 +5,7 @@ import type {
   RouteEndpoint,
   SchematicDocument,
 } from "@icm/model";
+import { createRoutePath, routeEnd } from "@icm/model";
 import {
   derivePowerRailComponent,
   deriveDocumentContactEvidence,
@@ -26,7 +27,7 @@ export function pointOnSegment(point: Point, from: Point, to: Point): boolean {
 }
 
 export function routeIsProtected(route: RouteBranch): boolean {
-  return route.segmentModes.includes("locked");
+  return route.legs.some((leg) => leg.mode === "locked");
 }
 
 export function endpointOwnerNetId(
@@ -82,7 +83,7 @@ export function netEndpointGroups(
   for (const route of document.routes.filter(
     (candidate) => candidate.netId === netId,
   )) {
-    union(endpointKey(route.from), endpointKey(route.to));
+    union(endpointKey(route.start), endpointKey(routeEnd(route)));
   }
   // A pin or Junction placed directly on another explicit same-Net endpoint
   // is a real electrical contact even when no Route object exists between the
@@ -198,17 +199,9 @@ export function lockedLayoutOwner(
 }
 
 export function routeFromEdit(
-  edit: Extract<SchematicEdit, { kind: "set_route_points" }>,
+  edit: Extract<SchematicEdit, { kind: "set_route_path" }>,
 ): RouteBranch {
-  return {
-    id: edit.routeId,
-    netId: edit.netId,
-    from: structuredClone(edit.from),
-    to: structuredClone(edit.to),
-    waypoints: structuredClone(edit.waypoints),
-    segmentModes: [...edit.segmentModes],
-    ...(edit.presentation ? { presentation: edit.presentation } : {}),
-  };
+  return structuredClone(edit.route);
 }
 
 export function validateRoute(
@@ -216,9 +209,6 @@ export function validateRoute(
   route: RouteBranch,
   resolver: SymbolResolver,
 ): string | null {
-  if (route.segmentModes.length !== route.waypoints.length + 1) {
-    return `Route ${route.id} requires one segment mode per geometric segment`;
-  }
   const net = document.nets.find((candidate) => candidate.id === route.netId);
   if (!net) return `Route net does not exist: ${route.netId}`;
   if (
@@ -227,10 +217,11 @@ export function validateRoute(
   ) {
     return `Power rail ${route.id} must belong to a named Net`;
   }
-  if (!endpointBelongsToNet(document, net, route.from)) {
+  if (!endpointBelongsToNet(document, net, route.start)) {
     return `Route from endpoint is not a member of ${route.netId}`;
   }
-  if (!endpointBelongsToNet(document, net, route.to)) {
+  const end = routeEnd(route);
+  if (!endpointBelongsToNet(document, net, end)) {
     return `Route to endpoint is not a member of ${route.netId}`;
   }
   const polyline = resolveRouteEditPath(document, resolver, route);
@@ -285,16 +276,16 @@ export function validateRoute(
   }
   for (const [endpoint, point, adjacent, mode] of [
     [
-      route.from,
+      route.start,
       polyline.points[0]!,
       polyline.points[1]!,
-      route.segmentModes[0],
+      route.legs[0]?.mode,
     ],
     [
-      route.to,
+      end,
       polyline.points.at(-1)!,
       polyline.points.at(-2)!,
-      route.segmentModes.at(-1),
+      route.legs.at(-1)?.mode,
     ],
   ] as const) {
     if (endpoint.kind !== "terminal" || mode !== "escape") continue;

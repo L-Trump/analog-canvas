@@ -22,24 +22,47 @@ export const RoutePresentationSchema = z.enum([
   "bulk-dashed",
   "power-rail",
 ]);
+export const RouteLegTargetSchema = z.discriminatedUnion("kind", [
+  z.strictObject({
+    kind: z.literal("bend"),
+    bendId: StableIdSchema,
+    position: PointSchema,
+  }),
+  z.strictObject({
+    kind: z.literal("endpoint"),
+    endpoint: RouteEndpointSchema,
+  }),
+]);
+export const RouteLegSchema = z.strictObject({
+  id: StableIdSchema,
+  to: RouteLegTargetSchema,
+  mode: SegmentModeSchema,
+});
 export const RouteBranchSchema = z
   .strictObject({
     id: StableIdSchema,
     netId: StableIdSchema,
-    from: RouteEndpointSchema,
-    to: RouteEndpointSchema,
-    waypoints: z.array(PointSchema),
-    segmentModes: z.array(SegmentModeSchema),
+    start: RouteEndpointSchema,
+    legs: z.array(RouteLegSchema).min(1),
     // Electrical connectivity is always owned by `netId` and the endpoints.
     presentation: RoutePresentationSchema.optional(),
   })
   .superRefine((route, context) => {
-    if (route.segmentModes.length !== route.waypoints.length + 1) {
-      context.addIssue({
-        code: "custom",
-        message: "A route requires one segment mode per geometric segment",
-        path: ["segmentModes"],
-      });
+    for (const [index, leg] of route.legs.entries()) {
+      const isFinal = index === route.legs.length - 1;
+      if (isFinal && leg.to.kind !== "endpoint") {
+        context.addIssue({
+          code: "custom",
+          message: "The final route leg must end at an endpoint",
+          path: ["legs", index, "to"],
+        });
+      } else if (!isFinal && leg.to.kind !== "bend") {
+        context.addIssue({
+          code: "custom",
+          message: "Only the final route leg may end at an endpoint",
+          path: ["legs", index, "to"],
+        });
+      }
     }
   });
 export const JunctionRoleSchema = z.enum([

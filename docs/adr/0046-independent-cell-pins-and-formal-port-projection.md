@@ -17,7 +17,8 @@ which could not be seen from the schematic geometry.
 
 ## Decision
 
-Schema 25 makes every visible Cell Pin an independent authored declaration.
+Schema 25 introduced every visible Cell Pin as an independent authored
+declaration; the contract remains present in current Schema 26.
 Each declaration owns exactly one Port Instance, one stable terminal identity,
 one name, one direction, and one physical Base Net. Duplicate names are valid.
 Placement, rename, copy, direction editing, deletion, and Wire cutting never

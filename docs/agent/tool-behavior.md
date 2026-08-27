@@ -54,21 +54,24 @@ A persisted Route has:
 {
   id,
   netId,
-  from,
-  to,
-  waypoints: Point[],
-  segmentModes: SegmentMode[]
+  start: RouteEndpoint,
+  legs: Array<{
+    id: LegId,
+    to: BendTarget | EndpointTarget,
+    mode: SegmentMode
+  }>
 }
 ```
 
-The effective polyline is `[resolved(from), ...waypoints, resolved(to)]`.
-Endpoint coordinates come from Instance terminals or Junctions; they are
-not duplicated in `waypoints`. Normal interactive route geometry must be
+The effective polyline is `resolved(start)`, every bend target, then the final
+resolved endpoint target. Endpoint coordinates come from Instance terminals or
+Junctions and are not duplicated in bend targets. Normal interactive route geometry must be
 octilinear (horizontal, vertical, or ±45°); orthogonal is the default
 authoring constraint. A `power-rail` is exactly one non-zero horizontal or
 vertical segment. The Agent may request the same
-`wireIntent.routingMode: "octilinear"` constraint as GUI, and
-`segmentModes.length` must equal the number of polyline segments.
+`wireIntent.routingMode: "octilinear"` constraint as GUI. Persisted Route
+attachments and route-segment wire intents use `{ routeId, legId }`; a derived
+`segmentIndex` is valid only for the current Snapshot revision.
 
 Segment modes describe/edit segment handling; they do not generate geometry.
 In particular, setting `auto`, `escape`, `manual`, `locked`, or `trunk` does
@@ -94,7 +97,7 @@ placement, or reroutes around a conflict.
 | Role           | Persisted result      | Meaning                                                           |
 | -------------- | --------------------- | ----------------------------------------------------------------- |
 | `endpoint`     | none                  | Bind an Instance terminal or Junction at its resolved coordinate. |
-| `bend`         | Route waypoint        | Degree-two, dot-free change of direction.                         |
+| `bend`         | Route bend leg target | Degree-two, dot-free change of direction.                         |
 | `tap`          | branch Junction       | Real electrical branch point.                                     |
 | `junction`     | branch Junction       | Real electrical branch point.                                     |
 | `label-anchor` | label-anchor Junction | Electrical anchor for an attached local Net label.                |
@@ -116,7 +119,7 @@ the offset in y; `axis: "y"` preserves y and offsets x.
 Non-label `link` and `trunk` edges must already be octilinear (horizontal,
 vertical, or ±45°). An `escape` edge remains axis-aligned with its terminal's
 outward direction. To turn a corner, the Agent must add a degree-two `bend`.
-The helper folds consecutive bend nodes into one Route's waypoints and keeps
+The helper folds consecutive bend nodes into one Route's bend legs and keeps
 them dot-free.
 
 ### Atomic conflict behavior

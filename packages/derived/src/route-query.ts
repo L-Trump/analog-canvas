@@ -4,6 +4,7 @@ import type {
   RouteEndpoint,
   SchematicDocument,
 } from "@icm/model";
+import { routeEnd } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
 import { endpointKey, resolveEndpointPoint } from "./endpoint.js";
@@ -87,10 +88,7 @@ export function resolveRouteTap(
         (pointer.x - candidate.point.x) ** 2 +
         (pointer.y - candidate.point.y) ** 2;
       return {
-        address: {
-          routeId: geometry.routeId,
-          segmentIndex: candidate.index - 1,
-        },
+        address: geometry.segments[candidate.index - 1]!.address,
         point: { ...candidate.point },
         t: 1,
         distanceSquared,
@@ -143,8 +141,8 @@ function sharedExplicitEndpoint(
   left: RouteBranch,
   right: RouteBranch,
 ): RouteEndpoint | null {
-  for (const leftEndpoint of [left.from, left.to]) {
-    for (const rightEndpoint of [right.from, right.to]) {
+  for (const leftEndpoint of [left.start, routeEnd(left)]) {
+    for (const rightEndpoint of [right.start, routeEnd(right)]) {
       if (endpointKey(leftEndpoint) === endpointKey(rightEndpoint)) {
         return leftEndpoint;
       }

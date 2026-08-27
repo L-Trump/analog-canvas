@@ -1,7 +1,9 @@
+import { createRoutePath, routeBends, routeEnd, routeModes } from "@icm/model";
 import type {
   Point,
   RouteBranch,
   RouteEndpoint,
+  SegmentMode,
   SchematicDocument,
 } from "@icm/model";
 import {
@@ -12,6 +14,7 @@ import type { SymbolResolver } from "@icm/symbols";
 
 import type { SchematicEdit } from "./edit-schema.js";
 import { normalizeRouteGeometry } from "./route-geometry-edit.js";
+import { rebuildRoutePath } from "./route-leg-mutation.js";
 import { resolveRouteEditPath } from "./route-operations.js";
 import { pointOnSegment } from "./transaction-routing.js";
 
@@ -44,31 +47,35 @@ export function splitRoute(
     // route validation. Partition the existing polyline at the vertex instead.
     const firstNormalized = normalizeRouteGeometry(
       polyline.points.slice(0, vertexIndex + 1),
-      route.segmentModes.slice(0, vertexIndex),
+      routeModes(route).slice(0, vertexIndex),
     );
     const secondNormalized = normalizeRouteGeometry(
       polyline.points.slice(vertexIndex),
-      route.segmentModes.slice(vertexIndex),
+      routeModes(route).slice(vertexIndex),
     );
+    const first = createRoutePath({
+      id: firstRouteId,
+      netId: route.netId,
+      start: structuredClone(route.start),
+      end: structuredClone(splitEndpoint),
+      bends: firstNormalized.points.slice(1, -1),
+      modes: firstNormalized.segmentModes,
+      ...(route.presentation ? { presentation: route.presentation } : {}),
+    });
+    const second = createRoutePath({
+      id: secondRouteId,
+      netId: route.netId,
+      start: structuredClone(splitEndpoint),
+      end: structuredClone(routeEnd(route)),
+      bends: secondNormalized.points.slice(1, -1),
+      modes: secondNormalized.segmentModes,
+      ...(route.presentation ? { presentation: route.presentation } : {}),
+    });
+    adoptSplitIdentities(first, route, 0);
+    adoptSplitIdentities(second, route, vertexIndex);
     return {
-      first: {
-        id: firstRouteId,
-        netId: route.netId,
-        from: structuredClone(route.from),
-        to: structuredClone(splitEndpoint),
-        waypoints: firstNormalized.points.slice(1, -1),
-        segmentModes: firstNormalized.segmentModes,
-        ...(route.presentation ? { presentation: route.presentation } : {}),
-      },
-      second: {
-        id: secondRouteId,
-        netId: route.netId,
-        from: structuredClone(splitEndpoint),
-        to: structuredClone(route.to),
-        waypoints: secondNormalized.points.slice(1, -1),
-        segmentModes: secondNormalized.segmentModes,
-        ...(route.presentation ? { presentation: route.presentation } : {}),
-      },
+      first,
+      second,
     };
   }
   const segmentFrom = polyline.points[segmentIndex]!;
@@ -78,35 +85,63 @@ export function splitRoute(
   }
   const firstNormalized = normalizeRouteGeometry(
     [...polyline.points.slice(0, segmentIndex + 1), position],
-    route.segmentModes.slice(0, segmentIndex + 1),
+    routeModes(route).slice(0, segmentIndex + 1),
   );
   const secondNormalized = normalizeRouteGeometry(
     [position, ...polyline.points.slice(segmentIndex + 1)],
     [
-      route.segmentModes[segmentIndex]!,
-      ...route.segmentModes.slice(segmentIndex + 1),
+      routeModes(route)[segmentIndex]!,
+      ...routeModes(route).slice(segmentIndex + 1),
     ],
   );
+  const first = createRoutePath({
+    id: firstRouteId,
+    netId: route.netId,
+    start: structuredClone(route.start),
+    end: structuredClone(splitEndpoint),
+    bends: firstNormalized.points.slice(1, -1),
+    modes: firstNormalized.segmentModes,
+    ...(route.presentation ? { presentation: route.presentation } : {}),
+  });
+  const second = createRoutePath({
+    id: secondRouteId,
+    netId: route.netId,
+    start: structuredClone(splitEndpoint),
+    end: structuredClone(routeEnd(route)),
+    bends: secondNormalized.points.slice(1, -1),
+    modes: secondNormalized.segmentModes,
+    ...(route.presentation ? { presentation: route.presentation } : {}),
+  });
+  adoptSplitIdentities(first, route, 0);
+  adoptSplitIdentities(second, route, segmentIndex + 1, true);
   return {
-    first: {
-      id: firstRouteId,
-      netId: route.netId,
-      from: structuredClone(route.from),
-      to: structuredClone(splitEndpoint),
-      waypoints: firstNormalized.points.slice(1, -1),
-      segmentModes: firstNormalized.segmentModes,
-      ...(route.presentation ? { presentation: route.presentation } : {}),
-    },
-    second: {
-      id: secondRouteId,
-      netId: route.netId,
-      from: structuredClone(splitEndpoint),
-      to: structuredClone(route.to),
-      waypoints: secondNormalized.points.slice(1, -1),
-      segmentModes: secondNormalized.segmentModes,
-      ...(route.presentation ? { presentation: route.presentation } : {}),
-    },
+    first,
+    second,
   };
+}
+
+function adoptSplitIdentities(
+  target: RouteBranch,
+  source: RouteBranch,
+  sourceOffset: number,
+  firstLegIsNew = false,
+): void {
+  for (const [index, leg] of target.legs.entries()) {
+    const sourceIndex = sourceOffset + index - (firstLegIsNew ? 1 : 0);
+    const sourceLeg = source.legs[sourceIndex];
+    if (!sourceLeg || (firstLegIsNew && index === 0)) continue;
+    leg.id = sourceLeg.id;
+    if (leg.to.kind === "bend" && sourceLeg.to.kind === "bend") {
+      leg.to.bendId = sourceLeg.to.bendId;
+    }
+  }
+  if (firstLegIsNew) {
+    const splitSource = source.legs[sourceOffset - 1];
+    const firstTarget = target.legs[0]?.to;
+    if (firstTarget?.kind === "bend" && splitSource?.to.kind === "bend") {
+      firstTarget.bendId = splitSource.to.bendId;
+    }
+  }
 }
 
 export function samePoint(left: Point, right: Point): boolean {
@@ -128,7 +163,7 @@ export function endpointBelongsToInstance(
 export function followRouteEndpoint(
   routeId: string,
   points: Point[],
-  modes: RouteBranch["segmentModes"],
+  modes: SegmentMode[],
   side: "from" | "to",
   oldPoint: Point,
   newPoint: Point,
@@ -218,13 +253,14 @@ export function applyInstancesRouteFollow(
 ): string[] {
   const changed: string[] = [];
   for (const originalRoute of originalDocument.routes) {
+    const originalEnd = routeEnd(originalRoute);
     if (explicitlyAuthoredRouteIds.has(originalRoute.id)) continue;
     const movesFrom =
-      originalRoute.from.kind === "terminal" &&
-      instanceIds.has(originalRoute.from.instanceId);
+      originalRoute.start.kind === "terminal" &&
+      instanceIds.has(originalRoute.start.instanceId);
     const movesTo =
-      originalRoute.to.kind === "terminal" &&
-      instanceIds.has(originalRoute.to.instanceId);
+      originalEnd.kind === "terminal" &&
+      instanceIds.has(originalEnd.instanceId);
     if (!movesFrom && !movesTo) continue;
 
     const route = draft.routes.find(
@@ -236,10 +272,10 @@ export function applyInstancesRouteFollow(
       originalRoute,
     );
     const newFrom = route
-      ? resolveEndpointConnection(draft, resolver, route.from)
+      ? resolveEndpointConnection(draft, resolver, route.start)
       : null;
     const newTo = route
-      ? resolveEndpointConnection(draft, resolver, route.to)
+      ? resolveEndpointConnection(draft, resolver, routeEnd(route))
       : null;
     if (!route || !original || !newFrom || !newTo) continue;
 
@@ -315,8 +351,17 @@ export function applyInstancesRouteFollow(
     // only when it would leave a degenerate segment behind — previously a
     // free-angle Route simply stopped following its instance.
     if (!polylineSatisfiesConstraint(normalized.points, "any-angle")) continue;
-    route.waypoints = normalized.points.slice(1, -1);
-    route.segmentModes = normalized.segmentModes;
+    const routeIndex = draft.routes.findIndex(
+      (candidate) => candidate.id === route.id,
+    );
+    draft.routes[routeIndex] = rebuildRoutePath(
+      route,
+      route.start,
+      routeEnd(route),
+      normalized.points.slice(1, -1),
+      normalized.segmentModes,
+      `follow-${draft.revision}`,
+    );
     changed.push(route.id);
   }
   return changed.sort((left, right) => left.localeCompare(right, "en"));
@@ -325,7 +370,7 @@ export function applyInstancesRouteFollow(
 /**
  * Converts shared route-follow output into the normal typed edit union. This
  * is intentionally a planner; Project transactions still validate and commit
- * every resulting `set_route_points` edit in the usual way.
+ * every resulting `set_route_path` edit in the usual way.
  */
 export function planInstanceSymbolGeometryRouteFollow(
   document: SchematicDocument,
@@ -347,14 +392,8 @@ export function planInstanceSymbolGeometryRouteFollow(
     const route = draft.routes.find((candidate) => candidate.id === routeId);
     if (!route) return { kind: "remove_route_geometry", routeId };
     return {
-      kind: "set_route_points",
-      routeId: route.id,
-      netId: route.netId,
-      from: structuredClone(route.from),
-      to: structuredClone(route.to),
-      waypoints: structuredClone(route.waypoints),
-      segmentModes: [...route.segmentModes],
-      ...(route.presentation ? { presentation: route.presentation } : {}),
+      kind: "set_route_path",
+      route: structuredClone(route),
     };
   });
 }

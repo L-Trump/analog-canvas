@@ -1,3 +1,4 @@
+import { createRoutePath, routeEnd } from "@icm/model";
 import type { RouteBranch, SchematicDocument } from "@icm/model";
 import { resolveEndpointConnection } from "@icm/derived";
 import type { SymbolResolver } from "@icm/symbols";
@@ -7,6 +8,7 @@ import {
   buildOrthogonalEscapeRoute,
   normalizeRouteGeometry,
 } from "./route-geometry-edit.js";
+import { rebuildRoutePath } from "./route-leg-mutation.js";
 import { resolveRouteEditPath } from "./route-operations.js";
 import type { EditMutationOutcome, RejectEdit } from "./transaction-domain.js";
 import { removeConnectivityEvidenceOwnedBy } from "./transaction-connectivity.js";
@@ -19,7 +21,7 @@ import {
 type RouteGeometryEdit = Extract<
   EditTransaction["edits"][number],
   {
-    kind: "set_route_points" | "route_orthogonal" | "remove_route_geometry";
+    kind: "set_route_path" | "route_orthogonal" | "remove_route_geometry";
   }
 >;
 
@@ -40,7 +42,7 @@ export function applyRouteGeometryEdit(
   const { draft, resolver, changedObjectIds, deferNetPrune, reject } = context;
 
   switch (edit.kind) {
-    case "set_route_points": {
+    case "set_route_path": {
       if (!resolver) {
         return {
           ok: false,
@@ -51,7 +53,7 @@ export function applyRouteGeometryEdit(
         };
       }
       const existingIndex = draft.routes.findIndex(
-        (candidate) => candidate.id === edit.routeId,
+        (candidate) => candidate.id === edit.route.id,
       );
       const existing = draft.routes[existingIndex];
       if (existing && routeIsProtected(existing)) {
@@ -59,9 +61,9 @@ export function applyRouteGeometryEdit(
           ok: false,
           rejection: reject(
             "EDIT_PRECONDITION",
-            `Route contains a locked segment: ${edit.routeId}`,
+            `Route contains a locked segment: ${edit.route.id}`,
             [],
-            [edit.routeId],
+            [edit.route.id],
           ),
         };
       }
@@ -77,20 +79,27 @@ export function applyRouteGeometryEdit(
             "EDIT_PRECONDITION",
             routeError,
             [],
-            [edit.routeId],
+            [edit.route.id],
           ),
         };
       }
       const polyline = resolveRouteEditPath(draft, resolver, route)!;
       const normalized = normalizeRouteGeometry(
         polyline.points,
-        route.segmentModes,
+        route.legs.map((leg) => leg.mode),
       );
-      route.waypoints = normalized.points.slice(1, -1);
-      route.segmentModes = normalized.segmentModes;
-      if (existingIndex >= 0) draft.routes[existingIndex] = route;
-      else draft.routes.push(route);
-      changedObjectIds.add(edit.routeId);
+      const normalizedRoute = rebuildRoutePath(
+        existing ?? route,
+        route.start,
+        routeEnd(route),
+        normalized.points.slice(1, -1),
+        normalized.segmentModes,
+        `set-route-${draft.revision}`,
+      );
+      if (route.presentation) normalizedRoute.presentation = route.presentation;
+      if (existingIndex >= 0) draft.routes[existingIndex] = normalizedRoute;
+      else draft.routes.push(normalizedRoute);
+      changedObjectIds.add(edit.route.id);
       return { ok: true, connectivityChanged: false };
     }
     case "route_orthogonal": {
@@ -141,15 +150,15 @@ export function applyRouteGeometryEdit(
         edit.escapeLength,
         draft.presentation.grid,
       );
-      const route: RouteBranch = {
+      const route: RouteBranch = createRoutePath({
         id: edit.routeId,
         netId: edit.netId,
-        from: structuredClone(edit.from),
-        to: structuredClone(edit.to),
-        waypoints: geometry.waypoints,
-        segmentModes: geometry.segmentModes,
+        start: structuredClone(edit.from),
+        end: structuredClone(edit.to),
+        bends: geometry.waypoints,
+        modes: geometry.segmentModes,
         ...(edit.presentation ? { presentation: edit.presentation } : {}),
-      };
+      });
       if (!route.presentation && existing?.presentation) {
         route.presentation = existing.presentation;
       }

@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import { createEmptyDocument } from "@icm/model";
@@ -41,22 +42,22 @@ describe("selection move plan", () => {
       position: { x: 200, y: 100 },
     });
     document.routes.push(
-      {
+      createRoutePath({
         id: "wire-left",
         netId: "n1",
-        from: { kind: "terminal", instanceId: "R1", pinName: "1" },
-        to: { kind: "junction", junctionId: "J1" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: { kind: "terminal", instanceId: "R1", pinName: "1" },
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "wire-right",
         netId: "n1",
-        from: { kind: "junction", junctionId: "J1" },
-        to: { kind: "terminal", instanceId: "R2", pinName: "1" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "J1" },
+        end: { kind: "terminal", instanceId: "R2", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
     );
     document.annotations.push({
       id: "label-r1",

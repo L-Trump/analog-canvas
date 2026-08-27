@@ -1,3 +1,4 @@
+import { createRoutePath, routeEnd } from "@icm/model";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -93,7 +94,9 @@ describe("direct-contact transform lifecycle", () => {
     if (!result.ok) throw new Error(result.error.message);
     expect(result.document.routes).toHaveLength(1);
     const route = result.document.routes[0]!;
-    expect(new Set([endpointKey(route.from), endpointKey(route.to)])).toEqual(
+    expect(
+      new Set([endpointKey(route.start), endpointKey(routeEnd(route))]),
+    ).toEqual(
       new Set([endpointKey(terminal("A")), endpointKey(terminal("B"))]),
     );
     expect(route.netId).toBe("net-contact");
@@ -161,22 +164,22 @@ describe("direct-contact transform lifecycle", () => {
       role: "route-anchor",
     });
     document.routes.push(
-      {
+      createRoutePath({
         id: "route-a-j1",
         netId: "net-contact",
-        from: terminal("A"),
-        to: { kind: "junction", junctionId: "J1" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: terminal("A"),
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-b-j1",
         netId: "net-contact",
-        from: terminal("B"),
-        to: { kind: "junction", junctionId: "J1" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("B"),
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [],
+        modes: ["manual"],
+      }),
     );
 
     const result = executeTransaction(
@@ -246,14 +249,16 @@ describe("direct-contact transform lifecycle", () => {
       position: { x: 300, y: 300 },
       role: "route-anchor",
     });
-    document.routes.push({
-      id: "route-a-j1",
-      netId: "net-contact",
-      from: terminal("A"),
-      to: { kind: "junction", junctionId: "J1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-a-j1",
+        netId: "net-contact",
+        start: terminal("A"),
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const cut = executeTransaction(
       document,
@@ -684,8 +689,8 @@ describe("direct-contact transform lifecycle", () => {
     expect(result.document.routes).toHaveLength(3);
     expect(
       result.document.routes.flatMap((route) => [
-        endpointKey(route.from),
-        endpointKey(route.to),
+        endpointKey(route.start),
+        endpointKey(routeEnd(route)),
       ]),
     ).toEqual(
       expect.arrayContaining([

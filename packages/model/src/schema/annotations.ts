@@ -14,7 +14,7 @@ export const VisualAnchorSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     kind: z.literal("route"),
     routeId: StableIdSchema,
-    segmentIndex: z.number().int().nonnegative(),
+    legId: StableIdSchema,
     t: z.number().min(0).max(1),
     normalOffset: z.number().finite(),
     direction: z.enum(["forward", "reverse"]),
@@ -64,7 +64,7 @@ export const AnnotationTextBindingSchema = z.discriminatedUnion("kind", [
 export const RouteMarkerKindSchema = z.enum(["current", "voltage"]);
 export const RouteAnnotationAttachmentSchema = z.strictObject({
   routeId: StableIdSchema,
-  segmentIndex: z.number().int().nonnegative(),
+  legId: StableIdSchema,
   t: z.number().min(0).max(1),
   direction: z.enum(["forward", "reverse"]),
   normalOffset: z.number().finite(),

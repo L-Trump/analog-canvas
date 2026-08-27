@@ -270,104 +270,156 @@
       "revision": 0,
       "routes": [
         {
-          "from": {
+          "id": "route-vinp",
+          "legs": [
+            {
+              "id": "route-leg-3c556608a7b92b20",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "M1",
+                  "kind": "terminal",
+                  "pinName": "G"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-vinp",
+          "start": {
             "instanceId": "VINP",
             "kind": "terminal",
             "pinName": "P"
-          },
-          "id": "route-vinp",
-          "netId": "net-vinp",
-          "segmentModes": [
-            "manual"
-          ],
-          "to": {
-            "instanceId": "M1",
-            "kind": "terminal",
-            "pinName": "G"
-          },
-          "waypoints": []
+          }
         },
         {
-          "from": {
+          "id": "route-vout",
+          "legs": [
+            {
+              "id": "route-leg-0303f7b0ac13791d",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-0303f7b0ac13791d",
+                "kind": "bend",
+                "position": {
+                  "x": 230,
+                  "y": 160
+                }
+              }
+            },
+            {
+              "id": "route-leg-0303f6b0ac13776a",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "VOUT",
+                  "kind": "terminal",
+                  "pinName": "P"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-vout",
+          "start": {
             "instanceId": "M1",
             "kind": "terminal",
             "pinName": "D"
-          },
-          "id": "route-vout",
-          "netId": "net-vout",
-          "segmentModes": [
-            "manual",
-            "manual"
-          ],
-          "to": {
-            "instanceId": "VOUT",
-            "kind": "terminal",
-            "pinName": "P"
-          },
-          "waypoints": [
-            {
-              "x": 230,
-              "y": 160
-            }
-          ]
+          }
         },
         {
-          "from": {
+          "id": "route-tail-left",
+          "legs": [
+            {
+              "id": "route-leg-5028a170dcebfa18",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-5028a170dcebfa18",
+                "kind": "bend",
+                "position": {
+                  "x": 180,
+                  "y": 260
+                }
+              }
+            },
+            {
+              "id": "route-leg-5028a270dcebfbcb",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-5028a270dcebfbcb",
+                "kind": "bend",
+                "position": {
+                  "x": 230,
+                  "y": 260
+                }
+              }
+            },
+            {
+              "id": "route-leg-5028a370dcebfd7e",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "GND",
+                  "kind": "terminal",
+                  "pinName": "0"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-tail",
+          "start": {
             "instanceId": "M1",
             "kind": "terminal",
             "pinName": "S"
-          },
-          "id": "route-tail-left",
-          "netId": "net-tail",
-          "segmentModes": [
-            "manual",
-            "manual",
-            "manual"
-          ],
-          "to": {
-            "instanceId": "GND",
-            "kind": "terminal",
-            "pinName": "0"
-          },
-          "waypoints": [
-            {
-              "x": 180,
-              "y": 260
-            },
-            {
-              "x": 230,
-              "y": 260
-            }
-          ]
+          }
         },
         {
-          "from": {
+          "id": "route-tail-right",
+          "legs": [
+            {
+              "id": "route-leg-d0cef353f3a103f0",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-d0cef353f3a103f0",
+                "kind": "bend",
+                "position": {
+                  "x": 280,
+                  "y": 260
+                }
+              }
+            },
+            {
+              "id": "route-leg-d0cef453f3a105a3",
+              "mode": "manual",
+              "to": {
+                "bendId": "route-bend-d0cef453f3a105a3",
+                "kind": "bend",
+                "position": {
+                  "x": 230,
+                  "y": 260
+                }
+              }
+            },
+            {
+              "id": "route-leg-d0cef553f3a10756",
+              "mode": "manual",
+              "to": {
+                "endpoint": {
+                  "instanceId": "GND",
+                  "kind": "terminal",
+                  "pinName": "0"
+                },
+                "kind": "endpoint"
+              }
+            }
+          ],
+          "netId": "net-tail",
+          "start": {
             "instanceId": "M2",
             "kind": "terminal",
             "pinName": "S"
-          },
-          "id": "route-tail-right",
-          "netId": "net-tail",
-          "segmentModes": [
-            "manual",
-            "manual",
-            "manual"
-          ],
-          "to": {
-            "instanceId": "GND",
-            "kind": "terminal",
-            "pinName": "0"
-          },
-          "waypoints": [
-            {
-              "x": 280,
-              "y": 260
-            },
-            {
-              "x": 230,
-              "y": 260
-            }
-          ]
+          }
         }
       ],
       "sourceStatus": "in-sync"
@@ -376,7 +428,7 @@
   "externalSubcircuitDefinitions": [],
   "id": "project-phase-5-dense-analog",
   "name": "Current Differential Stage",
-  "schemaVersion": 25,
+  "schemaVersion": 26,
   "source": {
     "dialect": "none",
     "entry": null,

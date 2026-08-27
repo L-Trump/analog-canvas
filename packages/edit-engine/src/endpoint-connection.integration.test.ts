@@ -1,3 +1,4 @@
+import { createRoutePath, routeBends, routeModes } from "@icm/model";
 import {
   createEmptyDocument,
   reflectOrientation,
@@ -32,15 +33,17 @@ function bulkDocument() {
     netId: "body",
     position: { x: 180, y: 100 },
   });
-  document.routes.push({
-    id: "body-route",
-    netId: "body",
-    from: { kind: "terminal", instanceId: "M1", pinName: "B" },
-    to: { kind: "junction", junctionId: "J1" },
-    waypoints: [{ x: 100, y: 100 }],
-    segmentModes: ["escape", "manual"],
-    presentation: "bulk-dashed",
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "body-route",
+      netId: "body",
+      start: { kind: "terminal", instanceId: "M1", pinName: "B" },
+      end: { kind: "junction", junctionId: "J1" },
+      bends: [{ x: 100, y: 100 }],
+      modes: ["escape", "manual"],
+      presentation: "bulk-dashed",
+    }),
+  );
   return document;
 }
 
@@ -120,14 +123,16 @@ function gateRouteDocument(symbolId: "nmos" | "pmos") {
     netId: "signal",
     position: { x: 120, y: 100 },
   });
-  document.routes.push({
-    id: "gate-route",
-    netId: "signal",
-    from: { kind: "terminal", instanceId: "M1", pinName: "G" },
-    to: { kind: "junction", junctionId: "J1" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "gate-route",
+      netId: "signal",
+      start: { kind: "terminal", instanceId: "M1", pinName: "G" },
+      end: { kind: "junction", junctionId: "J1" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   return document;
 }
 
@@ -160,8 +165,8 @@ describe("EndpointConnection transform lifecycle", () => {
       expect(restored).toMatchObject({ ok: true });
       if (!restored.ok) return;
       expect(restored.document.routes).toHaveLength(1);
-      expect(restored.document.routes[0]!.segmentModes).toHaveLength(
-        restored.document.routes[0]!.waypoints.length + 1,
+      expect(restored.document.routes[0]!.legs).toHaveLength(
+        routeBends(restored.document.routes[0]!).length + 1,
       );
     },
   );
@@ -175,7 +180,7 @@ describe("EndpointConnection transform lifecycle", () => {
       anchor: {
         kind: "route",
         routeId: "gate-route",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: 0,
         direction: "forward",
@@ -241,21 +246,23 @@ describe("EndpointConnection transform lifecycle", () => {
         { instanceId: "VDD1", pinName: "P" },
       ],
     });
-    document.routes.push({
-      id: "route-99c5b7423f110b2d",
-      netId: "net-vdd",
-      from: { kind: "terminal", instanceId: "M1", pinName: "S" },
-      to: { kind: "terminal", instanceId: "VDD1", pinName: "P" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-99c5b7423f110b2d",
+        netId: "net-vdd",
+        start: { kind: "terminal", instanceId: "M1", pinName: "S" },
+        end: { kind: "terminal", instanceId: "VDD1", pinName: "P" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     for (const direction of ["left-right", "top-bottom"] as const) {
       const result = reflectInstance(document, direction, direction);
       expect(result).toMatchObject({ ok: true });
       if (!result.ok) continue;
       for (const route of result.document.routes) {
-        expect(route.segmentModes).toHaveLength(route.waypoints.length + 1);
+        expect(route.legs).toHaveLength(routeBends(route).length + 1);
       }
       const restored = reflectInstance(
         result.document,
@@ -265,7 +272,7 @@ describe("EndpointConnection transform lifecycle", () => {
       expect(restored).toMatchObject({ ok: true });
       if (!restored.ok) continue;
       for (const route of restored.document.routes) {
-        expect(route.segmentModes).toHaveLength(route.waypoints.length + 1);
+        expect(route.legs).toHaveLength(routeBends(route).length + 1);
       }
     }
   });
@@ -297,9 +304,9 @@ describe("EndpointConnection transform lifecycle", () => {
     expect(result).toMatchObject({ ok: true });
     if (!result.ok) return;
     const route = result.document.routes[0]!;
-    expect(route.segmentModes[0]).toBe("escape");
+    expect(routeModes(route)[0]).toBe("escape");
     expect(
-      route.waypoints.every(
+      routeBends(route).every(
         (point) => point.x % 10 === 0 && point.y % 10 === 0,
       ),
     ).toBe(true);
@@ -330,10 +337,10 @@ describe("EndpointConnection transform lifecycle", () => {
       const route = result.document.routes.find(
         (candidate) => candidate.id === "body-route",
       )!;
-      expect(route.waypoints[0]).toEqual(landing);
-      expect(route.segmentModes[0]).toBe("escape");
+      expect(routeBends(route)[0]).toEqual(landing);
+      expect(routeModes(route)[0]).toBe("escape");
       expect(
-        route.waypoints.every(
+        routeBends(route).every(
           (point) => point.x % 10 === 0 && point.y % 10 === 0,
         ),
       ).toBe(true);

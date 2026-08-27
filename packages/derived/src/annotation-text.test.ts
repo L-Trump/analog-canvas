@@ -160,7 +160,7 @@ describe("bound annotation text", () => {
       anchor: {
         kind: "route" as const,
         routeId: "route-1",
-        segmentIndex: 2,
+        legId: "route-1-leg-2",
         t: 0.7,
         normalOffset: 60,
         direction: "reverse" as const,

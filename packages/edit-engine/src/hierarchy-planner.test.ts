@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import { createEmptyDocument, createEmptyProject } from "@icm/model";
@@ -418,14 +419,16 @@ describe("reviewed external MOS model targets", () => {
       netId: "net-drain",
       position: { x: 0, y: -40 },
     });
-    document.routes.push({
-      id: "route-drain",
-      netId: "net-drain",
-      from: { kind: "terminal", instanceId: "M1", pinName: "D" },
-      to: { kind: "junction", junctionId: "junction-drain" },
-      waypoints: [],
-      segmentModes: ["auto"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-drain",
+        netId: "net-drain",
+        start: { kind: "terminal", instanceId: "M1", pinName: "D" },
+        end: { kind: "junction", junctionId: "junction-drain" },
+        bends: [],
+        modes: ["auto"],
+      }),
+    );
     document.noConnects.push({
       id: "open-bulk",
       endpoint: { kind: "terminal", instanceId: "M1", pinName: "B" },
@@ -468,7 +471,7 @@ describe("reviewed external MOS model targets", () => {
     expect(result.project.documents[0]!.nets[0]!.terminals).toEqual([
       { instanceId: "M1", pinName: "D" },
     ]);
-    expect(result.project.documents[0]!.routes[0]!.from).toEqual({
+    expect(result.project.documents[0]!.routes[0]!.start).toEqual({
       kind: "terminal",
       instanceId: "M1",
       pinName: "D",

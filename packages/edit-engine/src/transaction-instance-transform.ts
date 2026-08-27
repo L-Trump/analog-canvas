@@ -1,3 +1,4 @@
+import { routeEndpoints } from "@icm/model";
 import type { SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
@@ -83,7 +84,7 @@ export function applyInstanceTransformEdit(
       }
       if (
         draft.routes.some((route) =>
-          [route.from, route.to].some(
+          routeEndpoints(route).some(
             (endpoint) =>
               endpoint.kind === "terminal" &&
               endpoint.instanceId === edit.instanceId,

@@ -1,4 +1,4 @@
-import { InstanceSchema, NoConnectSchema } from "@icm/model";
+import { InstanceSchema, NoConnectSchema, routeEndpoints } from "@icm/model";
 import type { SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
@@ -239,7 +239,7 @@ export function applyInstanceLifecycleEdit(
         ),
       );
       for (const route of draft.routes) {
-        for (const endpoint of [route.from, route.to]) {
+        for (const endpoint of routeEndpoints(route)) {
           if (
             endpoint.kind === "terminal" &&
             endpoint.instanceId === edit.instanceId
@@ -326,7 +326,7 @@ export function applyInstanceLifecycleEdit(
       }
       for (const route of draft.routes) {
         let changed = false;
-        for (const endpoint of [route.from, route.to]) {
+        for (const endpoint of routeEndpoints(route)) {
           if (
             endpoint.kind === "terminal" &&
             endpoint.instanceId === edit.instanceId

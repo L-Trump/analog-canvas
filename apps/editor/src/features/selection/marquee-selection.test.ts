@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
 import type { Rect, SchematicDocument } from "@icm/model";
 import {
@@ -50,14 +51,16 @@ function fixture(): {
       role: "route-anchor",
     },
   );
-  document.routes.push({
-    id: "route-1",
-    netId: "net-1",
-    from: { kind: "junction", junctionId: "j1" },
-    to: { kind: "junction", junctionId: "j2" },
-    waypoints: [],
-    segmentModes: ["manual"],
-  });
+  document.routes.push(
+    createRoutePath({
+      id: "route-1",
+      netId: "net-1",
+      start: { kind: "junction", junctionId: "j1" },
+      end: { kind: "junction", junctionId: "j2" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  );
   document.instances.push({
     id: "M1",
     symbolId: "nmos",

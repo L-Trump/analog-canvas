@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import {
   createEmptyDocument,
   flattenRichText,
@@ -523,14 +524,16 @@ describe("Edit Transaction envelope", () => {
         role: "route-anchor" as const,
       },
       {
-        kind: "set_route_points" as const,
-        routeId: "rail-vdd-branch",
-        netId: "net-vdd",
-        from: { kind: "junction" as const, junctionId: "junction-end" },
-        to: { kind: "junction" as const, junctionId: "junction-bend" },
-        waypoints: [],
-        segmentModes: ["manual" as const],
-        presentation: "power-rail" as const,
+        kind: "set_route_path" as const,
+        route: createRoutePath({
+          id: "rail-vdd-branch",
+          netId: "net-vdd",
+          start: { kind: "junction", junctionId: "junction-end" },
+          end: { kind: "junction", junctionId: "junction-bend" },
+          bends: [],
+          modes: ["manual"],
+          presentation: "power-rail",
+        }),
       },
     ];
 
@@ -749,15 +752,17 @@ describe("Edit Transaction envelope", () => {
       netId: "net-vss",
       position: { x: 180, y: 100 },
     });
-    document.routes.push({
-      id: "bulk-route",
-      netId: "net-vss",
-      from: { kind: "terminal", instanceId: "M1", pinName: "B" },
-      to: { kind: "junction", junctionId: "J1" },
-      waypoints: [{ x: 100, y: 100 }],
-      segmentModes: ["escape", "manual"],
-      presentation: "bulk-dashed",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "bulk-route",
+        netId: "net-vss",
+        start: { kind: "terminal", instanceId: "M1", pinName: "B" },
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [{ x: 100, y: 100 }],
+        modes: ["escape", "manual"],
+        presentation: "bulk-dashed",
+      }),
+    );
     document.mosBulkDefaults = { nmosNetId: "net-vss" };
 
     const result = executeTransaction(
@@ -1035,13 +1040,15 @@ describe("Edit Transaction envelope", () => {
         transactionId: "transaction-wire",
         edits: [
           {
-            kind: "set_route_points",
-            routeId: "route-ab",
-            netId: "net-ab",
-            from: { kind: "terminal", instanceId: "A", pinName: "P" },
-            to: { kind: "terminal", instanceId: "B", pinName: "P" },
-            waypoints: [],
-            segmentModes: ["manual"],
+            kind: "set_route_path",
+            route: createRoutePath({
+              id: "route-ab",
+              netId: "net-ab",
+              start: { kind: "terminal", instanceId: "A", pinName: "P" },
+              end: { kind: "terminal", instanceId: "B", pinName: "P" },
+              bends: [],
+              modes: ["manual"],
+            }),
           },
         ],
       },

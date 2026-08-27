@@ -10,18 +10,12 @@
 // helper only projects each edge onto legal octilinear coordinates. The helper never
 // decides topology, adds a missing node, switches a shape, or reroutes.
 
-import type { Point, RouteEndpoint } from "@icm/model";
+import type { Point, RouteEndpoint, SegmentMode } from "@icm/model";
 import type { SchematicEdit } from "@icm/edit-engine";
 
 /**
- * A segment mode for `set_route_points` edges. Derived from the Edit Engine
- * edit type so the helper does not take a direct zod dependency.
+ * A segment mode for canonical Route legs.
  */
-type SegmentMode = Extract<
-  SchematicEdit,
-  { kind: "set_route_points" }
->["segmentModes"][number];
-
 export type { SegmentMode };
 
 /**

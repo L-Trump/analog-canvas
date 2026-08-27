@@ -13,6 +13,8 @@ import {
   serializeProject,
   type ProjectStorage,
   upgradeSchema24To25WithReport,
+  upgradeSchema25To26,
+  upgradeSchema25To26WithReport,
 } from "./index.js";
 
 class MemoryStorage implements ProjectStorage {
@@ -167,11 +169,13 @@ describe("Project persistence", () => {
       junctions: directDocument.junctions,
     }).toEqual(topology);
 
-    const migrated = parseProjectWithMetadata(JSON.stringify(source));
+    const migrated = parseProjectWithMetadata(
+      JSON.stringify(upgradeSchema25To26(direct.project)),
+    );
     expect(migrated).toMatchObject({
-      sourceSchemaVersion: 24,
-      migrated: true,
-      project: { schemaVersion: 25 },
+      sourceSchemaVersion: 26,
+      migrated: false,
+      project: { schemaVersion: 26 },
     });
     const migratedDocument = migrated.project.documents[0]!;
     expect(migratedDocument.netlist?.terminals).toMatchObject([
@@ -259,12 +263,81 @@ describe("Project persistence", () => {
     });
   });
 
+  it("migrates schema-25 Route arrays and attachments to deterministic leg IDs", () => {
+    const source = JSON.parse(
+      serializeProject(
+        createEmptyProject("route-migration", "Route migration"),
+      ),
+    ) as Record<string, any>;
+    source.schemaVersion = 25;
+    const document = source.documents[0];
+    document.nets.push({ id: "net-1", terminals: [] });
+    document.junctions.push(
+      { id: "J1", netId: "net-1", position: { x: 0, y: 0 } },
+      { id: "J2", netId: "net-1", position: { x: 100, y: 100 } },
+    );
+    document.routes.push({
+      id: "route-1",
+      netId: "net-1",
+      from: { kind: "junction", junctionId: "J1" },
+      to: { kind: "junction", junctionId: "J2" },
+      waypoints: [{ x: 100, y: 0 }],
+      segmentModes: ["manual", "trunk"],
+    });
+    document.annotations.push({
+      id: "route-label",
+      kind: "net-label",
+      netId: "net-1",
+      binding: { kind: "net-name", netId: "net-1" },
+      anchor: {
+        kind: "route",
+        routeId: "route-1",
+        segmentIndex: 1,
+        t: 0.5,
+        normalOffset: -10,
+        direction: "forward",
+        orientation: "follow",
+        fallbackPosition: { x: 100, y: 50 },
+      },
+      alignment: "middle",
+      rotation: 0,
+      locked: false,
+    });
+
+    const first = upgradeSchema25To26WithReport(source);
+    const second = upgradeSchema25To26WithReport(source);
+    expect(first).toEqual(second);
+    expect(first.report.routes[0]).toMatchObject({
+      documentId: document.id,
+      routeId: "route-1",
+      reboundAnnotationIds: ["route-label"],
+    });
+    const parsed = parseProjectWithMetadata(JSON.stringify(source));
+    expect(parsed).toMatchObject({
+      sourceSchemaVersion: 25,
+      migrated: true,
+      project: { schemaVersion: 26 },
+    });
+    const route = parsed.project.documents[0]!.routes[0]!;
+    const annotation = parsed.project.documents[0]!.annotations[0]!;
+    expect(route.start).toEqual({ kind: "junction", junctionId: "J1" });
+    expect(route.legs.map((leg) => leg.mode)).toEqual(["manual", "trunk"]);
+    expect(annotation.anchor).toMatchObject({
+      kind: "route",
+      routeId: route.id,
+      legId: route.legs[1]!.id,
+    });
+    expect(
+      serializeProject(parseProject(serializeProject(parsed.project))),
+    ).toBe(serializeProject(parsed.project));
+  });
+
   it("rejects schemas outside the current-and-previous window", () => {
     const project = createEmptyProject("project-test", "Test Project");
-    for (const schemaVersion of [23, 26, 99]) {
+    for (const schemaVersion of [23, 24, 27, 99]) {
       expect(() =>
         parseProject(JSON.stringify({ ...project, schemaVersion })),
-      ).toThrow(/must be 24 or 25/);
+      ).toThrow(/must be 25 or 26/);
     }
   });
 });

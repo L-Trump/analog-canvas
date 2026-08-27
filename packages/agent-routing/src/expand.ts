@@ -5,7 +5,7 @@
 // into Route waypoints, and emits typed edits. It never invents topology,
 // chooses a bend, switches a shape, or calls route_orthogonal.
 
-import type { Point, RouteEndpoint } from "@icm/model";
+import { createRoutePath, type Point, type RouteEndpoint } from "@icm/model";
 import type { SchematicEdit } from "@icm/edit-engine";
 import { isSegmentAllowed, segmentLength } from "@icm/derived";
 import type {
@@ -446,13 +446,15 @@ function setRouteEdit(
   segmentModes: SegmentMode[],
 ): SchematicEdit {
   return {
-    kind: "set_route_points",
-    routeId,
-    netId,
-    from,
-    to,
-    waypoints,
-    segmentModes,
+    kind: "set_route_path",
+    route: createRoutePath({
+      id: routeId,
+      netId,
+      start: from,
+      end: to,
+      bends: waypoints,
+      modes: segmentModes,
+    }),
   };
 }
 
@@ -476,7 +478,7 @@ function collectIds(edits: SchematicEdit[]): string[] {
   const ids: string[] = [];
   for (const edit of edits) {
     if (edit.kind === "add_junction") ids.push(edit.junctionId);
-    if (edit.kind === "set_route_points") ids.push(edit.routeId);
+    if (edit.kind === "set_route_path") ids.push(edit.route.id);
     if (edit.kind === "upsert_schematic_annotation")
       ids.push(edit.annotation.id);
   }
@@ -499,7 +501,7 @@ function computeMetrics(
     bendCount += Math.max(0, route.points.length - 2);
   }
   return {
-    routeCount: edits.filter((edit) => edit.kind === "set_route_points").length,
+    routeCount: edits.filter((edit) => edit.kind === "set_route_path").length,
     junctionCount: edits.filter((edit) => edit.kind === "add_junction").length,
     totalRouteLength,
     bendCount,

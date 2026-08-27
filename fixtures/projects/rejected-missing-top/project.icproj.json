@@ -13,9 +13,9 @@
       "layoutGroups": [],
       "name": "Main",
       "netlist": {
+        "formalParameters": [],
         "name": "Main",
-        "terminals": [],
-        "formalParameters": []
+        "terminals": []
       },
       "nets": [],
       "noConnects": [],
@@ -29,9 +29,10 @@
       "sourceStatus": "in-sync"
     }
   ],
+  "externalSubcircuitDefinitions": [],
   "id": "project-rejected",
   "name": "Rejected",
-  "schemaVersion": 25,
+  "schemaVersion": 26,
   "source": {
     "dialect": "none",
     "entry": null,
@@ -44,6 +45,5 @@
     "id": "razavi-symbols",
     "version": "1"
   },
-  "topDocumentId": "missing-document",
-  "externalSubcircuitDefinitions": []
+  "topDocumentId": "missing-document"
 }

@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -145,14 +146,16 @@ describe("Project structural transaction", () => {
       position: { x: -100, y: 0 },
       role: "route-anchor",
     });
-    project.documents[0]!.routes.push({
-      id: "route-parent-in",
-      netId: "net-parent-in",
-      from: { kind: "terminal", instanceId: "X1", pinName: "IN" },
-      to: { kind: "junction", junctionId: "junction-parent-tail" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    project.documents[0]!.routes.push(
+      createRoutePath({
+        id: "route-parent-in",
+        netId: "net-parent-in",
+        start: { kind: "terminal", instanceId: "X1", pinName: "IN" },
+        end: { kind: "junction", junctionId: "junction-parent-tail" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeProjectTransaction(project, {
       transactionId: "remove-cell-pin-cascade",
@@ -183,11 +186,21 @@ describe("Project structural transaction", () => {
     expect(parent.routes).toEqual([
       expect.objectContaining({
         id: "route-parent-in",
-        from: {
+        start: {
           kind: "junction",
           junctionId: expect.stringMatching(/^junction-lifecycle-/),
         },
-        to: { kind: "junction", junctionId: "junction-parent-tail" },
+        legs: [
+          expect.objectContaining({
+            to: {
+              kind: "endpoint",
+              endpoint: {
+                kind: "junction",
+                junctionId: "junction-parent-tail",
+              },
+            },
+          }),
+        ],
       }),
     ]);
     expect(parent.junctions).toHaveLength(2);
@@ -221,14 +234,16 @@ describe("Project structural transaction", () => {
       position: { x: -100, y: 0 },
       role: "route-anchor",
     });
-    parent.routes.push({
-      id: "route-parent-in",
-      netId: "net-parent-in",
-      from: { kind: "terminal", instanceId: "X1", pinName: "IN" },
-      to: { kind: "junction", junctionId: "junction-parent-tail" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    parent.routes.push(
+      createRoutePath({
+        id: "route-parent-in",
+        netId: "net-parent-in",
+        start: { kind: "terminal", instanceId: "X1", pinName: "IN" },
+        end: { kind: "junction", junctionId: "junction-parent-tail" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeProjectTransaction(project, {
       transactionId: "remove-one-independent-pin",
@@ -243,7 +258,7 @@ describe("Project structural transaction", () => {
     expect(updatedParent.nets[0]!.terminals).toEqual([
       { instanceId: "X1", pinName: "IN" },
     ]);
-    expect(updatedParent.routes[0]!.from).toEqual({
+    expect(updatedParent.routes[0]!.start).toEqual({
       kind: "terminal",
       instanceId: "X1",
       pinName: "IN",
@@ -329,14 +344,16 @@ describe("Project structural transaction", () => {
       position: { x: -100, y: 0 },
       role: "route-anchor",
     });
-    parent.routes.push({
-      id: "route-parent-old",
-      netId: "net-parent-old",
-      from: { kind: "terminal", instanceId: "X1", pinName: "OLD" },
-      to: { kind: "junction", junctionId: "junction-parent-tail" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    parent.routes.push(
+      createRoutePath({
+        id: "route-parent-old",
+        netId: "net-parent-old",
+        start: { kind: "terminal", instanceId: "X1", pinName: "OLD" },
+        end: { kind: "junction", junctionId: "junction-parent-tail" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeProjectTransaction(project, {
       transactionId: "rename-final-old-pin-onto-existing-name",
@@ -355,7 +372,7 @@ describe("Project structural transaction", () => {
         terminals: [{ instanceId: "X1", pinName: "new" }],
       }),
     ]);
-    expect(updatedParent.routes[0]!.from).toMatchObject({
+    expect(updatedParent.routes[0]!.start).toMatchObject({
       kind: "junction",
     });
     expect(updatedParent.routes[0]!.netId).toBe("net-parent-old");
@@ -447,14 +464,16 @@ describe("Project structural transaction", () => {
       position: { x: -100, y: 0 },
       role: "route-anchor",
     });
-    parent.routes.push({
-      id: "route-parent-in",
-      netId: "net-parent-in",
-      from: { kind: "terminal", instanceId: "X1", pinName: "IN" },
-      to: { kind: "junction", junctionId: "junction-parent-tail" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    parent.routes.push(
+      createRoutePath({
+        id: "route-parent-in",
+        netId: "net-parent-in",
+        start: { kind: "terminal", instanceId: "X1", pinName: "IN" },
+        end: { kind: "junction", junctionId: "junction-parent-tail" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeProjectTransaction(project, {
       transactionId: "delete-representative-independent-pin",
@@ -476,7 +495,7 @@ describe("Project structural transaction", () => {
       expect.objectContaining({
         id: "route-parent-in",
         netId: "net-parent-in",
-        from: { kind: "terminal", instanceId: "X1", pinName: "in" },
+        start: { kind: "terminal", instanceId: "X1", pinName: "in" },
       }),
     ]);
     expect(updatedParent.junctions).toHaveLength(1);
@@ -523,14 +542,16 @@ describe("Project structural transaction", () => {
       position: { x: -100, y: 0 },
       role: "route-anchor",
     });
-    parent.routes.push({
-      id: "route-parent-vin",
-      netId: "net-parent-vin",
-      from: { kind: "terminal", instanceId: "X1", pinName: "VIN" },
-      to: { kind: "junction", junctionId: "junction-parent-tail" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    parent.routes.push(
+      createRoutePath({
+        id: "route-parent-vin",
+        netId: "net-parent-vin",
+        start: { kind: "terminal", instanceId: "X1", pinName: "VIN" },
+        end: { kind: "junction", junctionId: "junction-parent-tail" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     parent.noConnects.push({
       id: "no-connect-vin",
       endpoint: { kind: "terminal", instanceId: "X2", pinName: "VIN" },
@@ -549,7 +570,7 @@ describe("Project structural transaction", () => {
     expect(updatedParent.nets[0]!.terminals).toEqual([
       { instanceId: "X1", pinName: "vin" },
     ]);
-    expect(updatedParent.routes[0]!.from).toEqual({
+    expect(updatedParent.routes[0]!.start).toEqual({
       kind: "terminal",
       instanceId: "X1",
       pinName: "vin",
@@ -599,14 +620,16 @@ describe("Project structural transaction", () => {
         { instanceId: "X2", pinName: "IN" },
       ],
     });
-    parent.routes.push({
-      id: "route-between-callers",
-      netId: "net-parent",
-      from: { kind: "terminal", instanceId: "X1", pinName: "IN" },
-      to: { kind: "terminal", instanceId: "X2", pinName: "IN" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    parent.routes.push(
+      createRoutePath({
+        id: "route-between-callers",
+        netId: "net-parent",
+        start: { kind: "terminal", instanceId: "X1", pinName: "IN" },
+        end: { kind: "terminal", instanceId: "X2", pinName: "IN" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeProjectTransaction(project, {
       transactionId: "remove-shared-caller-pin",
@@ -620,8 +643,8 @@ describe("Project structural transaction", () => {
     const updatedParent = result.project.documents[0]!;
     expect(updatedParent.nets[0]?.terminals).toEqual([]);
     expect(updatedParent.routes[0]).toMatchObject({
-      from: { kind: "junction" },
-      to: { kind: "junction" },
+      start: { kind: "junction" },
+      legs: [{ to: { kind: "endpoint", endpoint: { kind: "junction" } } }],
     });
     expect(updatedParent.junctions).toHaveLength(2);
   });
@@ -1152,14 +1175,16 @@ describe("Project structural transaction", () => {
       netId: "net-parent",
       position: { x: -150, y: 0 },
     });
-    parent.routes.push({
-      id: "route-input",
-      netId: "net-parent",
-      from: { kind: "terminal", instanceId: "X1", pinName: "IN" },
-      to: { kind: "junction", junctionId: "J1" },
-      waypoints: [],
-      segmentModes: ["auto"],
-    });
+    parent.routes.push(
+      createRoutePath({
+        id: "route-input",
+        netId: "net-parent",
+        start: { kind: "terminal", instanceId: "X1", pinName: "IN" },
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [],
+        modes: ["auto"],
+      }),
+    );
 
     const result = executeProjectTransaction(project, {
       transactionId: "move-child-input-pin",
@@ -1183,8 +1208,16 @@ describe("Project structural transaction", () => {
             routes: [
               {
                 id: "route-input",
-                waypoints: [{ x: -150, y: -30 }],
-                segmentModes: ["auto", "auto"],
+                legs: [
+                  {
+                    mode: "auto",
+                    to: {
+                      kind: "bend",
+                      position: { x: -150, y: -30 },
+                    },
+                  },
+                  { mode: "auto", to: { kind: "endpoint" } },
+                ],
               },
             ],
           },

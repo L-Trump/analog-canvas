@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createRoutePath } from "@icm/model";
 
 import {
   gridAlignmentDiagnostics,
@@ -8,20 +9,28 @@ import {
 describe("typed-edit grid preflight", () => {
   it("reports only persisted Route waypoints with their semantic path", () => {
     const edit = {
-      kind: "set_route_points" as const,
-      routeId: "R1",
-      netId: "N1",
-      from: { kind: "junction" as const, junctionId: "J1" },
-      to: { kind: "junction" as const, junctionId: "J2" },
-      waypoints: [{ x: 16, y: 20 }],
-      segmentModes: ["manual" as const, "manual" as const],
+      kind: "set_route_path" as const,
+      route: createRoutePath({
+        id: "R1",
+        netId: "N1",
+        start: { kind: "junction", junctionId: "J1" },
+        end: { kind: "junction", junctionId: "J2" },
+        bends: [{ x: 16, y: 20 }],
+        modes: ["manual", "manual"],
+      }),
     };
 
     expect(gridPointsOfEdit(edit)).toEqual([
-      { point: { x: 16, y: 20 }, path: ["waypoints", 0] },
+      {
+        point: { x: 16, y: 20 },
+        path: ["route", "legs", 0, "to", "position"],
+      },
     ]);
     expect(gridAlignmentDiagnostics(edit, 10)).toMatchObject([
-      { code: "GRID_ALIGNMENT", path: ["waypoints", 0, "x"] },
+      {
+        code: "GRID_ALIGNMENT",
+        path: ["route", "legs", 0, "to", "position", "x"],
+      },
     ]);
   });
 
@@ -39,7 +48,7 @@ describe("typed-edit grid preflight", () => {
             anchor: {
               kind: "route",
               routeId: "R1",
-              segmentIndex: 0,
+              legId: "route-leg-1",
               t: 0.375,
               normalOffset: 3.25,
               direction: "forward",

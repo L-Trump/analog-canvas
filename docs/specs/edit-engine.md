@@ -35,6 +35,15 @@ including revision checks, dry runs, atomicity, results, and diagnostics.
 
 ## Data model or interface
 
+Routing gestures and planners cross one transient `RoutingOperationPlan`
+boundary before commit. The plan carries the source revision, typed edits,
+affected closure, stable-ID remap and an explicit expected electrical effect.
+`evaluateRoutingOperationPlan()` runs the same transaction used by commit and
+independently compares before/after electrical projections. The evaluated
+Document is the only valid full preview; the plan has no untyped preview
+payload and is not persisted. NoConnect and unrelated drafting/presentation
+edits continue to use the ordinary transaction directly.
+
 ```typescript
 interface EditTransaction {
   transactionId: string;
@@ -65,7 +74,7 @@ for readability; these groups do not create separate mutation endpoints:
 - Cell interface: `add_cell_terminal`, `update_cell_terminal`,
   `remove_cell_terminal`, `reorder_cell_terminals`,
   `set_cell_formal_parameters`;
-- Route/Junction/connectivity: `set_route_points`, `route_orthogonal`,
+- Route/Junction/connectivity: `set_route_path`, `route_orthogonal`,
   `add_junction`, `attach_endpoint_to_route`, `remove_junction`,
   `move_junction`, `remove_route_geometry`, `cut_connection`, `connect_endpoints`,
   `disconnect_endpoint`;
@@ -238,7 +247,7 @@ Topology operations have these preconditions:
   authoring uses the name-first power and named-Net planners; a transaction
   cannot silently add a canonical name, change scope, or repair a duplicate
   Net after the caller's explicit edits have run.
-- `move_junction` preserves topology and must be paired with `set_route_points`
+- `move_junction` preserves topology and must be paired with `set_route_path`
   edits for every incident Route whose geometry changes in the same
   transaction. GUI movement planners always author those Route edits; Routes
   protected by locked geometry reject the move.

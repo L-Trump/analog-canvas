@@ -803,7 +803,7 @@ function resolveRouteMarkerPlacement(
     };
   const placement = resolveRouteAttachment(route, {
     routeId: anchor.routeId,
-    segmentIndex: anchor.segmentIndex,
+    legId: anchor.legId,
     t: anchor.t,
     normalOffset: anchor.normalOffset,
     direction: anchor.direction,

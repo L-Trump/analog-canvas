@@ -1,16 +1,17 @@
 import {
-  createConnectivityProposal,
-  gateConnectivityProposal,
+  createRoutingOperationPlan,
+  gateRoutingOperationPlan,
 } from "@icm/edit-engine";
 import type {
-  ConnectivityIntent,
   EditTransactionResult,
   ProjectStructureEdit,
   ProjectTransaction,
   ProjectTransactionResult,
   SchematicEdit,
+  RoutingOperationIntent,
 } from "@icm/edit-engine";
 import type { CircuitProject, SchematicDocument } from "@icm/model";
+import type { SymbolResolver } from "@icm/symbols";
 
 import type { InteractionMode } from "../interaction/interaction-state";
 
@@ -22,6 +23,7 @@ interface TransactionOptions {
 export interface EditorTransactionCommandDependencies {
   project: CircuitProject;
   document: SchematicDocument;
+  resolver?: SymbolResolver;
   dispatchProjectTransaction: (
     request: ProjectTransaction,
     activeDocumentId?: string,
@@ -41,6 +43,7 @@ export interface EditorTransactionCommandDependencies {
 export function createEditorTransactionCommands({
   project,
   document,
+  resolver,
   dispatchProjectTransaction,
   transactDocument,
   getCurrentInteractionKind,
@@ -134,18 +137,18 @@ export function createEditorTransactionCommands({
   };
 
   const transactConnectivity = (
-    intent: ConnectivityIntent,
+    intent: RoutingOperationIntent,
     edits: readonly SchematicEdit[],
-    preview?: unknown,
     options: TransactionOptions = {},
   ): EditTransactionResult | null => {
-    const proposal = createConnectivityProposal(document, {
+    const proposal = createRoutingOperationPlan(document, {
       intent,
       edits,
       diagnostics: [],
-      ...(preview === undefined ? {} : { preview }),
     });
-    const gate = gateConnectivityProposal(document, proposal);
+    const gate = gateRoutingOperationPlan(document, proposal, {
+      ...(resolver ? { symbolResolver: resolver } : {}),
+    });
     if (!gate.ok) {
       setStatus(gate.message);
       return null;

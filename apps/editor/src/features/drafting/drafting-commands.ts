@@ -228,7 +228,7 @@ export function createDraftingCommands({
     }
     const segmentIndex = Math.min(
       selectedRouteSegmentIndex ?? 0,
-      selectedRoute.segmentModes.length - 1,
+      selectedRoute.legs.length - 1,
     );
     const record = routeGeometryRecords.find(
       ({ route }) => route.id === selectedRoute.id,
@@ -256,7 +256,7 @@ export function createDraftingCommands({
             anchor: {
               kind: "route",
               routeId: selectedRoute.id,
-              segmentIndex,
+              legId: selectedRoute.legs[segmentIndex]!.id,
               t: 0.5,
               normalOffset: -14,
               direction: "forward",

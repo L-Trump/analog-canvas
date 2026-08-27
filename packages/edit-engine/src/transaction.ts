@@ -117,8 +117,8 @@ export function executeTransaction(
   );
   const explicitlyAuthoredRouteIds = new Set(
     transaction.edits.flatMap((edit) =>
-      edit.kind === "set_route_points" || edit.kind === "route_orthogonal"
-        ? [edit.routeId]
+      edit.kind === "set_route_path" || edit.kind === "route_orthogonal"
+        ? [edit.kind === "set_route_path" ? edit.route.id : edit.routeId]
         : [],
     ),
   );
@@ -292,7 +292,7 @@ export function executeTransaction(
         if (outcome.connectivityChanged) connectivityChanged = true;
         break;
       }
-      case "set_route_points":
+      case "set_route_path":
       case "route_orthogonal": {
         const outcome = applyRouteGeometryEdit(edit, {
           draft,

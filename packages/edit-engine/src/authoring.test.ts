@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
 import { resolveDocumentLogicalNets } from "@icm/derived";
 import { builtInSymbols, InMemorySymbolResolver } from "@icm/symbols";
@@ -151,14 +152,16 @@ describe("semantic authoring", () => {
       netId: "net-d",
       position: { x: 100, y: 20 },
     });
-    document.routes.push({
-      id: "route-d",
-      netId: "net-d",
-      from: { kind: "terminal", instanceId: "XM1", pinName: "P1" },
-      to: { kind: "junction", junctionId: "junction-d" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-d",
+        netId: "net-d",
+        start: { kind: "terminal", instanceId: "XM1", pinName: "P1" },
+        end: { kind: "junction", junctionId: "junction-d" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeTransaction(
       document,
@@ -170,13 +173,15 @@ describe("semantic authoring", () => {
           pinMap: { P1: "D", P2: "G", P3: "S", P4: "B" },
         },
         {
-          kind: "set_route_points",
-          routeId: "route-d",
-          netId: "net-d",
-          from: { kind: "terminal", instanceId: "XM1", pinName: "D" },
-          to: { kind: "junction", junctionId: "junction-d" },
-          waypoints: [{ x: 110, y: 20 }],
-          segmentModes: ["manual", "manual"],
+          kind: "set_route_path",
+          route: createRoutePath({
+            id: "route-d",
+            netId: "net-d",
+            start: { kind: "terminal", instanceId: "XM1", pinName: "D" },
+            end: { kind: "junction", junctionId: "junction-d" },
+            bends: [{ x: 110, y: 20 }],
+            modes: ["manual", "manual"],
+          }),
         },
       ]),
       { symbolResolver: resolver },
@@ -212,7 +217,7 @@ describe("semantic authoring", () => {
         routes: [
           {
             id: "route-d",
-            from: { kind: "terminal", instanceId: "XM1", pinName: "D" },
+            start: { kind: "terminal", instanceId: "XM1", pinName: "D" },
           },
         ],
       },
@@ -283,14 +288,16 @@ describe("semantic authoring", () => {
       netId: "net-b",
       position: { x: 180, y: 100 },
     });
-    document.routes.push({
-      id: "route-b",
-      netId: "net-b",
-      from: { kind: "terminal", instanceId: "R2", pinName: "1" },
-      to: { kind: "junction", junctionId: "junction-b" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-b",
+        netId: "net-b",
+        start: { kind: "terminal", instanceId: "R2", pinName: "1" },
+        end: { kind: "junction", junctionId: "junction-b" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeTransaction(
       document,

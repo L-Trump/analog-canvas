@@ -1,3 +1,13 @@
+import {
+  createRoutePath,
+  routeBends,
+  routeEnd,
+  routeModes,
+  type Point,
+  type RouteEndpoint,
+  type RoutePresentation,
+  type SegmentMode,
+} from "@icm/model";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -31,6 +41,29 @@ import {
 
 const resolver = new InMemorySymbolResolver(builtInSymbols);
 const context = { symbolResolver: resolver };
+
+function routeEdit(input: {
+  routeId: string;
+  netId: string;
+  from: RouteEndpoint;
+  to: RouteEndpoint;
+  waypoints: Point[];
+  segmentModes: SegmentMode[];
+  presentation?: RoutePresentation;
+}) {
+  return {
+    kind: "set_route_path" as const,
+    route: createRoutePath({
+      id: input.routeId,
+      netId: input.netId,
+      start: input.from,
+      end: input.to,
+      bends: input.waypoints,
+      modes: input.segmentModes,
+      ...(input.presentation ? { presentation: input.presentation } : {}),
+    }),
+  };
+}
 
 function addNameClaim(
   document: ReturnType<typeof createEmptyDocument>,
@@ -99,20 +132,19 @@ describe("routing Edit Engine", () => {
     const result = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "wire-45",
           netId: "n1",
           from: { kind: "junction", junctionId: "J1" },
           to: { kind: "junction", junctionId: "J2" },
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
     expect(result.ok).toBe(true);
-    expect(result.ok && result.document.routes[0]?.waypoints).toEqual([]);
+    expect(result.ok && routeBends(result.document.routes[0]!)).toEqual([]);
   });
 
   it("gives Agent wire intent the same octilinear compiler", () => {
@@ -144,10 +176,15 @@ describe("routing Edit Engine", () => {
     });
     expect(typeof planned).not.toBe("string");
     if (typeof planned === "string") return;
-    const route = planned.edits.find(
-      (edit) => edit.kind === "set_route_points",
-    );
-    expect(route).toMatchObject({ waypoints: [{ x: 60, y: 60 }] });
+    const route = planned.edits.find((edit) => edit.kind === "set_route_path");
+    expect(route).toMatchObject({
+      route: {
+        legs: [
+          { to: { kind: "bend", position: { x: 60, y: 60 } } },
+          { to: { kind: "endpoint" } },
+        ],
+      },
+    });
   });
 
   it("rejects a Junction move that would leave an incident Route geometry stale", () => {
@@ -167,14 +204,16 @@ describe("routing Edit Engine", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "wire-1",
-      netId: "n1",
-      from: { kind: "junction", junctionId: "J1" },
-      to: { kind: "junction", junctionId: "J2" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "wire-1",
+        netId: "n1",
+        start: { kind: "junction", junctionId: "J1" },
+        end: { kind: "junction", junctionId: "J2" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const rejected = executeTransaction(
       document,
@@ -242,32 +281,32 @@ describe("routing Edit Engine", () => {
       },
     );
     document.routes.push(
-      {
+      createRoutePath({
         id: "rail-left",
         netId: "VDD",
-        from: { kind: "junction", junctionId: "vdd-start" },
-        to: { kind: "junction", junctionId: "vdd-tap" },
-        waypoints: [],
-        segmentModes: ["manual"],
+        start: { kind: "junction", junctionId: "vdd-start" },
+        end: { kind: "junction", junctionId: "vdd-tap" },
+        bends: [],
+        modes: ["manual"],
         presentation: "power-rail",
-      },
-      {
+      }),
+      createRoutePath({
         id: "rail-right",
         netId: "VDD",
-        from: { kind: "junction", junctionId: "vdd-tap" },
-        to: { kind: "junction", junctionId: "vdd-end" },
-        waypoints: [],
-        segmentModes: ["manual"],
+        start: { kind: "junction", junctionId: "vdd-tap" },
+        end: { kind: "junction", junctionId: "vdd-end" },
+        bends: [],
+        modes: ["manual"],
         presentation: "power-rail",
-      },
-      {
+      }),
+      createRoutePath({
         id: "branch",
         netId: "VDD",
-        from: { kind: "junction", junctionId: "vdd-tap" },
-        to: { kind: "junction", junctionId: "branch-end" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "vdd-tap" },
+        end: { kind: "junction", junctionId: "branch-end" },
+        bends: [],
+        modes: ["manual"],
+      }),
     );
 
     const resizedProposal = proposePowerRailEndpointResize(
@@ -363,15 +402,17 @@ describe("routing Edit Engine", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "vertical-rail-route",
-      netId: "VDD",
-      from: { kind: "junction", junctionId: "rail-top" },
-      to: { kind: "junction", junctionId: "rail-bottom" },
-      waypoints: [],
-      segmentModes: ["manual"],
-      presentation: "power-rail",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "vertical-rail-route",
+        netId: "VDD",
+        start: { kind: "junction", junctionId: "rail-top" },
+        end: { kind: "junction", junctionId: "rail-bottom" },
+        bends: [],
+        modes: ["manual"],
+        presentation: "power-rail",
+      }),
+    );
     const proposal = proposePowerRailEndpointResize(
       document,
       resolver,
@@ -412,15 +453,17 @@ describe("routing Edit Engine", () => {
         role: "route-anchor",
       },
     );
-    document.routes.push({
-      id: "vdd-rail",
-      netId: "VDD",
-      from: { kind: "junction", junctionId: "vdd-start" },
-      to: { kind: "junction", junctionId: "vdd-end" },
-      waypoints: [],
-      segmentModes: ["manual"],
-      presentation: "power-rail",
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "vdd-rail",
+        netId: "VDD",
+        start: { kind: "junction", junctionId: "vdd-start" },
+        end: { kind: "junction", junctionId: "vdd-end" },
+        bends: [],
+        modes: ["manual"],
+        presentation: "power-rail",
+      }),
+    );
     document.connectivityEvidence.push({
       id: "claim-VDD",
       kind: "name-claim",
@@ -453,7 +496,8 @@ describe("routing Edit Engine", () => {
       anchor: {
         kind: "route",
         routeId: "vdd-rail",
-        segmentIndex: 0,
+        legId: document.routes.find((route) => route.id === "vdd-rail")!
+          .legs[0]!.id,
         t: 0.5,
         normalOffset: 10,
         direction: "forward",
@@ -507,15 +551,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -547,8 +590,15 @@ describe("routing Edit Engine", () => {
     if (!attached.ok) return;
     expect(attached.document.routes).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: "route-h-a-e", to: terminal("E") }),
-        expect.objectContaining({ id: "route-h-b-e", from: terminal("E") }),
+        expect.objectContaining({
+          id: "route-h-a-e",
+          legs: [
+            expect.objectContaining({
+              to: { kind: "endpoint", endpoint: terminal("E") },
+            }),
+          ],
+        }),
+        expect.objectContaining({ id: "route-h-b-e", start: terminal("E") }),
       ]),
     );
     expect(
@@ -585,15 +635,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -606,7 +655,7 @@ describe("routing Edit Engine", () => {
       0,
       { x: 300, y: 340 },
     );
-    expect(plan.edits.some((edit) => edit.kind === "set_route_points")).toBe(
+    expect(plan.edits.some((edit) => edit.kind === "set_route_path")).toBe(
       true,
     );
     expect(plan.preview?.routes).toEqual([
@@ -642,30 +691,30 @@ describe("routing Edit Engine", () => {
       { id: "junction-left", netId: "net-j", position: { x: 20, y: 100 } },
     );
     document.routes.push(
-      {
+      createRoutePath({
         id: "route-main",
         netId: "net-j",
-        from: { kind: "junction", junctionId: "junction-center" },
-        to: { kind: "junction", junctionId: "junction-right" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: { kind: "junction", junctionId: "junction-center" },
+        end: { kind: "junction", junctionId: "junction-right" },
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-top",
         netId: "net-j",
-        from: { kind: "junction", junctionId: "junction-top" },
-        to: { kind: "junction", junctionId: "junction-center" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: { kind: "junction", junctionId: "junction-top" },
+        end: { kind: "junction", junctionId: "junction-center" },
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-left",
         netId: "net-j",
-        from: { kind: "junction", junctionId: "junction-left" },
-        to: { kind: "junction", junctionId: "junction-center" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "junction-left" },
+        end: { kind: "junction", junctionId: "junction-center" },
+        bends: [],
+        modes: ["manual"],
+      }),
     );
 
     const proposal = proposeWireSegmentMove(
@@ -734,15 +783,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -758,8 +806,8 @@ describe("routing Edit Engine", () => {
     ).toHaveLength(3);
     expect(
       plan.edits
-        .filter((edit) => edit.kind === "set_route_points")
-        .map((edit) => edit.routeId),
+        .filter((edit) => edit.kind === "set_route_path")
+        .map((edit) => edit.route.id),
     ).toEqual(["route-h"]);
     const moved = executeTransaction(
       routed.document,
@@ -799,15 +847,15 @@ describe("routing Edit Engine", () => {
         role: "route-anchor",
       },
     );
-    const wire = (id: string, from: string, to: string) => ({
-      kind: "set_route_points" as const,
-      routeId: id,
-      netId: "n1",
-      from: { kind: "junction" as const, junctionId: from },
-      to: { kind: "junction" as const, junctionId: to },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    const wire = (id: string, from: string, to: string) =>
+      routeEdit({
+        routeId: id,
+        netId: "n1",
+        from: { kind: "junction" as const, junctionId: from },
+        to: { kind: "junction" as const, junctionId: to },
+        waypoints: [],
+        segmentModes: ["manual"],
+      });
     const built = executeTransaction(
       document,
       transaction(document.id, 0, [
@@ -1017,22 +1065,22 @@ describe("routing Edit Engine", () => {
       position: { x: 320, y: 300 },
     });
     document.routes.push(
-      {
+      createRoutePath({
         id: "route-h-left",
         netId: "net-h",
-        from: terminal("A"),
-        to: { kind: "junction", junctionId: "junction-h" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: terminal("A"),
+        end: { kind: "junction", junctionId: "junction-h" },
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-h-right",
         netId: "net-h",
-        from: { kind: "junction", junctionId: "junction-h" },
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "junction-h" },
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
     );
 
     const plan = proposeGroupMoveEdits(document, resolver, [
@@ -1048,8 +1096,8 @@ describe("routing Edit Engine", () => {
     ]);
     expect(
       plan.edits
-        .filter((edit) => edit.kind === "set_route_points")
-        .map((edit) => edit.routeId),
+        .filter((edit) => edit.kind === "set_route_path")
+        .map((edit) => edit.route.id),
     ).toEqual(["route-h-left", "route-h-right"]);
 
     const moved = executeTransaction(
@@ -1080,8 +1128,8 @@ describe("routing Edit Engine", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const route = result.document.routes[0]!;
-    expect(route.segmentModes[0]).toBe("escape");
-    expect(route.segmentModes.at(-1)).toBe("escape");
+    expect(routeModes(route)[0]).toBe("escape");
+    expect(routeModes(route).at(-1)).toBe("escape");
     expect(
       resolveRouteGeometry(result.document, resolver, route)?.centerline,
     ).toEqual([
@@ -1095,15 +1143,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1164,15 +1211,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1214,15 +1260,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1236,7 +1281,8 @@ describe("routing Edit Engine", () => {
       anchor: {
         kind: "route",
         routeId: "route-h",
-        segmentIndex: 0,
+        legId: routed.document.routes.find((route) => route.id === "route-h")!
+          .legs[0]!.id,
         t: 0.5,
         normalOffset: -8,
         direction: "forward",
@@ -1251,8 +1297,7 @@ describe("routing Edit Engine", () => {
     const reshaped = executeTransaction(
       routed.document,
       transaction(document.id, 1, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
@@ -1262,7 +1307,7 @@ describe("routing Edit Engine", () => {
             { x: 450, y: 340 },
           ],
           segmentModes: ["manual", "manual", "manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1284,14 +1329,14 @@ describe("routing Edit Engine", () => {
   it("remaps a current marker by physical location when route segments change", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
     document.annotations.push({
       id: "current-route-h",
@@ -1301,7 +1346,7 @@ describe("routing Edit Engine", () => {
       anchor: {
         kind: "route",
         routeId: "route-h",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.5,
         normalOffset: -14,
         direction: "forward",
@@ -1316,8 +1361,7 @@ describe("routing Edit Engine", () => {
     const complex = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
@@ -1328,7 +1372,7 @@ describe("routing Edit Engine", () => {
             { x: 300, y: 300 },
           ],
           segmentModes: ["manual", "manual", "manual", "manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1342,7 +1386,7 @@ describe("routing Edit Engine", () => {
       anchor: {
         kind: "route",
         routeId: "route-h",
-        segmentIndex: 3,
+        legId: complex.document.routes[0]!.legs[3]!.id,
         t: 0,
         normalOffset: -14,
         direction: "forward",
@@ -1356,15 +1400,14 @@ describe("routing Edit Engine", () => {
     const simple = executeTransaction(
       complex.document,
       transaction(document.id, 1, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1375,7 +1418,10 @@ describe("routing Edit Engine", () => {
         (annotation) => annotation.id === "current-route-h",
       ),
     ).toMatchObject({
-      anchor: { segmentIndex: 0, t: 0.5 },
+      anchor: {
+        legId: simple.document.routes[0]!.legs[0]!.id,
+        t: 0.5,
+      },
     });
   });
 
@@ -1398,15 +1444,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1754,15 +1799,14 @@ describe("routing Edit Engine", () => {
     const routed = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1807,8 +1851,7 @@ describe("routing Edit Engine", () => {
     const result = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-bad-escape",
           netId: "net-h",
           from: terminal("A"),
@@ -1819,7 +1862,7 @@ describe("routing Edit Engine", () => {
             { x: 450, y: 320 },
           ],
           segmentModes: ["escape", "manual", "manual", "manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1838,24 +1881,22 @@ describe("routing Edit Engine", () => {
     const result = executeTransaction(
       document,
       transaction(document.id, 0, [
-        {
-          kind: "set_route_points",
+        routeEdit({
           routeId: "route-h",
           netId: "net-h",
           from: terminal("A"),
           to: terminal("B"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
-        {
-          kind: "set_route_points",
+        }),
+        routeEdit({
           routeId: "route-v",
           netId: "net-v",
           from: terminal("C"),
           to: terminal("D"),
           waypoints: [],
           segmentModes: ["manual"],
-        },
+        }),
       ]),
       context,
     );
@@ -1884,14 +1925,14 @@ describe("routing Edit Engine", () => {
   it("atomically splits a route through an explicit Junction", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
     document.annotations.push({
       id: "current-split",
@@ -1901,7 +1942,7 @@ describe("routing Edit Engine", () => {
       anchor: {
         kind: "route",
         routeId: "route-h",
-        segmentIndex: 0,
+        legId: document.routes[0]!.legs[0]!.id,
         t: 0.75,
         normalOffset: -14,
         direction: "forward",
@@ -1924,7 +1965,7 @@ describe("routing Edit Engine", () => {
             routeId: "route-h",
             firstRouteId: "route-h-a",
             secondRouteId: "route-h-b",
-            segmentIndex: 0,
+            legId: document.routes[0]!.legs[0]!.id,
           },
         },
       ]),
@@ -1944,11 +1985,11 @@ describe("routing Edit Engine", () => {
       "route-h-a",
       "route-h-b",
     ]);
-    expect(result.document.routes[0]!.to).toEqual({
+    expect(routeEnd(result.document.routes[0]!)).toEqual({
       kind: "junction",
       junctionId: "junction-h",
     });
-    expect(result.document.routes[1]!.from).toEqual({
+    expect(result.document.routes[1]!.start).toEqual({
       kind: "junction",
       junctionId: "junction-h",
     });
@@ -1960,7 +2001,8 @@ describe("routing Edit Engine", () => {
       anchor: {
         kind: "route",
         routeId: "route-h-b",
-        segmentIndex: 0,
+        legId: result.document.routes.find((route) => route.id === "route-h-b")!
+          .legs[0]!.id,
         t: 0.5,
         normalOffset: -14,
       },
@@ -1970,17 +2012,17 @@ describe("routing Edit Engine", () => {
   it("materializes a Junction at an existing orthogonal bend without a zero-length segment", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-bend",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [
           { x: 150, y: 200 },
           { x: 450, y: 200 },
         ],
-        segmentModes: ["manual", "manual", "manual"],
-      },
+        modes: ["manual", "manual", "manual"],
+      }),
     ];
     const result = executeTransaction(
       document,
@@ -1994,7 +2036,7 @@ describe("routing Edit Engine", () => {
             routeId: "route-bend",
             firstRouteId: "route-bend-a",
             secondRouteId: "route-bend-b",
-            segmentIndex: 0,
+            legId: document.routes[0]!.legs[0]!.id,
           },
         },
       ]),
@@ -2032,22 +2074,22 @@ describe("routing Edit Engine", () => {
   it("rejects a Junction dot that would join conflicting crossing Nets", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-v",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
 
     const result = executeTransaction(
@@ -2062,7 +2104,7 @@ describe("routing Edit Engine", () => {
             routeId: "route-h",
             firstRouteId: "route-h-a",
             secondRouteId: "route-h-b",
-            segmentIndex: 0,
+            legId: document.routes[0]!.legs[0]!.id,
           },
         },
       ]),
@@ -2081,15 +2123,14 @@ describe("routing Edit Engine", () => {
   it("accepts an arbitrary-angle route and still needs its context", () => {
     const document = documentFixture();
     const diagonal = transaction(document.id, 0, [
-      {
-        kind: "set_route_points",
+      routeEdit({
         routeId: "route-diagonal",
         netId: "net-h",
         from: terminal("A"),
         to: terminal("E"),
         waypoints: [],
         segmentModes: ["manual"],
-      },
+      }),
     ]);
     // ADR 0039: segment heading is geometry, not a rule about legal Routes.
     expect(executeTransaction(document, diagonal, context)).toMatchObject({
@@ -2103,14 +2144,14 @@ describe("routing Edit Engine", () => {
 
     const locked = documentFixture();
     locked.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["locked"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["locked"],
+      }),
     ];
     expect(
       executeTransaction(
@@ -2133,14 +2174,14 @@ describe("routing Edit Engine", () => {
   it("detaches visible geometry while retaining the logical Net", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-h",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
     const beforeNet = structuredClone(document.nets[0]);
     const beforeFlightlines = deriveFlightlines(document, resolver);
@@ -2163,14 +2204,14 @@ describe("routing Edit Engine", () => {
   it("cuts a fully routed electrical branch and partitions its Net", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-v",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
 
     const result = executeTransaction(
@@ -2249,14 +2290,16 @@ describe("routing Edit Engine", () => {
         interfaceInstanceIds: ["P2"],
       },
     );
-    document.routes.push({
-      id: "route-interface",
-      netId: "net-interface",
-      from: { kind: "terminal", instanceId: "P1", pinName: "P" },
-      to: { kind: "terminal", instanceId: "P2", pinName: "P" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-interface",
+        netId: "net-interface",
+        start: { kind: "terminal", instanceId: "P1", pinName: "P" },
+        end: { kind: "terminal", instanceId: "P2", pinName: "P" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeTransaction(
       document,
@@ -2339,14 +2382,16 @@ describe("routing Edit Engine", () => {
         interfaceInstanceIds: ["P2"],
       },
     );
-    document.routes.push({
-      id: "route-vin-r1",
-      netId: "net-vin",
-      from: { kind: "terminal", instanceId: "P1", pinName: "P" },
-      to: { kind: "terminal", instanceId: "R1", pinName: "1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-vin-r1",
+        netId: "net-vin",
+        start: { kind: "terminal", instanceId: "P1", pinName: "P" },
+        end: { kind: "terminal", instanceId: "R1", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
 
     const result = executeTransaction(
       document,
@@ -2378,25 +2423,25 @@ describe("routing Edit Engine", () => {
   it("removes redundant cycle geometry without splitting the Net", () => {
     const document = documentFixture();
     document.routes = [
-      {
+      createRoutePath({
         id: "route-v-direct",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
-      {
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [],
+        modes: ["manual"],
+      }),
+      createRoutePath({
         id: "route-v-loop",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [
           { x: 340, y: 100 },
           { x: 340, y: 500 },
         ],
-        segmentModes: ["manual", "manual", "manual"],
-      },
+        modes: ["manual", "manual", "manual"],
+      }),
     ];
 
     const result = executeTransaction(
@@ -2440,14 +2485,14 @@ describe("routing Edit Engine", () => {
       },
     );
     document.routes = [
-      {
+      createRoutePath({
         id: "route-free",
         netId: "net-free",
-        from: { kind: "junction", junctionId: "junction-free-a" },
-        to: { kind: "junction", junctionId: "junction-free-b" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "junction-free-a" },
+        end: { kind: "junction", junctionId: "junction-free-b" },
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
 
     const result = executeTransaction(
@@ -2480,14 +2525,14 @@ describe("routing Edit Engine", () => {
       sourceNetId: "source-horizontal",
     });
     document.routes = [
-      {
+      createRoutePath({
         id: "route-partial",
         netId: "net-h",
-        from: terminal("A"),
-        to: terminal("B"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("A"),
+        end: terminal("B"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
 
     const result = executeTransaction(
@@ -2594,14 +2639,16 @@ describe("routing Edit Engine", () => {
         { instanceId: "B", pinName: "1" },
       ],
     });
-    document.routes.push({
-      id: "route-a-b",
-      netId: "net-vss",
-      from: { kind: "terminal", instanceId: "A", pinName: "1" },
-      to: { kind: "terminal", instanceId: "B", pinName: "1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-a-b",
+        netId: "net-vss",
+        start: { kind: "terminal", instanceId: "A", pinName: "1" },
+        end: { kind: "terminal", instanceId: "B", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.connectivityEvidence.push(
       {
         id: "claim-ground",
@@ -2690,32 +2737,32 @@ describe("routing Edit Engine", () => {
       { id: "J2", netId: "net-vss", position: { x: 200, y: 100 } },
     );
     document.routes.push(
-      {
+      createRoutePath({
         id: "bulk-near",
         netId: "net-vss",
-        from: { kind: "terminal", instanceId: "M1", pinName: "B" },
-        to: { kind: "junction", junctionId: "J1" },
-        waypoints: [{ x: 100, y: 100 }],
-        segmentModes: ["escape", "manual"],
+        start: { kind: "terminal", instanceId: "M1", pinName: "B" },
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [{ x: 100, y: 100 }],
+        modes: ["escape", "manual"],
         presentation: "bulk-dashed",
-      },
-      {
+      }),
+      createRoutePath({
         id: "bulk-distal",
         netId: "net-vss",
-        from: { kind: "junction", junctionId: "J1" },
-        to: { kind: "junction", junctionId: "J2" },
-        waypoints: [],
-        segmentModes: ["manual"],
+        start: { kind: "junction", junctionId: "J1" },
+        end: { kind: "junction", junctionId: "J2" },
+        bends: [],
+        modes: ["manual"],
         presentation: "bulk-dashed",
-      },
-      {
+      }),
+      createRoutePath({
         id: "route-ui-112",
         netId: "net-vss",
-        from: { kind: "junction", junctionId: "J2" },
-        to: { kind: "terminal", instanceId: "GND1", pinName: "0" },
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: { kind: "junction", junctionId: "J2" },
+        end: { kind: "terminal", instanceId: "GND1", pinName: "0" },
+        bends: [],
+        modes: ["manual"],
+      }),
     );
     document.connectivityEvidence.push({
       id: "claim-ground",
@@ -2763,14 +2810,14 @@ describe("routing Edit Engine", () => {
       }
     }
     document.routes = [
-      {
+      createRoutePath({
         id: "route-global",
         netId: "net-v",
-        from: terminal("C"),
-        to: terminal("D"),
-        waypoints: [],
-        segmentModes: ["manual"],
-      },
+        start: terminal("C"),
+        end: terminal("D"),
+        bends: [],
+        modes: ["manual"],
+      }),
     ];
 
     const result = executeTransaction(
@@ -2819,14 +2866,16 @@ describe("routing Edit Engine", () => {
         terminals: [{ instanceId: "VDD1", pinName: "P" }],
       },
     );
-    document.routes.push({
-      id: "route-ground-signal",
-      netId: "net-ground",
-      from: { kind: "terminal", instanceId: "GND1", pinName: "0" },
-      to: { kind: "terminal", instanceId: "SIG", pinName: "1" },
-      waypoints: [],
-      segmentModes: ["manual"],
-    });
+    document.routes.push(
+      createRoutePath({
+        id: "route-ground-signal",
+        netId: "net-ground",
+        start: { kind: "terminal", instanceId: "GND1", pinName: "0" },
+        end: { kind: "terminal", instanceId: "SIG", pinName: "1" },
+        bends: [],
+        modes: ["manual"],
+      }),
+    );
     document.connectivityEvidence.push(
       {
         id: "claim-ground",

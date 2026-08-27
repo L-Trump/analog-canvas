@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createRoutingOperationPlan,
+  evaluateRoutingOperationPlan,
   executeTransaction,
   proposeVisualRouteDeletion,
 } from "@icm/edit-engine";
@@ -102,6 +104,16 @@ describe("drawn VDD rail construction", () => {
     });
     expect(plan.ok).toBe(true);
     if (!plan.ok) return;
+    const operation = createRoutingOperationPlan(document, {
+      intent: "connect",
+      diagnostics: [],
+      edits: plan.edits,
+    });
+    const evaluated = evaluateRoutingOperationPlan(document, operation, {
+      symbolResolver: resolver,
+    });
+    if (!evaluated.ok) throw new Error(JSON.stringify(evaluated));
+    expect(evaluated).toMatchObject({ ok: true });
     const result = executeTransaction(
       document,
       {

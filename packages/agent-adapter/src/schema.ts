@@ -15,6 +15,7 @@ import {
   PresentationIntentSchema,
   GridRectSchema,
   RouteEndpointSchema,
+  RouteLegSchema,
   RoutePresentationSchema,
   SegmentModeSchema,
   SourceSpanSchema,
@@ -85,7 +86,7 @@ export const AgentWireIntentAnchorSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     kind: z.literal("route-segment"),
     routeId: StableIdSchema,
-    segmentIndex: z.number().int().nonnegative(),
+    legId: StableIdSchema,
     point: PointSchema,
   }),
   z.strictObject({ kind: z.literal("free"), point: PointSchema }),
@@ -452,10 +453,8 @@ export const AgentSnapshotNetSchema = z.strictObject({
 export const AgentSnapshotRouteSchema = z.strictObject({
   id: StableIdSchema,
   netId: AgentSnapshotLogicalNetIdSchema,
-  from: RouteEndpointSchema,
-  to: RouteEndpointSchema,
-  waypoints: z.array(PointSchema),
-  segmentModes: z.array(SegmentModeSchema),
+  start: RouteEndpointSchema,
+  legs: z.array(RouteLegSchema).min(1),
   presentation: RoutePresentationSchema.optional(),
   polyline: z.array(DerivedPointSchema).min(2).nullable(),
 });

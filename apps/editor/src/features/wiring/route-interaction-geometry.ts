@@ -19,6 +19,7 @@ import type {
   RouteEndpoint,
   SchematicDocument,
 } from "@icm/model";
+import { routeEnd, routeEndpoints } from "@icm/model";
 import { schematicTextFontSize } from "@icm/render-svg";
 import type { SymbolResolver } from "@icm/symbols";
 
@@ -107,11 +108,11 @@ export function junctionRouteDegree(
   document: SchematicDocument,
   junctionId: string,
 ): number {
-  return document.routes.filter(
-    (route) =>
-      (route.from.kind === "junction" &&
-        route.from.junctionId === junctionId) ||
-      (route.to.kind === "junction" && route.to.junctionId === junctionId),
+  return document.routes.filter((route) =>
+    routeEndpoints(route).some(
+      (endpoint) =>
+        endpoint.kind === "junction" && endpoint.junctionId === junctionId,
+    ),
   ).length;
 }
 
@@ -135,16 +136,17 @@ export function looseRouteAnchorIds(
   document: SchematicDocument,
   route: SchematicDocument["routes"][number],
 ): [string, string] | null {
+  const end = routeEnd(route);
   if (
-    route.from.kind !== "junction" ||
-    route.to.kind !== "junction" ||
-    route.from.junctionId === route.to.junctionId ||
-    !isLooseRouteEndpoint(document, route.from) ||
-    !isLooseRouteEndpoint(document, route.to)
+    route.start.kind !== "junction" ||
+    end.kind !== "junction" ||
+    route.start.junctionId === end.junctionId ||
+    !isLooseRouteEndpoint(document, route.start) ||
+    !isLooseRouteEndpoint(document, end)
   ) {
     return null;
   }
-  return [route.from.junctionId, route.to.junctionId];
+  return [route.start.junctionId, end.junctionId];
 }
 
 export function attachmentAtPoint(
@@ -157,7 +159,6 @@ export function attachmentAtPoint(
     .filter((record) => !routeId || record.route.id === routeId)
     .flatMap(({ route, geometry }) =>
       geometry.segments.map(({ address, from, to }) => {
-        const segmentIndex = address.segmentIndex;
         const position = closestPointOnSegment(candidate, from, to);
         const dx = to.x - from.x;
         const dy = to.y - from.y;
@@ -174,7 +175,7 @@ export function attachmentAtPoint(
         return {
           routeAttachment: {
             routeId: route.id,
-            segmentIndex,
+            legId: address.legId,
             t,
             direction: "forward" as const,
             normalOffset,
@@ -213,7 +214,6 @@ export function dragRouteAttachmentAtPoint(
   if (!record) return null;
   const candidates = record.geometry.segments
     .flatMap(({ address, from, to }) => {
-      const segmentIndex = address.segmentIndex;
       const position = closestPointOnSegment(candidate, from, to);
       const dx = to.x - from.x;
       const dy = to.y - from.y;
@@ -252,7 +252,7 @@ export function dragRouteAttachmentAtPoint(
         {
           routeAttachment: {
             ...current,
-            segmentIndex,
+            legId: address.legId,
             t,
             normalOffset,
           },
@@ -285,6 +285,7 @@ export function dragNetLabelAttachmentAtPoint(
   candidate: Point,
   routeId: string,
 ): {
+  legId: string;
   segmentIndex: number;
   t: number;
   normalOffset: number;
@@ -324,6 +325,7 @@ export function dragNetLabelAttachmentAtPoint(
       };
       return [
         {
+          legId: address.legId,
           segmentIndex,
           t,
           normalOffset,
@@ -340,8 +342,8 @@ export function dragNetLabelAttachmentAtPoint(
     .sort((left, right) => left.distanceSquared - right.distanceSquared);
   const closest = candidates[0];
   if (!closest) return null;
-  const { segmentIndex, t, normalOffset, labelPosition } = closest;
-  return { segmentIndex, t, normalOffset, labelPosition };
+  const { legId, segmentIndex, t, normalOffset, labelPosition } = closest;
+  return { legId, segmentIndex, t, normalOffset, labelPosition };
 }
 
 export function effectiveRouteAttachment(
@@ -354,7 +356,7 @@ export function effectiveRouteAttachment(
     const anchor = annotation.anchor;
     return {
       routeId: anchor.routeId,
-      segmentIndex: anchor.segmentIndex,
+      legId: anchor.legId,
       t: anchor.t,
       direction: anchor.direction,
       normalOffset: anchor.normalOffset,

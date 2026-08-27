@@ -101,11 +101,17 @@ export function gridPointsOfEdit(edit: SchematicEdit): LocatedPoint[] {
     case "move_instance":
     case "move_junction":
       return [{ point: edit.position, path: ["position"] }];
-    case "set_route_points":
-      return edit.waypoints.map((point, index) => ({
-        point,
-        path: ["waypoints", index],
-      }));
+    case "set_route_path":
+      return edit.route.legs.flatMap((leg, index) =>
+        leg.to.kind === "bend"
+          ? [
+              {
+                point: leg.to.position,
+                path: ["route", "legs", index, "to", "position"],
+              },
+            ]
+          : [],
+      );
     case "add_junction":
       return [{ point: edit.position, path: ["position"] }];
     case "attach_endpoint_to_route":

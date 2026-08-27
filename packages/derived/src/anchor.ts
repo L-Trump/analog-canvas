@@ -112,7 +112,7 @@ function resolveRouteAnchor(
   }
   const placement = resolveRouteAttachment(geometry, {
     routeId: anchor.routeId,
-    segmentIndex: anchor.segmentIndex,
+    legId: anchor.legId,
     t: anchor.t,
     normalOffset: anchor.normalOffset,
     direction: anchor.direction,
@@ -123,7 +123,7 @@ function resolveRouteAnchor(
     return unresolvedRoute(
       anchor,
       "DRAFTING_ROUTE_SEGMENT_INVALID",
-      `Route ${anchor.routeId} segment ${anchor.segmentIndex} is no longer valid; using fallback position.`,
+      `Route ${anchor.routeId} leg ${anchor.legId} is no longer valid; using fallback position.`,
     );
   }
   return {

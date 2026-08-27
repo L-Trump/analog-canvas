@@ -1,3 +1,4 @@
+import { createRoutePath } from "@icm/model";
 import { createEmptyDocument } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
@@ -172,24 +173,24 @@ describe("MOS bulk resolution", () => {
       { id: "J2", netId: "net-vss", position: { x: 200, y: 100 } },
     );
     document.routes.push(
-      {
+      createRoutePath({
         id: "bulk-near",
         netId: "net-vss",
-        from: { kind: "terminal", instanceId: "M1", pinName: "B" },
-        to: { kind: "junction", junctionId: "J1" },
-        waypoints: [],
-        segmentModes: ["manual"],
+        start: { kind: "terminal", instanceId: "M1", pinName: "B" },
+        end: { kind: "junction", junctionId: "J1" },
+        bends: [],
+        modes: ["manual"],
         presentation: "bulk-dashed",
-      },
-      {
+      }),
+      createRoutePath({
         id: "bulk-distal",
         netId: "net-vss",
-        from: { kind: "junction", junctionId: "J1" },
-        to: { kind: "junction", junctionId: "J2" },
-        waypoints: [],
-        segmentModes: ["manual"],
+        start: { kind: "junction", junctionId: "J1" },
+        end: { kind: "junction", junctionId: "J2" },
+        bends: [],
+        modes: ["manual"],
         presentation: "bulk-dashed",
-      },
+      }),
     );
     document.mosBulkDefaults = { nmosNetId: "net-vss" };
 

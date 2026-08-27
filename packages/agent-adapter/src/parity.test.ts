@@ -34,58 +34,64 @@ function fixtureProject() {
 // shared Edit Engine must produce the identical Document and identical SVG.
 // This proves typed-edit semantic parity; it does not exercise the GUI
 // The Edit Engine is the shared execution boundary for browser and Agent edits.
-const draftingEdits = [
-  {
-    kind: "upsert_schematic_annotation",
-    annotation: {
-      id: "marker-parity",
-      kind: "route-marker",
-      markerKind: "current",
-      content: { runs: [{ kind: "text", value: "I_x" }] },
-      anchor: {
-        kind: "route",
-        routeId: "route-vout",
-        segmentIndex: 0,
-        t: 0.5,
-        normalOffset: -14,
-        direction: "forward",
-        orientation: "follow",
-        fallbackPosition: { x: 200, y: 120 },
+function draftingEdits(routeLegId: string) {
+  return [
+    {
+      kind: "upsert_schematic_annotation",
+      annotation: {
+        id: "marker-parity",
+        kind: "route-marker",
+        markerKind: "current",
+        content: { runs: [{ kind: "text", value: "I_x" }] },
+        anchor: {
+          kind: "route",
+          routeId: "route-vout",
+          legId: routeLegId,
+          t: 0.5,
+          normalOffset: -14,
+          direction: "forward",
+          orientation: "follow",
+          fallbackPosition: { x: 200, y: 120 },
+        },
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
       },
-      alignment: "middle",
-      rotation: 0,
-      locked: false,
     },
-  },
-  {
-    kind: "upsert_drafting_object",
-    object: {
-      id: "note-parity",
-      kind: "text",
-      locked: false,
-      zIndex: 0,
-      anchor: { kind: "free", position: { x: 150, y: 300 } },
-      content: {
-        runs: [
-          { kind: "text", value: "V" },
-          {
-            kind: "span",
-            style: "subscript",
-            children: [{ kind: "text", value: "in" }],
-          },
-        ],
+    {
+      kind: "upsert_drafting_object",
+      object: {
+        id: "note-parity",
+        kind: "text",
+        locked: false,
+        zIndex: 0,
+        anchor: { kind: "free", position: { x: 150, y: 300 } },
+        content: {
+          runs: [
+            { kind: "text", value: "V" },
+            {
+              kind: "span",
+              style: "subscript",
+              children: [{ kind: "text", value: "in" }],
+            },
+          ],
+        },
+        alignment: "start",
+        rotation: 0,
       },
-      alignment: "start",
-      rotation: 0,
     },
-  },
-] as const;
+  ] as const;
+}
 
 describe("Agent/Edit Engine drafting parity", () => {
   it("produces the same Document and SVG through the Agent service and the shared Edit Engine", () => {
     // Agent path: typed edits through the service.
     const project = fixtureProject();
     let document = structuredClone(project.documents[0]!);
+    const routeLegId = document.routes.find(
+      (route) => route.id === "route-vout",
+    )!.legs[0]!.id;
+    const edits = draftingEdits(routeLegId);
     const service = createAgentCircuitService({
       agentId: "agent-parity",
       resolver,
@@ -109,7 +115,7 @@ describe("Agent/Edit Engine drafting parity", () => {
       documentId: "document-differential-stage",
       transactionId: "parity-transact",
       expectedRevision: 0,
-      edits: [...draftingEdits],
+      edits: [...edits],
     });
     expect(agentResponse).toMatchObject({ ok: true });
 
@@ -121,7 +127,7 @@ describe("Agent/Edit Engine drafting parity", () => {
       documentId: "document-differential-stage",
       expectedRevision: 0,
       actor: { kind: "human", id: "gui" },
-      edits: [...draftingEdits],
+      edits: [...edits],
     });
     expect(guiResult.ok).toBe(true);
 
