@@ -66,6 +66,41 @@ Co-locate single-parent presentation fragments when they share one ordering or
 change boundary. File length alone is neither a reason to split nor a reason to
 merge.
 
+## Presentation Style Ownership
+
+Styles load from a route-level entry, never from a lazy component. The editor
+route imports `styles/editor-entry.css`; Gallery, My Submissions, and
+Moderation import `styles/gallery-entry.css`. A feature may keep its stylesheet
+beside its component, but every runtime surface that renders that feature must
+load it statically from its presentation entry. This is why Version History is
+loaded by both route entries while Publish to Gallery is loaded only by the
+editor entry.
+
+The editor entry preserves an explicit cascade order and delegates selectors
+to these owners:
+
+- `editor-chrome.css`: application bars, menus, commands, project identity,
+  status bar, and the root error surface.
+- `editor-workspace.css`: workspace grid, library rail, shapes browser, and
+  resizing behavior.
+- `editor-inspection.css`: selection shelf, inspector details, and diagnostics.
+- `editor-overlays.css`: help and recovery surfaces that float over the
+  workspace without resizing it.
+- `editor-canvas.css` and `editor-canvas-state.css`: persistent SVG surface and
+  transient canvas states.
+- `editor-properties.css`: editable properties and their derived context.
+- `editor-dialogs.css`: editor-owned modal workflows.
+- `editor-agent.css`: agent session presentation.
+- `editor-accessibility.css`: the cross-cutting reduced-motion policy.
+
+Responsive rules stay with the owner whose layout they change. A selector
+should begin with, or be structurally contained by, that owner's root family;
+cross-owner selectors and non-local duplicate overrides require an explicit
+shared contract. Adjacent base-and-specialization rules may share a selector
+when their relationship is visible in one owner. Do not import CSS inside a
+lazy dialog or component: opening a feature must not inject rules or change the
+computed style of unrelated UI.
+
 ## Dependency Direction
 
 Dependencies flow toward stable contracts:

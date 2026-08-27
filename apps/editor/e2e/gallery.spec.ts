@@ -889,9 +889,30 @@ test("an ordinary user sees blocking quality gates on an empty project", async (
   );
 
   await page.goto("/editor");
+  const toolbar = page.locator(".toolbar-row").first();
+  const toolbarStyleBeforeDialog = await toolbar.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      backgroundColor: style.backgroundColor,
+      borderTopColor: style.borderTopColor,
+      display: style.display,
+    };
+  });
   await page.getByTestId("publish-gallery-button").click();
   const dialog = page.getByTestId("publish-gallery-dialog");
   await expect(dialog).toBeVisible();
+  await expect
+    .poll(() =>
+      toolbar.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          backgroundColor: style.backgroundColor,
+          borderTopColor: style.borderTopColor,
+          display: style.display,
+        };
+      }),
+    )
+    .toEqual(toolbarStyleBeforeDialog);
 
   // The empty canvas fails the content gate, evaluated locally.
   const gates = page.getByTestId("publish-gallery-gates");
