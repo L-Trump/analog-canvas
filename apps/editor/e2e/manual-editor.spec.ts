@@ -4672,6 +4672,135 @@ test("Fit View keeps the drawing clear of the Properties dock", async ({
   for (const right of rights) expect(right).toBeLessThanOrEqual(dockBox.x);
 });
 
+test("carries the connection point when a column and its wire move", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  const canvas = page.getByTestId("schematic-canvas");
+
+  // Two columns sharing one bus, as a differential pair is drawn.
+  for (const [x, y] of [
+    [240, 200],
+    [560, 200],
+    [240, 440],
+    [560, 440],
+  ] as const) {
+    await placeComponent(page, "nmos", { x, y });
+  }
+  const ids = await page
+    .locator('[data-layer="symbols"] [data-object-id]')
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("data-object-id")),
+    );
+  for (const [top, bottom] of [
+    [ids[0], ids[2]],
+    [ids[1], ids[3]],
+  ] as const) {
+    await clickDrawTool(page, "wire");
+    await page.getByTestId(`terminal-${top}-D`).click();
+    await page.getByTestId(`terminal-${bottom}-D`).click();
+    await page.keyboard.press("Escape");
+  }
+  const columnMids = await page
+    .locator('[data-layer="routes"] polyline')
+    .evaluateAll((elements) =>
+      elements
+        .map((element) => element.getBoundingClientRect())
+        .map((rect) => ({
+          x: rect.x + rect.width / 2,
+          y: rect.y + rect.height / 2,
+        })),
+    );
+  await clickDrawTool(page, "wire");
+  await page.mouse.click(columnMids[0]!.x, columnMids[0]!.y);
+  await page.mouse.dblclick(columnMids[1]!.x, columnMids[1]!.y);
+  await page.keyboard.press("Escape");
+
+  const scene = () =>
+    page.evaluate(() => ({
+      dots: [
+        ...document.querySelectorAll('[data-layer="junctions"] circle'),
+      ].map((circle) => Math.round(Number(circle.getAttribute("cx")))),
+      bends: [
+        ...document.querySelectorAll('[data-layer="routes"] polyline'),
+      ].map((line) => (line as unknown as SVGPolylineElement).points.length),
+    }));
+
+  const before = await scene();
+  expect(before.dots).toHaveLength(2);
+  // Every wire is a straight run to start with.
+  expect(before.bends.every((count) => count === 2)).toBe(true);
+  const rightJunction = Math.max(...before.dots);
+
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.move(box.x + 480, box.y + 140);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 700, box.y + 520, { steps: 12 });
+  await page.mouse.up();
+  await expect(page.getByTestId("status")).toContainText("Selected");
+
+  await page.mouse.move(box.x + 560, box.y + 200);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 680, box.y + 200, { steps: 12 });
+  await page.mouse.up();
+
+  const after = await scene();
+  // The connection point travels with the column it belongs to. Pinning it
+  // left the selected wires bending back to a point that stayed behind.
+  expect(Math.max(...after.dots)).toBeGreaterThan(rightJunction);
+  expect(Math.min(...after.dots)).toBe(Math.min(...before.dots));
+  // The bus stretches; nothing in the selection deforms into a dogleg.
+  expect(after.bends.filter((count) => count > 2)).toHaveLength(0);
+});
+
+test("leaves the connection point alone when only a part moves", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  const canvas = page.getByTestId("schematic-canvas");
+  await placeComponent(page, "nmos", { x: 300, y: 200 });
+  await placeComponent(page, "nmos", { x: 300, y: 440 });
+  const ids = await page
+    .locator('[data-layer="symbols"] [data-object-id]')
+    .evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute("data-object-id")),
+    );
+  await clickDrawTool(page, "wire");
+  await page.getByTestId(`terminal-${ids[0]}-D`).click();
+  await page.getByTestId(`terminal-${ids[1]}-D`).click();
+  await page.keyboard.press("Escape");
+  const wire = (await page
+    .locator('[data-layer="routes"] polyline')
+    .first()
+    .boundingBox())!;
+  await clickDrawTool(page, "wire");
+  await page.mouse.click(wire.x + wire.width / 2, wire.y + wire.height / 2);
+  await page.mouse.dblclick(
+    wire.x + wire.width / 2 - 200,
+    wire.y + wire.height / 2,
+  );
+  await page.keyboard.press("Escape");
+
+  const dotX = () =>
+    page
+      .locator('[data-layer="junctions"] circle')
+      .first()
+      .evaluate((circle) => Math.round(Number(circle.getAttribute("cx"))));
+  const before = await dotX();
+
+  // One part, no wire: its own lead stretches rather than dragging the
+  // connection point — and with it the rest of the net — along.
+  await canvas.click({ position: { x: 300, y: 200 } });
+  await page.mouse.move(0, 0);
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.move(box.x + 300, box.y + 200);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 420, box.y + 200, { steps: 10 });
+  await page.mouse.up();
+
+  expect(await dotX()).toBe(before);
+});
+
 test("drags a marquee selection that holds no instance", async ({ page }) => {
   await page.goto("/editor");
   const canvas = page.getByTestId("schematic-canvas");

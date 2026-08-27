@@ -77,22 +77,30 @@ export function deriveRoutingAffectedClosure(
     if (knownJunctions.has(junctionId)) internalJunctionIds.add(junctionId);
   }
 
-  // A selected isolated Wire owns both degree-one route-anchor Junctions.
-  // Other selected Routes remain physical geometry, not an implicit request
-  // to absorb their external electrical neighbourhood into the selection.
+  // A Route the person selected travels with the selection, and the Junctions
+  // on its ends travel with it.
+  //
+  // What pins a Route is a terminal it cannot take along: a Terminal endpoint
+  // belongs to an Instance, so a Route reaching an unselected Instance has to
+  // stay attached and stretch. A Junction endpoint pins nothing — it is an
+  // anchor, free to move, and the unselected Routes meeting it stretch to
+  // follow. Requiring every endpoint to be inside instead stranded the
+  // Junction where two columns share a bus: the selected wires grew doglegs
+  // bending back to a connection point that stayed behind.
   for (const routeId of seed.routeIds) {
     if (!knownRoutes.has(routeId) || internalRouteIds.has(routeId)) continue;
     const route = document.routes.find((item) => item.id === routeId)!;
-    const end = routeEnd(route);
-    if (
-      route.start.kind === "junction" &&
-      end.kind === "junction" &&
-      junctionDegree(document, route.start.junctionId) === 1 &&
-      junctionDegree(document, end.junctionId) === 1
-    ) {
-      internalRouteIds.add(route.id);
-      internalJunctionIds.add(route.start.junctionId);
-      internalJunctionIds.add(end.junctionId);
+    const ends = [route.start, routeEnd(route)];
+    const heldByUnselectedInstance = ends.some(
+      (endpoint) =>
+        endpoint.kind === "terminal" && !instanceIds.has(endpoint.instanceId),
+    );
+    if (heldByUnselectedInstance) continue;
+    internalRouteIds.add(route.id);
+    for (const endpoint of ends) {
+      if (endpoint.kind === "junction") {
+        internalJunctionIds.add(endpoint.junctionId);
+      }
     }
   }
 
