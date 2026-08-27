@@ -1,0 +1,510 @@
+import type { SchematicDocument } from "@icm/model";
+import {
+  deriveElectricalTopologyProjection,
+  endpointKey,
+  resolveDocumentLogicalNets,
+  type ElectricalTopologyProjection,
+} from "@icm/derived";
+
+import type { SchematicEdit } from "./edit-schema.js";
+import { executeTransaction } from "./transaction.js";
+import type {
+  EditDiagnostic,
+  EditDiff,
+  EditExecutionContext,
+} from "./transaction-result.js";
+
+export type RoutingOperationIntent =
+  | "connect"
+  | "attach-to-route"
+  | "cut"
+  | "transform"
+  | "route-geometry"
+  | "clone"
+  | "delete"
+  | "rename-marker"
+  | "rename-net";
+
+export interface RoutingAffectedClosure {
+  readonly instances: readonly string[];
+  readonly internalRoutes: readonly string[];
+  readonly boundaryRoutes: readonly string[];
+  readonly externalRoutes: readonly string[];
+  readonly internalJunctions: readonly string[];
+  readonly boundaryJunctions: readonly string[];
+  readonly electricalAnnotationIds: readonly string[];
+  readonly protectedObjectIds: readonly string[];
+}
+
+export interface OperationIdRemap {
+  readonly instances: Readonly<Record<string, string>>;
+  readonly nets: Readonly<Record<string, string>>;
+  readonly routes: Readonly<Record<string, string>>;
+  readonly legs: Readonly<Record<string, string>>;
+  readonly bends: Readonly<Record<string, string>>;
+  readonly junctions: Readonly<Record<string, string>>;
+  readonly annotations: Readonly<Record<string, string>>;
+  readonly evidence: Readonly<Record<string, string>>;
+}
+
+export type ExpectedElectricalEffect =
+  | { readonly kind: "preserve"; readonly endpointKeys: readonly string[] }
+  | {
+      readonly kind: "merge";
+      readonly endpointGroups: readonly (readonly string[])[];
+    }
+  | {
+      readonly kind: "partition";
+      readonly sourceBaseNetIds: readonly string[];
+      readonly cutRouteIds: readonly string[];
+    }
+  | { readonly kind: "remove"; readonly removedEndpointKeys: readonly string[] }
+  | {
+      readonly kind: "clone";
+      readonly mapping: Readonly<Record<string, string>>;
+      readonly boundaryPolicy: "disconnect";
+    }
+  | {
+      readonly kind: "rebind-name-owner";
+      readonly ownerKey: string;
+      readonly fromBaseNetId: string;
+      readonly requestedName: string;
+      readonly scope: "local" | "global";
+    }
+  | {
+      readonly kind: "rename-logical-net";
+      readonly logicalNetId: string;
+      readonly requestedName: string;
+      readonly scope: "local" | "global";
+    };
+
+export interface RoutingOperationPlan {
+  readonly source: { readonly documentId: string; readonly revision: number };
+  readonly intent: RoutingOperationIntent;
+  readonly affected: RoutingAffectedClosure;
+  readonly expectedElectricalEffect: ExpectedElectricalEffect;
+  readonly edits: readonly SchematicEdit[];
+  readonly idRemap: OperationIdRemap;
+  readonly diagnostics: readonly EditDiagnostic[];
+}
+
+export interface ActualElectricalEffect {
+  readonly changedEndpointBaseNetKeys: readonly string[];
+  readonly changedPhysicalComponentKeys: readonly string[];
+  readonly changedLogicalBaseNetIds: readonly string[];
+  readonly changedNameOwnerKeys: readonly string[];
+  readonly addedRouteIds: readonly string[];
+  readonly removedRouteIds: readonly string[];
+}
+
+export interface EvaluatedRoutingOperation {
+  readonly plan: RoutingOperationPlan;
+  readonly finalDocument: SchematicDocument;
+  readonly actualElectricalEffect: ActualElectricalEffect;
+  readonly diff: EditDiff;
+  readonly diagnostics: readonly EditDiagnostic[];
+}
+
+export type RoutingOperationEvaluation =
+  | { readonly ok: true; readonly value: EvaluatedRoutingOperation }
+  | {
+      readonly ok: false;
+      readonly message: string;
+      readonly diagnostics: readonly EditDiagnostic[];
+    };
+
+const EMPTY_CLOSURE: RoutingAffectedClosure = {
+  instances: [],
+  internalRoutes: [],
+  boundaryRoutes: [],
+  externalRoutes: [],
+  internalJunctions: [],
+  boundaryJunctions: [],
+  electricalAnnotationIds: [],
+  protectedObjectIds: [],
+};
+
+const EMPTY_ID_REMAP: OperationIdRemap = {
+  instances: {},
+  nets: {},
+  routes: {},
+  legs: {},
+  bends: {},
+  junctions: {},
+  annotations: {},
+  evidence: {},
+};
+
+function unique(values: Iterable<string>): readonly string[] {
+  return [...new Set(values)].sort((left, right) =>
+    left.localeCompare(right, "en"),
+  );
+}
+
+function changedMapKeys<T>(
+  before: ReadonlyMap<string, T>,
+  after: ReadonlyMap<string, T>,
+): readonly string[] {
+  return unique([...before.keys(), ...after.keys()]).filter(
+    (key) => JSON.stringify(before.get(key)) !== JSON.stringify(after.get(key)),
+  );
+}
+
+function routeIds(document: SchematicDocument): Set<string> {
+  return new Set(document.routes.map((route) => route.id));
+}
+
+function actualEffect(
+  beforeDocument: SchematicDocument,
+  afterDocument: SchematicDocument,
+  before: ElectricalTopologyProjection,
+  after: ElectricalTopologyProjection,
+): ActualElectricalEffect {
+  const beforeRoutes = routeIds(beforeDocument);
+  const afterRoutes = routeIds(afterDocument);
+  return {
+    changedEndpointBaseNetKeys: changedMapKeys(
+      before.endpointToBaseNet,
+      after.endpointToBaseNet,
+    ),
+    changedPhysicalComponentKeys: changedMapKeys(
+      before.endpointToPhysicalComponent,
+      after.endpointToPhysicalComponent,
+    ),
+    changedLogicalBaseNetIds: changedMapKeys(
+      before.logicalNetByBaseNet,
+      after.logicalNetByBaseNet,
+    ),
+    changedNameOwnerKeys: changedMapKeys(
+      before.nameClaimsByOwner,
+      after.nameClaimsByOwner,
+    ),
+    addedRouteIds: [...afterRoutes]
+      .filter((id) => !beforeRoutes.has(id))
+      .sort((a, b) => a.localeCompare(b, "en")),
+    removedRouteIds: [...beforeRoutes]
+      .filter((id) => !afterRoutes.has(id))
+      .sort((a, b) => a.localeCompare(b, "en")),
+  };
+}
+
+function sameMapEntries(
+  before: ReadonlyMap<string, string>,
+  after: ReadonlyMap<string, string>,
+  keys: readonly string[],
+): boolean {
+  return keys.every((key) => before.get(key) === after.get(key));
+}
+
+function validateExpectedEffect(
+  beforeDocument: SchematicDocument,
+  afterDocument: SchematicDocument,
+  before: ElectricalTopologyProjection,
+  after: ElectricalTopologyProjection,
+  expected: ExpectedElectricalEffect,
+): string | null {
+  switch (expected.kind) {
+    case "preserve": {
+      const keys = expected.endpointKeys;
+      if (
+        !sameMapEntries(before.endpointToBaseNet, after.endpointToBaseNet, keys)
+      ) {
+        return "Routing operation changed endpoint Net membership outside a preserve effect";
+      }
+      return null;
+    }
+    case "merge":
+      for (const group of expected.endpointGroups) {
+        const netIds = unique(
+          group.flatMap((key) => {
+            const netId = after.endpointToBaseNet.get(key);
+            return netId ? [netId] : [];
+          }),
+        );
+        if (
+          netIds.length !== 1 ||
+          group.some((key) => !after.endpointToBaseNet.has(key))
+        ) {
+          return `Routing merge did not join endpoint group ${group.join(", ")}`;
+        }
+      }
+      return null;
+    case "partition": {
+      const remaining = new Set(afterDocument.routes.map((route) => route.id));
+      if (expected.cutRouteIds.some((routeId) => remaining.has(routeId))) {
+        return "Routing partition retained a Route declared as cut";
+      }
+      return null;
+    }
+    case "remove":
+      return expected.removedEndpointKeys.some((key) =>
+        after.endpointToBaseNet.has(key),
+      )
+        ? "Routing removal retained an endpoint declared as removed"
+        : null;
+    case "clone":
+      return Object.entries(expected.mapping).some(
+        ([source, clone]) => source === clone,
+      )
+        ? "Routing clone reused a source identity"
+        : null;
+    case "rebind-name-owner": {
+      const claim = after.nameClaimsByOwner.get(expected.ownerKey);
+      return claim?.name === expected.requestedName &&
+        claim.scope === expected.scope
+        ? null
+        : `Routing rename did not rebind ${expected.ownerKey}`;
+    }
+    case "rename-logical-net": {
+      const group = resolveDocumentLogicalNets(afterDocument).byId.get(
+        expected.logicalNetId,
+      );
+      return group?.name === expected.requestedName &&
+        group.scope === expected.scope
+        ? null
+        : `Routing rename did not rename Logical Net ${expected.logicalNetId}`;
+    }
+  }
+}
+
+function endpointKeysFromEdits(edits: readonly SchematicEdit[]): string[] {
+  return edits.flatMap((edit) => {
+    switch (edit.kind) {
+      case "connect_endpoints":
+        return [endpointKey(edit.from), endpointKey(edit.to)];
+      case "disconnect_endpoint":
+        return [endpointKey(edit.endpoint)];
+      case "attach_endpoint_to_route":
+        return [endpointKey(edit.endpoint)];
+      case "add_no_connect":
+        return [endpointKey(edit.noConnect.endpoint)];
+      default:
+        return [];
+    }
+  });
+}
+
+function existingEndpointKeys(document: SchematicDocument): readonly string[] {
+  return unique([
+    ...document.nets.flatMap((net) =>
+      net.terminals.map((terminal) =>
+        endpointKey({ kind: "terminal", ...terminal }),
+      ),
+    ),
+    ...document.junctions.map((junction) =>
+      endpointKey({ kind: "junction", junctionId: junction.id }),
+    ),
+  ]);
+}
+
+export function expectedElectricalEffectForOperation(
+  document: SchematicDocument,
+  intent: RoutingOperationIntent,
+  edits: readonly SchematicEdit[],
+): ExpectedElectricalEffect {
+  if (intent === "connect" || intent === "attach-to-route") {
+    const groups = edits.flatMap((edit) =>
+      edit.kind === "connect_endpoints"
+        ? [[endpointKey(edit.from), endpointKey(edit.to)]]
+        : [],
+    );
+    return groups.length > 0
+      ? { kind: "merge", endpointGroups: groups }
+      : { kind: "preserve", endpointKeys: existingEndpointKeys(document) };
+  }
+  if (intent === "cut") {
+    const cutRouteIds = edits.flatMap((edit) =>
+      edit.kind === "cut_connection" || edit.kind === "remove_route_geometry"
+        ? [edit.routeId]
+        : [],
+    );
+    const sourceBaseNetIds = unique(
+      cutRouteIds.flatMap((routeId) => {
+        const route = document.routes.find((item) => item.id === routeId);
+        return route ? [route.netId] : [];
+      }),
+    );
+    return { kind: "partition", sourceBaseNetIds, cutRouteIds };
+  }
+  if (intent === "delete") {
+    const removedInstanceIds = new Set(
+      edits.flatMap((edit) =>
+        edit.kind === "remove_instance" ? [edit.instanceId] : [],
+      ),
+    );
+    return {
+      kind: "remove",
+      removedEndpointKeys: unique([
+        ...endpointKeysFromEdits(edits),
+        ...document.nets.flatMap((net) =>
+          net.terminals
+            .filter((terminal) => removedInstanceIds.has(terminal.instanceId))
+            .map((terminal) => endpointKey({ kind: "terminal", ...terminal })),
+        ),
+      ]),
+    };
+  }
+  if (intent === "clone") {
+    return { kind: "preserve", endpointKeys: existingEndpointKeys(document) };
+  }
+  const editedEndpointKeys = endpointKeysFromEdits(edits);
+  return {
+    kind: "preserve",
+    endpointKeys:
+      editedEndpointKeys.length > 0
+        ? editedEndpointKeys
+        : existingEndpointKeys(document),
+  };
+}
+
+export function createRoutingOperationPlan(
+  document: SchematicDocument,
+  input: Pick<RoutingOperationPlan, "intent" | "edits" | "diagnostics"> &
+    Partial<
+      Pick<
+        RoutingOperationPlan,
+        "affected" | "expectedElectricalEffect" | "idRemap"
+      >
+    >,
+): RoutingOperationPlan {
+  return {
+    source: { documentId: document.id, revision: document.revision },
+    intent: input.intent,
+    affected: input.affected ?? EMPTY_CLOSURE,
+    expectedElectricalEffect:
+      input.expectedElectricalEffect ??
+      expectedElectricalEffectForOperation(document, input.intent, input.edits),
+    edits: input.edits,
+    idRemap: input.idRemap ?? EMPTY_ID_REMAP,
+    diagnostics: input.diagnostics,
+  };
+}
+
+export type RoutingOperationGate =
+  | {
+      readonly ok: true;
+      readonly edits: readonly SchematicEdit[];
+      readonly evaluated: EvaluatedRoutingOperation;
+    }
+  | { readonly ok: false; readonly message: string };
+
+/** Evaluate once before a UI commit; the returned edits are the evaluated plan. */
+export function gateRoutingOperationPlan(
+  document: SchematicDocument,
+  plan: RoutingOperationPlan,
+  context: EditExecutionContext = {},
+): RoutingOperationGate {
+  const evaluation = evaluateRoutingOperationPlan(document, plan, context);
+  return evaluation.ok
+    ? {
+        ok: true,
+        edits: evaluation.value.plan.edits,
+        evaluated: evaluation.value,
+      }
+    : { ok: false, message: evaluation.message };
+}
+
+export function evaluateRoutingOperationPlan(
+  document: SchematicDocument,
+  plan: RoutingOperationPlan,
+  context: EditExecutionContext = {},
+): RoutingOperationEvaluation {
+  if (plan.source.documentId !== document.id) {
+    return {
+      ok: false,
+      message: "Routing operation targets another Cell",
+      diagnostics: [],
+    };
+  }
+  if (plan.source.revision !== document.revision) {
+    return {
+      ok: false,
+      message: "Routing operation is stale",
+      diagnostics: [],
+    };
+  }
+  if (plan.edits.length === 0) {
+    return {
+      ok: false,
+      message: "Routing operation has no edits",
+      diagnostics: [],
+    };
+  }
+  const blocking = plan.diagnostics.find((item) => item.severity === "error");
+  if (blocking) {
+    return {
+      ok: false,
+      message: blocking.message,
+      diagnostics: plan.diagnostics,
+    };
+  }
+  const before = deriveElectricalTopologyProjection(
+    document,
+    context.symbolResolver,
+  );
+  const result = executeTransaction(
+    document,
+    {
+      transactionId: `evaluate-routing-${document.revision}`,
+      documentId: document.id,
+      expectedRevision: document.revision,
+      actor: { kind: "agent", id: "routing-operation-evaluator" },
+      edits: [...plan.edits],
+    },
+    context,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: result.error.message,
+      diagnostics: result.diagnostics,
+    };
+  }
+  const after = deriveElectricalTopologyProjection(
+    result.document,
+    context.symbolResolver,
+  );
+  const violation = validateExpectedEffect(
+    document,
+    result.document,
+    before,
+    after,
+    plan.expectedElectricalEffect,
+  );
+  if (violation) {
+    return {
+      ok: false,
+      message: violation,
+      diagnostics: [
+        {
+          code: "ELECTRICAL_EFFECT_MISMATCH",
+          severity: "error",
+          message: violation,
+        },
+      ],
+    };
+  }
+  return {
+    ok: true,
+    value: {
+      plan,
+      finalDocument: result.document,
+      actualElectricalEffect: actualEffect(
+        document,
+        result.document,
+        before,
+        after,
+      ),
+      diff: result.diff,
+      diagnostics: result.diagnostics,
+    },
+  };
+}
+
+export function emptyRoutingAffectedClosure(): RoutingAffectedClosure {
+  return EMPTY_CLOSURE;
+}
+
+export function emptyOperationIdRemap(): OperationIdRemap {
+  return EMPTY_ID_REMAP;
+}

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 
 import {
-  createConnectivityProposal,
-  gateConnectivityProposal,
+  createRoutingOperationPlan,
+  gateRoutingOperationPlan,
   type SchematicEdit,
 } from "@icm/edit-engine";
 import { flattenRichText, semanticTextDocument } from "@icm/model";
@@ -165,10 +165,10 @@ export function usePropertiesEditor(options: UsePropertiesEditorOptions) {
   const additionalParameterSerialRef = useRef(0);
 
   const transactNamedNet = (edits: readonly SchematicEdit[]): boolean => {
-    const gate = gateConnectivityProposal(
+    const gate = gateRoutingOperationPlan(
       options.document,
-      createConnectivityProposal(options.document, {
-        intent: "rename_or_merge_named_net",
+      createRoutingOperationPlan(options.document, {
+        intent: "rename-marker",
         diagnostics: [],
         edits,
       }),

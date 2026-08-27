@@ -8,7 +8,7 @@ export * from "./direct-contact-planner.js";
 export * from "./reference-planner.js";
 export * from "./reference-batch-planner.js";
 export * from "./batch-property-planner.js";
-export * from "./connectivity-proposal.js";
+export * from "./routing-operation-plan.js";
 export * from "./instance-lifecycle.js";
 export * from "./transaction.js";
 export * from "./project-transaction.js";

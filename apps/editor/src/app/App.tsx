@@ -667,6 +667,7 @@ export function App({
     createEditorTransactionCommands({
       project,
       document,
+      resolver,
       dispatchProjectTransaction,
       transactDocument,
       getCurrentInteractionKind: () => getCurrentInteractionState().kind,

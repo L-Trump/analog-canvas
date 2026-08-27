@@ -104,6 +104,9 @@ The schema-26 stable Route leg and bend identity decision, replacing parallel
 waypoint/mode arrays and persisted segment-index attachments while preserving
 the existing electrical endpoint and Junction model, is
 [`0047-stable-route-leg-model.md`](0047-stable-route-leg-model.md).
+The single transient routing-operation envelope and independent electrical
+effect validation decision is
+[`0048-routing-operation-plan.md`](0048-routing-operation-plan.md).
 The arbitrary-angle Route authoring decision is
 [`0039-any-angle-route-authoring.md`](0039-any-angle-route-authoring.md).
 

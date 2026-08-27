@@ -2,7 +2,7 @@ import {
   proposeEndpointRouteAttachment,
   proposeGroupMoveEdits,
   proposeLooseRouteTranslation,
-  type ConnectivityIntent,
+  type RoutingOperationIntent,
   type SchematicEdit,
   type WireSource,
 } from "@icm/edit-engine";
@@ -68,9 +68,8 @@ export function createSelectionMoveController({
   routeGeometryRecords: readonly RouteGeometryRecord[];
   contactComponents: readonly RoutedComponent[];
   transactConnectivity: (
-    intent: ConnectivityIntent,
+    intent: RoutingOperationIntent,
     edits: readonly SchematicEdit[],
-    preview?: unknown,
   ) => TransactionResult | null;
   setStatus: (status: string) => void;
   nextRoutingSuffix: () => number;
@@ -131,11 +130,10 @@ export function createSelectionMoveController({
     const looseRouteEdits = movePlan.looseRouteIds.flatMap(
       (routeId) => proposeLooseRouteTranslation(document, routeId, delta).edits,
     );
-    const result = transactConnectivity(
-      "move_connected_selection",
-      [...looseRouteEdits, ...visualMoveEdits(movePlan, delta)],
-      { delta, looseRouteIds: movePlan.looseRouteIds },
-    );
+    const result = transactConnectivity("transform", [
+      ...looseRouteEdits,
+      ...visualMoveEdits(movePlan, delta),
+    ]);
     if (result?.ok && movePlan.fixedObjectIds.length > 0) {
       setStatus(
         `Moved selection; ${movePlan.fixedObjectIds.length} attached object(s) remained fixed`,
@@ -468,10 +466,10 @@ export function createSelectionMoveController({
           : [];
       const result = transactConnectivity(
         targetElectrical?.kind === "route"
-          ? "attach_endpoint_to_wire"
+          ? "attach-to-route"
           : targetElectrical?.kind === "endpoint"
-            ? "connect_without_wire"
-            : "move_connected_selection",
+            ? "connect"
+            : "transform",
         [
           ...prefixEdits,
           ...groupMove.edits,
@@ -479,7 +477,6 @@ export function createSelectionMoveController({
           ...visualMoveEdits(preview.movePlan, delta, sourceDocument),
           ...contactEdits,
         ],
-        { moves, electricalMatch },
       );
       if (result?.ok && electricalMatch) {
         setStatus("Snapped pin endpoints and connected them without a wire");
