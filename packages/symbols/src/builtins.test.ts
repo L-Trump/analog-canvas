@@ -2,6 +2,7 @@ import { transformPoint } from "@icm/model";
 import { describe, expect, it } from "vitest";
 
 import { builtInSymbols } from "./builtins.js";
+import { expandedDeviceSymbols } from "./expanded-device-catalog.js";
 import { razaviProductSymbols } from "./razavi-catalog.js";
 import { InMemorySymbolResolver } from "./resolver.js";
 import { SYMBOL_CONNECTION_GRID, SymbolDefinitionSchema } from "./schema.js";
@@ -44,11 +45,15 @@ const PRODUCT_IDS = [
   "xor-gate",
 ] as const;
 
-describe("Razavi-only product Symbol Library", () => {
-  it("contains exactly the reviewed Razavi product symbols", () => {
+describe("built-in Symbol libraries", () => {
+  it("keeps the reviewed Razavi core and Extended Devices explicit", () => {
     expect(razaviProductSymbols.map((symbol) => symbol.id)).toEqual(
       PRODUCT_IDS,
     );
+    expect(expandedDeviceSymbols.map((symbol) => symbol.id)).toEqual([
+      "ndmos",
+      "pdmos",
+    ]);
     for (const symbol of builtInSymbols) {
       expect(SymbolDefinitionSchema.parse(symbol)).toEqual(symbol);
     }
@@ -119,10 +124,15 @@ describe("Razavi-only product Symbol Library", () => {
     }
   });
 
-  it("preserves MOS electrical bulk pins in textbook variants", () => {
+  it("preserves MOS electrical bulk pins in their three-terminal variants", () => {
     const resolver = new InMemorySymbolResolver(builtInSymbols);
-    for (const symbolId of ["nmos", "pmos"]) {
-      const resolved = resolver.resolve(symbolId, "textbook-3terminal");
+    for (const [symbolId, variantId] of [
+      ["nmos", "textbook-3terminal"],
+      ["pmos", "textbook-3terminal"],
+      ["ndmos", "standard-3terminal"],
+      ["pdmos", "standard-3terminal"],
+    ] as const) {
+      const resolved = resolver.resolve(symbolId, variantId);
       expect(resolved?.definition.pins.map((pin) => pin.name)).toEqual([
         "D",
         "G",

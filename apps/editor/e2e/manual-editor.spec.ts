@@ -1218,6 +1218,35 @@ test("leads the Bulk section with its draw action", async ({ page }) => {
   expect(firstSection).toBe("MOS bulk connection");
 });
 
+test("keeps DMOS bulk hidden until drawing an explicit bulk route", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await placeComponent(page, "ndmos", { x: 360, y: 220 });
+  await placeComponent(page, "resistor", { x: 560, y: 220 });
+  await expect(page.getByTestId("terminal-M1-B")).toHaveCount(0);
+
+  await page.getByTestId("hit-M1").click();
+  await openSelectionShelf(page);
+  await page.getByTestId("draw-bulk-connection").click();
+
+  await expect(page.getByTestId("status")).toContainText(
+    "Drawing M1.B bulk connection",
+  );
+  await expect(page.getByTestId("terminal-M1-B")).toBeVisible();
+  await page.getByTestId("terminal-R1-1").click();
+  await page.keyboard.press("Escape");
+
+  const bulkRoute = page.locator(
+    '[data-layer="routes"] [data-object-id="route-ui-1"]',
+  );
+  await expect(bulkRoute).toBeVisible();
+  await expect(bulkRoute).toHaveAttribute(
+    "data-route-presentation",
+    "bulk-dashed",
+  );
+});
+
 test("initializes NMOS bulk from the first explicitly placed Ground", async ({
   page,
 }) => {

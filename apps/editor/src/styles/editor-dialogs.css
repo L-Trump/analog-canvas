@@ -226,6 +226,14 @@
   backdrop-filter: blur(8px);
 }
 
+.insert-option-group h4 {
+  margin: 0;
+  padding: 0.25rem 0.75rem 0.35rem;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  font-weight: 600;
+}
+
 .insert-option-group button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

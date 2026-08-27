@@ -30,6 +30,8 @@ describe("component parameter catalogue", () => {
       "m",
     ]);
     expect(componentParameters("pmos")).toEqual(componentParameters("nmos"));
+    expect(componentParameters("ndmos")).toEqual(componentParameters("nmos"));
+    expect(componentParameters("pdmos")).toEqual(componentParameters("pmos"));
     // A MOS placed with no geometry could not display a value at all, so
     // placement seeds each device default instead of leaving them blank.
     expect(initialComponentParameterValues("nmos")).toEqual({

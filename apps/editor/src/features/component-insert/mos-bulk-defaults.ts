@@ -1,4 +1,5 @@
 import type { SchematicEdit } from "@icm/edit-engine";
+import { mosBulkKind } from "@icm/derived";
 import type { SchematicDocument } from "@icm/model";
 
 /**
@@ -37,7 +38,7 @@ export function planMosBulkDefaultUpdate(
   netId: string | null,
 ): readonly SchematicEdit[] {
   const clearEdits: SchematicEdit[] = document.instances.flatMap((instance) =>
-    instance.symbolId === kind &&
+    mosBulkKind(instance) === kind &&
     instance.mosBulkBinding?.origin === "cell-default"
       ? [{ kind: "clear_mos_bulk_default", instanceId: instance.id }]
       : [],

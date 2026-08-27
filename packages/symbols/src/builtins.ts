@@ -1,12 +1,18 @@
+import { expandedDeviceSymbols } from "./expanded-device-catalog.js";
 import { razaviLibrarySymbols } from "./razavi-catalog.js";
 
 /**
- * The sole runtime device library. The historical hand-authored and generic
- * compatibility symbols were intentionally removed; this collection contains
- * only reviewed Razavi catalog entries.
+ * The complete runtime resolver library. The Reference-calibrated Razavi core
+ * remains authoritative for its own style, while deliberately separated
+ * Extended Devices add optional device families without claiming that
+ * authority.
  *
  * Everything reviewed resolves here, browsable or not: a Symbol an action
  * switches an Instance to must draw even though nobody picks it from the
- * Library. The Library's own list is `razaviProductSymbols`.
+ * Library. Browsable lists are owned by `razaviProductSymbols` and
+ * `expandedDeviceSymbols`.
  */
-export const builtInSymbols = razaviLibrarySymbols;
+export const builtInSymbols = [
+  ...razaviLibrarySymbols,
+  ...expandedDeviceSymbols,
+];

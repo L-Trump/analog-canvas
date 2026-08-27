@@ -27,6 +27,14 @@ describe("built-in device/Symbol parity", () => {
         { name: "m", required: false },
       ],
     });
+    for (const symbolId of ["ndmos", "pdmos"]) {
+      expect(deviceDescriptor(symbolId)).toMatchObject({
+        deviceClass: "mos",
+        referencePrefix: "M",
+        pinOrder: ["D", "G", "S", "B"],
+        targetPolicy: "required-model",
+      });
+    }
   });
 
   it("defines Ground artwork as a non-emitting Net marker", () => {

@@ -1,3 +1,4 @@
+import { deviceDescriptor } from "@icm/devices";
 import type {
   Instance,
   Net,
@@ -22,9 +23,7 @@ export type MosBulkResolution =
     };
 
 export function mosBulkKind(instance: Instance): MosBulkKind | undefined {
-  return instance.symbolId === "nmos" || instance.symbolId === "pmos"
-    ? instance.symbolId
-    : undefined;
+  return deviceDescriptor(instance.symbolId)?.mosBulkClass;
 }
 
 /**

@@ -37,13 +37,15 @@ The product set is exactly the reviewed, Reference-calibrated entries:
   bubble; XNOR is the direct XOR body with the reviewed two-input NOR negation
   bubble.
 
-`nmos` and `pmos` are the only MOS asset IDs. Their default visual variant is
-`textbook-3terminal`; explicit bulk-capable variants remain properties of the
-same canonical assets. The drawn VDD rail remains the explicit Net/Route
-authoring form; `vdd-port` is its reviewed marker Symbol for placed-device
-authoring on the same global VDD Net. There is no legacy symbol catalog or
-generic fallback. A device without a reviewed Razavi symbol is an unsupported
-import error until its Reference calibration is approved and added here.
+`nmos` and `pmos` are the only MOS asset IDs in the Reference-calibrated
+Razavi catalog. Their default visual variant is `textbook-3terminal`; explicit
+bulk-capable variants remain properties of the same canonical assets. Optional
+families such as high-voltage DMOS live in the separate Extended Devices
+catalog and do not claim Razavi visual authority. The drawn VDD rail remains
+the explicit Net/Route authoring form; `vdd-port` is its reviewed marker Symbol
+for placed-device authoring on the same global VDD Net. There is no legacy
+symbol catalog or generic fallback. A device without a reviewed Razavi symbol
+or an explicit Extended Devices entry is an unsupported import error.
 
 The catalog records only runtime electrical pin order and visual authority.
 It does not read or cite VSS/Visio. Historic VSS material is archival evidence

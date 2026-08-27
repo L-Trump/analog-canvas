@@ -33,6 +33,10 @@ describe("InsertComponentDialog", () => {
     expect(markup).toContain('aria-label="Placement options"');
     expect(markup).toContain('aria-label="Initial rotation"');
     expect(markup).toContain('aria-label="Reference name"');
+    expect(markup).toContain(">Extended Devices</h3>");
+    expect(markup).toContain(">High-voltage devices</h4>");
+    expect(markup).toContain('data-testid="insert-component-ndmos"');
+    expect(markup).toContain('data-testid="insert-component-pdmos"');
     expect(markup).toContain("W / m");
     expect(markup).toContain("(Total channel width)");
     expect(markup).toContain("(Finger count, so finger width is W / NF)");

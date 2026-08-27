@@ -253,6 +253,47 @@ test("inserts from the master-detail dialog with keyboard and live placement pre
   );
 });
 
+test("groups and places high-voltage DMOS from Extended Devices", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await awaitEditorReady(page);
+  await page.keyboard.press("i");
+  const dialog = page.getByRole("dialog", { name: "Insert Component" });
+  const expanded = dialog
+    .locator(".insert-option-group")
+    .filter({ hasText: "Extended Devices" });
+  await expect(expanded.getByRole("heading", { level: 3 })).toHaveText(
+    "Extended Devices",
+  );
+  await expect(expanded.getByRole("heading", { level: 4 })).toHaveText(
+    "High-voltage devices",
+  );
+  await expect(expanded.getByTestId("insert-component-ndmos")).toContainText(
+    "N-channel DMOS",
+  );
+  await expect(expanded.getByTestId("insert-component-pdmos")).toContainText(
+    "P-channel DMOS",
+  );
+
+  await expanded.getByTestId("insert-component-ndmos").click();
+  await expect(dialog.getByLabel("Component w")).toHaveValue("1u");
+  await dialog.getByRole("button", { name: "Apply" }).click();
+  await page
+    .getByTestId("schematic-canvas")
+    .click({ position: { x: 360, y: 230 } });
+  await page.keyboard.press("Escape");
+
+  await expect(
+    page
+      .getByTestId("schematic-canvas")
+      .locator('[data-object-id="M1"][data-symbol-id="ndmos"]'),
+  ).toBeVisible();
+  await expect
+    .poll(() => recoveryProjectTexts(page))
+    .toContain('"symbolId": "ndmos"');
+});
+
 test("places a named vertical Power Rail from I", async ({ page }) => {
   await emulateDownloadOnlyBrowser(page);
   await page.goto("/editor");
@@ -919,8 +960,8 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   const categories = panel.locator('[data-testid^="shapes-category-"]');
 
   await expect(panel).toHaveAttribute("data-open", "true");
-  await expect(libraryChips).toHaveCount(36);
-  await expect(categories).toHaveCount(7);
+  await expect(libraryChips).toHaveCount(38);
+  await expect(categories).toHaveCount(8);
   const transistorCategory = page.getByTestId("shapes-category-transistors");
   const transistorChips = transistorCategory.locator(
     '[data-testid^="shapes-chip-"]',
@@ -1033,7 +1074,7 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   expect(artworkGeometry.every((artwork) => artwork.separatedFromLabel)).toBe(
     true,
   );
-  await expect(libraryChips.locator("span")).toHaveCount(36);
+  await expect(libraryChips.locator("span")).toHaveCount(38);
   await expect(transistorCategory).toHaveJSProperty("open", true);
   await transistorCategory.locator("summary").click();
   await expect(transistorCategory).toHaveJSProperty("open", false);
@@ -1053,6 +1094,11 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   await expect(page.getByTestId("shapes-chip-buffer")).toBeAttached();
   await expect(page.getByTestId("shapes-chip-delay-cell")).toBeAttached();
   await expect(page.getByTestId("shapes-chip-d-flip-flop")).toBeAttached();
+  await expect(
+    page
+      .getByTestId("shapes-category-extended-devices")
+      .getByText("High-voltage devices", { exact: true }),
+  ).toBeVisible();
   await expect(
     panel.getByRole("button", { name: "Place Independent Voltage Source" }),
   ).toBeAttached();

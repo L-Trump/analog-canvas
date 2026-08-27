@@ -4,6 +4,7 @@ export const pmosDevice = {
   id: "pmos",
   symbolId: "pmos",
   deviceClass: "mos",
+  mosBulkClass: "pmos",
   referencePrefix: "M",
   pinOrder: ["D", "G", "S", "B"],
   targetPolicy: "required-model",

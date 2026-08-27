@@ -6,6 +6,7 @@ import {
   flattenComponentCatalog,
   libraryDescription,
   symbolCategory,
+  symbolSubcategory,
 } from "./symbol-catalog";
 
 describe("component insertion catalog", () => {
@@ -20,6 +21,7 @@ describe("component insertion catalog", () => {
       "Switches",
       "Analog Blocks",
       "Logic Gates",
+      "Extended Devices",
     ]);
   });
 
@@ -49,6 +51,9 @@ describe("component insertion catalog", () => {
     expect(symbolCategory("diode")).toBe("Passives");
     expect(symbolCategory("ideal-switch")).toBe("Switches");
     expect(symbolCategory("closed-switch")).toBe("Switches");
+    expect(symbolCategory("ndmos")).toBe("Extended Devices");
+    expect(symbolCategory("pdmos")).toBe("Extended Devices");
+    expect(symbolSubcategory("ndmos")).toBe("High-voltage devices");
   });
 
   it("offers the two-terminal variable resistor as a searchable passive", () => {
@@ -58,6 +63,19 @@ describe("component insertion catalog", () => {
 
     expect(symbols.map((symbol) => symbol.id)).toEqual(["variable-resistor"]);
     expect(symbols[0]?.pins.map((pin) => pin.name)).toEqual(["P1", "P2"]);
+  });
+
+  it("offers N- and P-channel DMOS in the high-voltage expanded library", () => {
+    const groups = componentCatalog("razavi-textbook-v1", "dmos");
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toMatchObject({
+      category: "Extended Devices",
+      subcategory: "High-voltage devices",
+    });
+    expect(groups[0]?.symbols.map((symbol) => symbol.id)).toEqual([
+      "ndmos",
+      "pdmos",
+    ]);
   });
 
   it("describes the filled Cell Pin as an independent authoring object", () => {

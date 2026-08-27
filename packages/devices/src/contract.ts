@@ -3,6 +3,9 @@ import type { NetlistDeviceClass, StableId } from "@icm/model";
 export type DeviceNetlistTargetPolicy =
   "builtin" | "required-model" | "child-cell" | "none";
 
+/** Cell-default body binding follows channel polarity, not Symbol spelling. */
+export type MosBulkClass = "nmos" | "pmos";
+
 export interface DeviceCapabilities {
   readonly supportsModel: boolean;
   readonly supportsBulkBinding: boolean;
@@ -46,6 +49,8 @@ export interface DeviceDescriptor {
   /** The exact current Symbol artwork this device uses. */
   readonly symbolId: StableId;
   readonly deviceClass: NetlistDeviceClass;
+  /** Present for every built-in MOS family, including expanded DMOS artwork. */
+  readonly mosBulkClass?: MosBulkClass;
   readonly referencePrefix: string | null;
   readonly pinOrder: readonly string[];
   /** Optional fixed semantics for canonical pins; pin order remains electrical authority. */

@@ -4,6 +4,7 @@ export const nmosDevice = {
   id: "nmos",
   symbolId: "nmos",
   deviceClass: "mos",
+  mosBulkClass: "nmos",
   referencePrefix: "M",
   pinOrder: ["D", "G", "S", "B"],
   targetPolicy: "required-model",

@@ -1,6 +1,7 @@
 import { executeTransaction, type SchematicEdit } from "@icm/edit-engine";
 import {
   hasExplicitMosBulkRoute,
+  mosBulkKind,
   mosBulkShouldBeVisible,
   resolveDetachedMosBulkDefault,
   resolveMosBulkConnection,
@@ -12,6 +13,8 @@ import { builtInSymbols, createProjectSymbolResolver } from "@icm/symbols";
 const DEFAULT_SYMBOL_VARIANTS: Readonly<Record<string, string>> = {
   nmos: "textbook-3terminal",
   pmos: "textbook-3terminal",
+  ndmos: "standard-3terminal",
+  pdmos: "standard-3terminal",
 };
 
 export function defaultRazaviSymbolVariantId(
@@ -43,10 +46,11 @@ export function razaviManualBulkConnectionEdits(
       if (hasExplicitMosBulkRoute(document, instance.id)) {
         return instance.mosBulkBinding !== undefined;
       }
+      const kind = mosBulkKind(instance);
       const configuredNetId =
-        instance.symbolId === "nmos"
+        kind === "nmos"
           ? document.mosBulkDefaults?.nmosNetId
-          : instance.symbolId === "pmos"
+          : kind === "pmos"
             ? document.mosBulkDefaults?.pmosNetId
             : undefined;
       return Boolean(

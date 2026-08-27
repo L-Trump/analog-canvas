@@ -1,6 +1,7 @@
 import type { SchematicEdit } from "@icm/edit-engine";
 import {
   hasExplicitMosBulkRoute,
+  mosBulkKind,
   resolveDocumentLogicalNets,
   resolveDetachedMosBulkDefault,
   resolveMosBulkConnection,
@@ -39,11 +40,11 @@ function soleNetOfDomain(
 
 function unboundCount(
   document: SchematicDocument,
-  symbolId: "nmos" | "pmos",
+  kind: "nmos" | "pmos",
 ): number {
   return document.instances.filter(
     (instance) =>
-      instance.symbolId === symbolId &&
+      mosBulkKind(instance) === kind &&
       instance.placement !== null &&
       resolveMosBulkConnection(document, instance)?.status === "unresolved",
   ).length;
@@ -51,14 +52,14 @@ function unboundCount(
 
 function pendingDefaultCount(
   document: SchematicDocument,
-  symbolId: "nmos" | "pmos",
+  kind: "nmos" | "pmos",
 ): number {
   const configuredNetId =
-    symbolId === "nmos"
+    kind === "nmos"
       ? document.mosBulkDefaults?.nmosNetId
       : document.mosBulkDefaults?.pmosNetId;
   return document.instances.filter((instance) => {
-    if (instance.symbolId !== symbolId || instance.placement === null)
+    if (mosBulkKind(instance) !== kind || instance.placement === null)
       return false;
     if (hasExplicitMosBulkRoute(document, instance.id)) {
       return instance.mosBulkBinding !== undefined;
@@ -85,19 +86,19 @@ export function planCheckBulkDefaults(
   const edits: SchematicEdit[] = [];
   const ambiguous = { nmos: false, pmos: false };
 
-  for (const [symbolId, domain, current] of [
+  for (const [kind, domain, current] of [
     ["nmos", "ground", document.mosBulkDefaults?.nmosNetId ?? null],
     ["pmos", "vdd", document.mosBulkDefaults?.pmosNetId ?? null],
   ] as const) {
-    if (unboundCount(document, symbolId) === 0) continue;
+    if (unboundCount(document, kind) === 0) continue;
     if (current) continue;
     const netId = soleNetOfDomain(document, domain);
     if (!netId) {
-      ambiguous[symbolId] = true;
+      ambiguous[kind] = true;
       continue;
     }
     edits.push(
-      symbolId === "nmos"
+      kind === "nmos"
         ? { kind: "set_mos_bulk_defaults", nmosNetId: netId }
         : { kind: "set_mos_bulk_defaults", pmosNetId: netId },
     );
