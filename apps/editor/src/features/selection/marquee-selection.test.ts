@@ -85,6 +85,16 @@ function fixture(): {
         rotation: 0,
         lineStyle: "solid",
       },
+      {
+        id: "circle-1",
+        kind: "circle",
+        locked: false,
+        zIndex: 1,
+        anchor: { kind: "free", position: { x: 700, y: 100 } },
+        center: { x: 700, y: 100 },
+        radius: 40,
+        lineStyle: "solid",
+      },
     ],
   };
   const geometry = resolveRouteGeometry(
@@ -171,6 +181,15 @@ describe("marquee window selection (left-to-right)", () => {
       select({ x: 480, y: 90, width: 30, height: 15 }, "window").draftingIds,
     ).toEqual([]);
   });
+
+  it("selects a circle only when its full outline is inside", () => {
+    expect(
+      select({ x: 650, y: 50, width: 100, height: 100 }, "window").draftingIds,
+    ).toEqual(["circle-1"]);
+    expect(
+      select({ x: 670, y: 70, width: 60, height: 60 }, "window").draftingIds,
+    ).toEqual([]);
+  });
 });
 
 describe("marquee crossing selection (right-to-left)", () => {
@@ -196,6 +215,16 @@ describe("marquee crossing selection (right-to-left)", () => {
     // A crossing wholly inside the empty box still selects only contents.
     expect(
       select({ x: 480, y: 90, width: 30, height: 15 }, "crossing").draftingIds,
+    ).toEqual([]);
+  });
+
+  it("selects a circle when crossing touches or encloses its outline", () => {
+    expect(
+      select({ x: 650, y: 50, width: 100, height: 100 }, "crossing")
+        .draftingIds,
+    ).toEqual(["circle-1"]);
+    expect(
+      select({ x: 695, y: 95, width: 10, height: 10 }, "crossing").draftingIds,
     ).toEqual([]);
   });
 

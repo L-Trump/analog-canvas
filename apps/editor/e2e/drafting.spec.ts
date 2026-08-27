@@ -686,7 +686,7 @@ test("O creates a selectable, styleable circle with one radial handle and no rot
   await expect(page.locator('[data-kind="draft-rectangle"]')).toHaveCount(0);
 });
 
-test("E converts a rectangle into a navigable hierarchical Cell", async ({
+test("E leaves a selected drafting rectangle as drawing geometry", async ({
   page,
 }) => {
   await page.goto("/editor");
@@ -694,76 +694,13 @@ test("E converts a rectangle into a navigable hierarchical Cell", async ({
   await page.keyboard.press("r");
   await clickCreate(page, { x: 220, y: 220 }, { x: 380, y: 320 });
 
-  const rectangleHit = page.getByTestId(/^drafting-hit-rectangle-/);
-  const edge = await rectangleHit.evaluate((element) => {
-    const polygon = element as SVGPolygonElement;
-    const matrix = polygon.getScreenCTM();
-    if (!matrix || polygon.points.numberOfItems < 2) return null;
-    const first = polygon.points.getItem(0);
-    const second = polygon.points.getItem(1);
-    const midpoint = new DOMPoint(
-      (first.x + second.x) / 2,
-      (first.y + second.y) / 2,
-    ).matrixTransform(matrix);
-    return { x: midpoint.x, y: midpoint.y };
-  });
-  if (!edge) throw new Error("Rectangle edge is not measurable");
-  await page.mouse.click(edge.x, edge.y);
+  await page.getByTestId(/^drafting-hit-rectangle-/).click({ force: true });
   await page.keyboard.press("e");
 
-  await expect(page.getByTestId("document-count")).toHaveText("2");
-  await expect(page.getByTestId("active-document-id")).toHaveText(
-    "document-cell-1",
-  );
-  await expect(page.getByTestId("active-instance-count")).toHaveText("0");
+  await expect(page.getByTestId("document-count")).toHaveText("1");
+  await expect(page.locator('[data-kind="draft-rectangle"]')).toHaveCount(1);
   await expect(page.getByTestId("status")).toHaveText(
-    "Created and entered Cell Cell1",
-  );
-  await expect(page.getByTestId("cell-navigation")).toBeVisible();
-
-  await page.keyboard.press("Shift+E");
-  await expect(page.getByTestId("active-document-id")).toHaveText(
-    "document-main",
-  );
-  await expect(page.getByTestId("hit-X1")).toBeVisible();
-
-  await page.getByTestId("hit-X1").click();
-  await page.keyboard.press("e");
-  await expect(page.getByTestId("active-document-id")).toHaveText(
-    "document-cell-1",
-  );
-
-  await page.getByRole("button", { name: "Up" }).click();
-  await page.getByTestId("hit-X1").dblclick();
-  await expect(page.getByTestId("active-document-id")).toHaveText(
-    "document-cell-1",
-  );
-
-  const projectBytes = await downloadBytes(page, "File", "Save Project");
-  const project = JSON.parse(projectBytes.toString("utf8"));
-  expect(project.documents).toHaveLength(2);
-  expect(project.documents[0].drafting.objects).toEqual([]);
-  expect(project.documents[0].instances[0]).toMatchObject({
-    id: "X1",
-    netlist: {
-      binding: {
-        kind: "subcircuit",
-        childDocumentId: "document-cell-1",
-      },
-    },
-  });
-
-  await page.getByTestId("project-file").setInputFiles({
-    name: "hierarchical-cell.icproj.json",
-    mimeType: "application/json",
-    buffer: projectBytes,
-  });
-  await expect(page.getByTestId("active-document-id")).toHaveText(
-    "document-main",
-  );
-  await page.getByTestId("hit-X1").dblclick();
-  await expect(page.getByTestId("active-document-id")).toHaveText(
-    "document-cell-1",
+    "Select a hierarchical block before entering a Cell",
   );
 });
 

@@ -46,6 +46,37 @@ describe("selection inspection model", () => {
     expect(model.selectionShelfSummary).toBe("X1 · hierarchical:Child");
   });
 
+  it("does not treat drafting rectangles as hierarchy entry targets", () => {
+    const project = createEmptyProject("project", "Project");
+    const document = project.documents[0]!;
+    document.drafting!.objects.push({
+      id: "rectangle-1",
+      kind: "rectangle",
+      locked: false,
+      zIndex: 0,
+      anchor: { kind: "free", position: { x: 100, y: 100 } },
+      center: { x: 100, y: 100 },
+      width: 80,
+      height: 40,
+      rotation: 0,
+      lineStyle: "solid",
+    });
+
+    const model = deriveSelectionInspectionModel({
+      project,
+      document,
+      resolver,
+      selection: {
+        instanceIds: [],
+        ...emptySupplementalSelection,
+        draftingIds: ["rectangle-1"],
+      },
+      selectedEndpoint: null,
+    });
+
+    expect(model.hasHierarchyEnterSelection).toBe(false);
+  });
+
   it("prefers an imported route-bound Net Label over its identifier shape", () => {
     const project = createEmptyProject("project", "Project");
     const document = project.documents[0]!;

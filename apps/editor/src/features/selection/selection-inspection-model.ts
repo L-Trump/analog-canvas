@@ -124,8 +124,7 @@ export function deriveSelectionInspectionModel({
       )
     : undefined;
   const hasHierarchyEnterSelection = Boolean(
-    (selectedInstance && referencedDocumentId(project, selectedInstance)) ||
-    selectedDrafting?.kind === "rectangle",
+    selectedInstance && referencedDocumentId(project, selectedInstance),
   );
   const hasRotatableSelection =
     selectedIds.some((id) =>

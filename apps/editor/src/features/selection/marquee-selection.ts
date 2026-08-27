@@ -7,6 +7,7 @@ import type { Point, Rect, SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
 import {
+  circleBoundaryIntersectsRect,
   pointInRect,
   polylineInRect,
   rectContainsRect,
@@ -121,7 +122,6 @@ export function marqueeSelection(
             : rectangleBoundaryIntersectsRect(geometry.corners, rect);
         }
         if (geometry.kind === "circle") {
-          const centerInRect = pointInRect(geometry.center, rect);
           const radius = geometry.radius;
           if (window) {
             return (
@@ -141,19 +141,7 @@ export function marqueeSelection(
               )
             );
           }
-          const closestX = Math.max(
-            rect.x,
-            Math.min(geometry.center.x, rect.x + rect.width),
-          );
-          const closestY = Math.max(
-            rect.y,
-            Math.min(geometry.center.y, rect.y + rect.height),
-          );
-          const nearestDistance = Math.hypot(
-            closestX - geometry.center.x,
-            closestY - geometry.center.y,
-          );
-          return !centerInRect && nearestDistance <= radius;
+          return circleBoundaryIntersectsRect(geometry.center, radius, rect);
         }
         return boxSelected(geometry.bounds);
       })

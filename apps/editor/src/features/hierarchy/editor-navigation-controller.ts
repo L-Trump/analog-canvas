@@ -16,7 +16,6 @@ import type { WireSource } from "@icm/edit-engine";
 import type { NetlistDiagnostic } from "@icm/netlist";
 import type {
   CircuitProject,
-  DraftingObject,
   GridRect,
   Point,
   RouteEndpoint,
@@ -28,7 +27,6 @@ import type { SymbolResolver } from "@icm/symbols";
 import { fitCameraToBounds, type CameraRectInput } from "../../canvas/fit-view";
 import { referencedDocumentId } from "../../document/editor-session";
 import { endpointNetId } from "../wiring/route-interaction-geometry";
-import { convertRectangleToHierarchy } from "./rectangle-to-cell";
 
 type Instance = SchematicDocument["instances"][number];
 type SelectionKind = "instance" | "route" | "junction" | "annotation";
@@ -68,11 +66,6 @@ export interface EditorNavigationControllerDependencies {
   setInstanceTableOpen: (open: boolean) => void;
   setCellManagerOpen: (open: boolean) => void;
   selectedInstance: Instance | null | undefined;
-  selectedDrafting: DraftingObject | null | undefined;
-  commitProjectStructure: (
-    project: CircuitProject,
-    activeDocumentId?: string,
-  ) => unknown;
   setStatus: (status: string) => void;
 }
 
@@ -101,8 +94,6 @@ export function createEditorNavigationController({
   setInstanceTableOpen,
   setCellManagerOpen,
   selectedInstance,
-  selectedDrafting,
-  commitProjectStructure,
   setStatus,
 }: EditorNavigationControllerDependencies) {
   const switchDocument = (nextDocumentId: string): void => {
@@ -350,36 +341,7 @@ export function createEditorNavigationController({
       enterHierarchy(selectedInstance.id);
       return;
     }
-    if (selectedDrafting?.kind !== "rectangle") {
-      setStatus(
-        "Select a rectangle or hierarchical block before entering a Cell",
-      );
-      return;
-    }
-    try {
-      const converted = convertRectangleToHierarchy(
-        project,
-        document.id,
-        selectedDrafting.id,
-      );
-      commitProjectStructure(converted.project, document.id);
-      setDocumentStack((current) => [
-        ...current,
-        {
-          parentDocumentId: converted.parentDocumentId,
-          instanceId: converted.instanceId,
-          childDocumentId: converted.childDocumentId,
-        },
-      ]);
-      switchDocument(converted.childDocumentId);
-      setStatus(`Created and entered Cell ${converted.cellName}`);
-    } catch (error) {
-      setStatus(
-        `Could not create Cell: ${
-          error instanceof Error ? error.message : "unexpected failure"
-        }`,
-      );
-    }
+    setStatus("Select a hierarchical block before entering a Cell");
   };
 
   const returnToParentDocument = (): void => {

@@ -65,10 +65,9 @@ Junctions in the same undoable Project transaction.
 Deleting a hierarchical Instance with the normal Delete command never deletes
 its reusable child Cell.
 
-Rectangles remain drafting geometry. Selecting an unlocked rectangle and using
-**Enter Cell** is only a convenience gesture: the commit removes the rectangle,
-creates a child Cell, and places an ordinary hierarchical Instance. Saved
-hierarchy never depends on rectangle drawing data.
+Rectangles are drafting geometry only. Create reusable Cells through
+**Manage Cells…** and place them with **Place Cell**; **Enter Cell** never
+converts drawing objects.
 
 Select a Cell Instance in a parent and open **Properties** to adjust that
 Cell's shared symbol layout: body width/height and each pin side/offset. Pin
