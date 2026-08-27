@@ -258,6 +258,40 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
     },
   },
   {
+    symbolId: "delay-cell",
+    name: "Delay Cell",
+    category: "logic",
+    reviewStatus: "reviewed",
+    pinOrder: ["A", "Y"],
+    palette: true,
+    automaticMappings: [],
+    manualOnlyReason:
+      "Visual delay-stage block; timing and structural netlist semantics require an explicit implementation mapping.",
+    assetPath: "delay-cell.symbol.json",
+    assetHash:
+      "5ff41946c5ea6cadfdac4e49d5c6f978220de9ceebf9ef8a2a67fdbb4f23c19d",
+    visualAuthority: {
+      kind: "razavi-reference-v1",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePaths: [
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-vector-source.json",
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-reference.png",
+      ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-geometry.json",
+    },
+    generation: {
+      kind: "razavi-pdf-vector-reference",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePath:
+        "fixtures/visual-reference/razavi-reference-v1/delay-cell-vector-source.json",
+      converterPath: "scripts/generate-razavi-delay-cell-asset.mjs",
+      converterVersion: 1,
+    },
+  },
+  {
     symbolId: "diode",
     name: "Diode",
     category: "passive",
@@ -2243,6 +2277,198 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           lineCap: "butt",
           lineJoin: "miter",
         },
+      },
+    ],
+    variants: [],
+  },
+  {
+    schemaVersion: 1,
+    id: "delay-cell",
+    name: "Delay Cell",
+    viewBox: {
+      x: -34,
+      y: -14,
+      width: 68,
+      height: 28,
+    },
+    pins: [
+      {
+        name: "A",
+        role: "input",
+        at: {
+          x: -30,
+          y: 0,
+        },
+        direction: "west",
+        presentation: {
+          visibility: "visible",
+          leadLength: 12,
+        },
+      },
+      {
+        name: "Y",
+        role: "output",
+        at: {
+          x: 30,
+          y: 0,
+        },
+        direction: "east",
+        presentation: {
+          visibility: "visible",
+          leadLength: 12,
+        },
+      },
+    ],
+    primitives: [
+      {
+        kind: "line",
+        from: {
+          x: -30,
+          y: 0,
+        },
+        to: {
+          x: -18,
+          y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "path",
+        data: "M -18 -9 L 18 -9 L 18 9 L -18 9 Z",
+        style: {
+          strokeRole: "emphasis",
+          lineCap: "butt",
+          lineJoin: "miter",
+          miterLimit: 4,
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 18,
+          y: 0,
+        },
+        to: {
+          x: 30,
+          y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: -0.713254,
+            y: -2.900975,
+          },
+          {
+            x: -1.112745,
+            y: -1.04879,
+          },
+          {
+            x: -3.455215,
+            y: 3.999324,
+          },
+          {
+            x: -4.163404,
+            y: 4.525925,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: -0.713254,
+            y: -2.900975,
+          },
+          {
+            x: 2.319245,
+            y: 4.525925,
+          },
+          {
+            x: 0.975503,
+            y: 3.999324,
+          },
+          {
+            x: -1.112745,
+            y: -1.04879,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: -4.163404,
+            y: 4.525925,
+          },
+          {
+            x: -3.455215,
+            y: 3.999324,
+          },
+          {
+            x: 0.975503,
+            y: 3.999324,
+          },
+          {
+            x: 2.319245,
+            y: 4.525925,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
+      },
+      {
+        kind: "polygon",
+        points: [
+          {
+            x: 4.957771,
+            y: 3.636595,
+          },
+          {
+            x: 3.632187,
+            y: 3.636595,
+          },
+          {
+            x: 4.739867,
+            y: -1.720216,
+          },
+          {
+            x: 2.851364,
+            y: -1.720216,
+          },
+          {
+            x: 3.087427,
+            y: -2.791578,
+          },
+          {
+            x: 8.153699,
+            y: -2.791578,
+          },
+          {
+            x: 7.935794,
+            y: -1.720216,
+          },
+          {
+            x: 6.06545,
+            y: -1.720216,
+          },
+        ],
+        fill: "foreground",
+        stroke: "none",
       },
     ],
     variants: [],

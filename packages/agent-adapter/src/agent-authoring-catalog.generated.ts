@@ -186,6 +186,28 @@ export const agentRazaviAuthoringCatalog = {
       variants: [],
     },
     {
+      symbolId: "delay-cell",
+      name: "Delay Cell",
+      category: "logic",
+      defaultVariantId: null,
+      labelVisibility: "shown",
+      pins: [
+        {
+          name: "A",
+          role: "input",
+          direction: "west",
+          visibility: "visible",
+        },
+        {
+          name: "Y",
+          role: "output",
+          direction: "east",
+          visibility: "visible",
+        },
+      ],
+      variants: [],
+    },
+    {
       symbolId: "diode",
       name: "Diode",
       category: "passive",

@@ -27,6 +27,25 @@
   ],
   "vectorEvidence": [
     {
+      "id": "razavi-textbook-delay-cell",
+      "kind": "pdf-vector-extract",
+      "source": {
+        "title": "Analysis and Design of Data Converters",
+        "sha256": "8a5c1bb42a5e32a84cd6af53e2f43db79ea8f511552c913ec65d2caa1d90a028",
+        "pdfPage": 349,
+        "printedPage": 331,
+        "figure": "16.2(c)"
+      },
+      "extractPath": "delay-cell-vector-source.json",
+      "extractSha256": "0674951bb955d63dc9a4515593946a2133a3c67d7f44cbb29eed16d9bfcb148a",
+      "rasterPath": "delay-cell-reference.png",
+      "rasterSha256": "b327960fe94f29386a2f7d4c5adb7eea9f231a51ae7060f870a331bb08f9fcfb",
+      "scope": [
+        "two-terminal delay-stage rectangle and lead proportions",
+        "Delta-T internal mark and body-to-wire stroke hierarchy"
+      ]
+    },
+    {
       "id": "razavi-textbook-figure-15-21-inductor",
       "kind": "pdf-vector-extract",
       "source": {
@@ -289,7 +308,9 @@
       "extractSha256": "fcd9cd46b1e2799d65d088e4b576e0d19a1606a4b272cf85f29cab3ca1004380",
       "rasterPath": "d-flip-flop-reference.png",
       "rasterSha256": "b3a7caab14b71944766da26cac934902a96fa7a304b4963cbb43ac49fe97fa2e",
-      "scope": ["generic D/CK/Q/Q-bar flip-flop block without external circuit ports"]
+      "scope": [
+        "generic D/CK/Q/Q-bar flip-flop block without external circuit ports"
+      ]
     }
   ],
   "mosGeometryPath": "mos-geometry.json",
@@ -316,8 +337,10 @@
   "logicGateGeometrySha256": "82ab85760e6c5db3f1201a792fbad19d7a3dad32dfc42c90bd69603f693c88f8",
   "bufferDffGeometryPath": "buffer-dff-geometry.json",
   "bufferDffGeometrySha256": "eafca52e46e90a020b5fc6aa934a3d07785df907d3313fcecb86ceb9cc42c3be",
+  "delayCellGeometryPath": "delay-cell-geometry.json",
+  "delayCellGeometrySha256": "699b0a5a16b9756e904436328a89b57ad1e04c247f4011c0f824cd9c16b9694a",
   "fidelityTargetsPath": "fidelity-targets.json",
-  "fidelityTargetsSha256": "9f5652abaa4a2481048028ddf1ec5693d0467e929347e37cd840254f551cfb6b",
+  "fidelityTargetsSha256": "0555f60611d74e58038b5c8b275d3a89bbfbab82dd4b9b1faf3e2ec980783ad6",
   "pixels": {
     "width": 1204,
     "height": 794
@@ -336,7 +359,8 @@
     "PDF-derived fully differential op-amp geometry and polarity marks",
     "PDF-derived common BJT, diode, gain-block, and switch families",
     "PDF-derived logic-gate bodies, bubbles, and lead junctions",
-    "PDF-derived Buffer and generic D flip-flop geometry"
+    "PDF-derived Buffer and generic D flip-flop geometry",
+    "PDF-derived page-331 Delay Cell geometry and Delta-T mark"
   ],
   "notes": [
     "This manifest is the sole visual authority for Razavi style v1.",

@@ -240,6 +240,13 @@
       "useVariant": false
     },
     {
+      "id": "delay-cell",
+      "measurementPath": "delay-cell-geometry.json",
+      "measurementKey": "delay-cell",
+      "symbolId": "delay-cell",
+      "useVariant": false
+    },
+    {
       "id": "d-flip-flop",
       "measurementPath": "buffer-dff-geometry.json",
       "measurementKey": "d-flip-flop",

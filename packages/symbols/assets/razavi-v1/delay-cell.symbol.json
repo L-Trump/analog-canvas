@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "id": "delay-cell",
+  "name": "Delay Cell",
+  "viewBox": {
+    "x": -34,
+    "y": -14,
+    "width": 68,
+    "height": 28
+  },
+  "pins": [
+    {
+      "name": "A",
+      "role": "input",
+      "at": {
+        "x": -30,
+        "y": 0
+      },
+      "direction": "west",
+      "presentation": {
+        "visibility": "visible",
+        "leadLength": 12
+      }
+    },
+    {
+      "name": "Y",
+      "role": "output",
+      "at": {
+        "x": 30,
+        "y": 0
+      },
+      "direction": "east",
+      "presentation": {
+        "visibility": "visible",
+        "leadLength": 12
+      }
+    }
+  ],
+  "primitives": [
+    {
+      "kind": "line",
+      "from": {
+        "x": -30,
+        "y": 0
+      },
+      "to": {
+        "x": -18,
+        "y": 0
+      },
+      "style": {
+        "strokeRole": "normal",
+        "lineCap": "butt",
+        "lineJoin": "miter"
+      }
+    },
+    {
+      "kind": "path",
+      "data": "M -18 -9 L 18 -9 L 18 9 L -18 9 Z",
+      "style": {
+        "strokeRole": "emphasis",
+        "lineCap": "butt",
+        "lineJoin": "miter",
+        "miterLimit": 4
+      }
+    },
+    {
+      "kind": "line",
+      "from": {
+        "x": 18,
+        "y": 0
+      },
+      "to": {
+        "x": 30,
+        "y": 0
+      },
+      "style": {
+        "strokeRole": "normal",
+        "lineCap": "butt",
+        "lineJoin": "miter"
+      }
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": -0.713254,
+          "y": -2.900975
+        },
+        {
+          "x": -1.112745,
+          "y": -1.04879
+        },
+        {
+          "x": -3.455215,
+          "y": 3.999324
+        },
+        {
+          "x": -4.163404,
+          "y": 4.525925
+        }
+      ],
+      "fill": "foreground",
+      "stroke": "none"
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": -0.713254,
+          "y": -2.900975
+        },
+        {
+          "x": 2.319245,
+          "y": 4.525925
+        },
+        {
+          "x": 0.975503,
+          "y": 3.999324
+        },
+        {
+          "x": -1.112745,
+          "y": -1.04879
+        }
+      ],
+      "fill": "foreground",
+      "stroke": "none"
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": -4.163404,
+          "y": 4.525925
+        },
+        {
+          "x": -3.455215,
+          "y": 3.999324
+        },
+        {
+          "x": 0.975503,
+          "y": 3.999324
+        },
+        {
+          "x": 2.319245,
+          "y": 4.525925
+        }
+      ],
+      "fill": "foreground",
+      "stroke": "none"
+    },
+    {
+      "kind": "polygon",
+      "points": [
+        {
+          "x": 4.957771,
+          "y": 3.636595
+        },
+        {
+          "x": 3.632187,
+          "y": 3.636595
+        },
+        {
+          "x": 4.739867,
+          "y": -1.720216
+        },
+        {
+          "x": 2.851364,
+          "y": -1.720216
+        },
+        {
+          "x": 3.087427,
+          "y": -2.791578
+        },
+        {
+          "x": 8.153699,
+          "y": -2.791578
+        },
+        {
+          "x": 7.935794,
+          "y": -1.720216
+        },
+        {
+          "x": 6.06545,
+          "y": -1.720216
+        }
+      ],
+      "fill": "foreground",
+      "stroke": "none"
+    }
+  ],
+  "variants": []
+}

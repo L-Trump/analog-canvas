@@ -143,6 +143,7 @@ describe("Razavi symbol catalog", () => {
       ["comparator-inputs-swapped", "reviewed", "razavi-reference-v1"],
       ["current-source", "reviewed", "razavi-reference-v1"],
       ["d-flip-flop", "reviewed", "razavi-reference-v1"],
+      ["delay-cell", "reviewed", "razavi-reference-v1"],
       ["diode", "reviewed", "razavi-reference-v1"],
       ["ground", "reviewed", "razavi-reference-v1"],
       ["ideal-switch", "reviewed", "razavi-reference-v1"],
@@ -272,6 +273,43 @@ describe("Razavi symbol catalog", () => {
     expect(
       dff.primitives.filter((primitive) => primitive.kind === "line"),
     ).toHaveLength(5);
+  });
+
+  it("keeps the page-331 Delay Cell proportions and source glyph outlines", () => {
+    const delayCell = requireRazaviCatalogSymbol("delay-cell");
+    expect(delayCell.pins.map((pin) => pin.name)).toEqual(["A", "Y"]);
+    expect(delayCell.pins.map((pin) => pin.at)).toEqual([
+      { x: -30, y: 0 },
+      { x: 30, y: 0 },
+    ]);
+    const [inputLead, body, outputLead, ...glyphPolygons] =
+      delayCell.primitives;
+    expect(inputLead).toMatchObject({
+      kind: "line",
+      from: { x: -30, y: 0 },
+      to: { x: -18, y: 0 },
+      style: { strokeRole: "normal" },
+    });
+    expect(body).toMatchObject({
+      kind: "path",
+      data: "M -18 -9 L 18 -9 L 18 9 L -18 9 Z",
+      style: { strokeRole: "emphasis" },
+    });
+    expect(outputLead).toMatchObject({
+      kind: "line",
+      from: { x: 18, y: 0 },
+      to: { x: 30, y: 0 },
+      style: { strokeRole: "normal" },
+    });
+    expect(glyphPolygons).toHaveLength(4);
+    expect(
+      glyphPolygons.every(
+        (primitive) =>
+          primitive.kind === "polygon" &&
+          primitive.fill === "foreground" &&
+          primitive.stroke === "none",
+      ),
+    ).toBe(true);
   });
 
   it("keeps the enlarged FD Amp angle, pair spacing, and joined leads", () => {
@@ -433,7 +471,7 @@ describe("Razavi symbol catalog", () => {
   });
 
   it("uses reviewed catalog objects as the sole built-in product library", () => {
-    expect(razaviCatalogSymbols).toHaveLength(38);
+    expect(razaviCatalogSymbols).toHaveLength(39);
     for (const catalogSymbol of razaviProductSymbols) {
       expect(
         builtInSymbols.find((symbol) => symbol.id === catalogSymbol.id),
@@ -452,6 +490,7 @@ describe("Razavi symbol catalog", () => {
       "comparator",
       "current-source",
       "d-flip-flop",
+      "delay-cell",
       "diode",
       "ground",
       "ideal-switch",
