@@ -16,6 +16,8 @@ The family extractors currently cover:
 - `extract-razavi-logic-gates.py`: inverter, AND, NAND, NOR, and XOR native
   vectors from Figures 16.2, 16.24, and 16.25. OR and XNOR are explicitly
   derived by the family generator from these direct sources.
+- `extract-razavi-buffer-dff.py`: direct Buffer geometry from Figure 16.53(a)
+  and the generic D/CK/Q/Q-bar flip-flop block from Figure 16.23(a).
 
 Each extractor writes:
 

@@ -8,10 +8,12 @@ import { SYMBOL_CONNECTION_GRID, SymbolDefinitionSchema } from "./schema.js";
 
 const PRODUCT_IDS = [
   "and-gate",
+  "buffer",
   "capacitor",
   "closed-switch",
   "comparator",
   "current-source",
+  "d-flip-flop",
   "diode",
   "ground",
   "ideal-switch",

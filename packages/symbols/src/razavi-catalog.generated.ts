@@ -47,6 +47,40 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
     },
   },
   {
+    symbolId: "buffer",
+    name: "Buffer",
+    category: "logic",
+    reviewStatus: "reviewed",
+    pinOrder: ["A", "Y"],
+    palette: true,
+    automaticMappings: [],
+    manualOnlyReason:
+      "Behavioral logic symbol; structural SPICE realization requires an explicit subcircuit or PDK mapping.",
+    assetPath: "buffer.symbol.json",
+    assetHash:
+      "bcd99b1cb41e5dee38457eabc93382c0ea6f0e657ead3b321caa6325b2a5d111",
+    visualAuthority: {
+      kind: "razavi-reference-v1",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePaths: [
+        "fixtures/visual-reference/razavi-reference-v1/buffer-vector-source.json",
+        "fixtures/visual-reference/razavi-reference-v1/buffer-reference.png",
+      ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/buffer-dff-geometry.json",
+    },
+    generation: {
+      kind: "razavi-pdf-vector-reference",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePath:
+        "fixtures/visual-reference/razavi-reference-v1/buffer-vector-source.json",
+      converterPath: "scripts/generate-razavi-buffer-dff-assets.mjs",
+      converterVersion: 1,
+    },
+  },
+  {
     symbolId: "capacitor",
     name: "Capacitor",
     category: "passive",
@@ -186,6 +220,40 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       referencePath:
         "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
       converterPath: "scripts/generate-razavi-peripheral-assets.mjs",
+      converterVersion: 1,
+    },
+  },
+  {
+    symbolId: "d-flip-flop",
+    name: "D Flip-Flop",
+    category: "logic",
+    reviewStatus: "reviewed",
+    pinOrder: ["D", "CK", "Q", "QBAR"],
+    palette: true,
+    automaticMappings: [],
+    manualOnlyReason:
+      "Behavioral logic symbol; structural SPICE realization requires an explicit subcircuit or PDK mapping.",
+    assetPath: "d-flip-flop.symbol.json",
+    assetHash:
+      "1d980b4f14d3e1dc38e2b452fb87541d91854c3d80b967368816b43ec3af5e4f",
+    visualAuthority: {
+      kind: "razavi-reference-v1",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePaths: [
+        "fixtures/visual-reference/razavi-reference-v1/d-flip-flop-vector-source.json",
+        "fixtures/visual-reference/razavi-reference-v1/d-flip-flop-reference.png",
+      ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/buffer-dff-geometry.json",
+    },
+    generation: {
+      kind: "razavi-pdf-vector-reference",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePath:
+        "fixtures/visual-reference/razavi-reference-v1/d-flip-flop-vector-source.json",
+      converterPath: "scripts/generate-razavi-buffer-dff-assets.mjs",
       converterVersion: 1,
     },
   },
@@ -1236,6 +1304,90 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
   },
   {
     schemaVersion: 1,
+    id: "buffer",
+    name: "Buffer",
+    viewBox: {
+      x: -44,
+      y: -24,
+      width: 88,
+      height: 48,
+    },
+    pins: [
+      {
+        name: "A",
+        role: "input",
+        at: {
+          x: -40,
+          y: 0,
+        },
+        direction: "west",
+        presentation: {
+          visibility: "visible",
+          leadLength: 20,
+        },
+      },
+      {
+        name: "Y",
+        role: "output",
+        at: {
+          x: 40,
+          y: 0,
+        },
+        direction: "east",
+        presentation: {
+          visibility: "visible",
+          leadLength: 20,
+        },
+      },
+    ],
+    primitives: [
+      {
+        kind: "line",
+        from: {
+          x: -40,
+          y: 0,
+        },
+        to: {
+          x: -14.727526,
+          y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "path",
+        data: "M 9.022751 -0.0 L -14.727526 14.998936 L -14.727526 -13.749865 L 9.022751 -0.0",
+        style: {
+          strokeRole: "emphasis",
+          lineCap: "butt",
+          lineJoin: "miter",
+          miterLimit: 4,
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 9.022751,
+          y: 0,
+        },
+        to: {
+          x: 40,
+          y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+    ],
+    variants: [],
+  },
+  {
+    schemaVersion: 1,
     id: "capacitor",
     name: "Capacitor",
     viewBox: {
@@ -1914,6 +2066,177 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         to: {
           x: 0,
           y: 20,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+    ],
+    variants: [],
+  },
+  {
+    schemaVersion: 1,
+    id: "d-flip-flop",
+    name: "D Flip-Flop",
+    viewBox: {
+      x: -44,
+      y: -24,
+      width: 88,
+      height: 48,
+    },
+    pins: [
+      {
+        name: "D",
+        role: "input",
+        at: {
+          x: -40,
+          y: -10,
+        },
+        direction: "west",
+        presentation: {
+          visibility: "visible",
+          leadLength: 20,
+          showName: true,
+          textStyle: "math-symbol",
+          textSizeScale: 0.68,
+        },
+      },
+      {
+        name: "CK",
+        role: "clock",
+        at: {
+          x: -40,
+          y: 10,
+        },
+        direction: "west",
+        presentation: {
+          visibility: "visible",
+          leadLength: 20,
+          showName: true,
+          textStyle: "math-symbol",
+          textSizeScale: 0.68,
+        },
+      },
+      {
+        name: "Q",
+        role: "output",
+        at: {
+          x: 40,
+          y: -10,
+        },
+        direction: "east",
+        presentation: {
+          visibility: "visible",
+          leadLength: 20,
+          showName: true,
+          textStyle: "math-symbol",
+          textSizeScale: 0.68,
+        },
+      },
+      {
+        name: "QBAR",
+        role: "output-complement",
+        at: {
+          x: 40,
+          y: 10,
+        },
+        direction: "east",
+        presentation: {
+          visibility: "visible",
+          leadLength: 20,
+          showName: true,
+          displayName: "Q",
+          textStyle: "math-symbol",
+          textSizeScale: 0.68,
+        },
+      },
+    ],
+    primitives: [
+      {
+        kind: "line",
+        from: {
+          x: -40,
+          y: -10,
+        },
+        to: {
+          x: -20.000684,
+          y: -10,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: -40,
+          y: 10,
+        },
+        to: {
+          x: -20.000684,
+          y: 10,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "path",
+        data: "M -20.000684 -20.0 L 20.000684 -20.0 L 20.000684 20.0 L -20.000684 20.0 Z",
+        style: {
+          strokeRole: "emphasis",
+          lineCap: "butt",
+          lineJoin: "miter",
+          miterLimit: 4,
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 20.000684,
+          y: -10,
+        },
+        to: {
+          x: 40,
+          y: -10,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 20.000684,
+          y: 10,
+        },
+        to: {
+          x: 40,
+          y: 10,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 8.687,
+          y: 4.24947,
+        },
+        to: {
+          x: 17.354168,
+          y: 4.24947,
         },
         style: {
           strokeRole: "normal",

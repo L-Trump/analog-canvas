@@ -136,11 +136,13 @@ describe("Razavi symbol catalog", () => {
       ]),
     ).toEqual([
       ["and-gate", "reviewed", "razavi-reference-v1"],
+      ["buffer", "reviewed", "razavi-reference-v1"],
       ["capacitor", "reviewed", "razavi-reference-v1"],
       ["closed-switch", "reviewed", "razavi-reference-v1"],
       ["comparator", "reviewed", "razavi-reference-v1"],
       ["comparator-inputs-swapped", "reviewed", "razavi-reference-v1"],
       ["current-source", "reviewed", "razavi-reference-v1"],
+      ["d-flip-flop", "reviewed", "razavi-reference-v1"],
       ["diode", "reviewed", "razavi-reference-v1"],
       ["ground", "reviewed", "razavi-reference-v1"],
       ["ideal-switch", "reviewed", "razavi-reference-v1"],
@@ -233,6 +235,43 @@ describe("Razavi symbol catalog", () => {
       ],
     });
     expect(invalid.success).toBe(false);
+  });
+
+  it("keeps the PDF-derived Buffer seams and generic DFF pin contract", () => {
+    const buffer = requireRazaviCatalogSymbol("buffer");
+    const [inputLead, triangle, outputLead] = buffer.primitives;
+    if (
+      inputLead?.kind !== "line" ||
+      triangle?.kind !== "path" ||
+      outputLead?.kind !== "line"
+    ) {
+      throw new Error("Buffer must retain lead/triangle/lead ordering");
+    }
+    const trianglePoints = pathPoints(triangle.data);
+    const basePoints = trianglePoints.filter(
+      (point) => point.x === Math.min(...trianglePoints.map(({ x }) => x)),
+    );
+    const apex = trianglePoints.find(
+      (point) => point.x === Math.max(...trianglePoints.map(({ x }) => x)),
+    );
+    expect(inputLead.to.x).toBe(basePoints[0]?.x);
+    expect(inputLead.to.y).toBe(0);
+    expect(apex).toBeDefined();
+    expect(outputLead.from.x).toBe(apex?.x);
+    expect(outputLead.from.y).toBeCloseTo(apex?.y ?? Number.NaN, 8);
+    expect(buffer.pins.map((pin) => pin.name)).toEqual(["A", "Y"]);
+
+    const dff = requireRazaviCatalogSymbol("d-flip-flop");
+    expect(dff.pins.map((pin) => pin.name)).toEqual(["D", "CK", "Q", "QBAR"]);
+    expect(dff.pins.at(-1)?.presentation).toMatchObject({
+      showName: true,
+      displayName: "Q",
+      textStyle: "math-symbol",
+      textSizeScale: 0.68,
+    });
+    expect(
+      dff.primitives.filter((primitive) => primitive.kind === "line"),
+    ).toHaveLength(5);
   });
 
   it("keeps the enlarged FD Amp angle, pair spacing, and joined leads", () => {
@@ -394,7 +433,7 @@ describe("Razavi symbol catalog", () => {
   });
 
   it("uses reviewed catalog objects as the sole built-in product library", () => {
-    expect(razaviCatalogSymbols).toHaveLength(36);
+    expect(razaviCatalogSymbols).toHaveLength(38);
     for (const catalogSymbol of razaviProductSymbols) {
       expect(
         builtInSymbols.find((symbol) => symbol.id === catalogSymbol.id),
@@ -407,10 +446,12 @@ describe("Razavi symbol catalog", () => {
   it("lists only reviewed Reference-calibrated assets in the product library", () => {
     expect(razaviProductSymbols.map((symbol) => symbol.id)).toEqual([
       "and-gate",
+      "buffer",
       "capacitor",
       "closed-switch",
       "comparator",
       "current-source",
+      "d-flip-flop",
       "diode",
       "ground",
       "ideal-switch",

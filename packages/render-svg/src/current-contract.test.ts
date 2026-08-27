@@ -168,6 +168,54 @@ describe("current rendering contract", () => {
     expect(svg).not.toContain("font-style:italic");
   });
 
+  it("renders an explicit pin display name without changing electrical identity", () => {
+    const namedPinSymbol = {
+      schemaVersion: 1,
+      id: "display-pin-test",
+      name: "Display Pin Test",
+      viewBox: { x: -20, y: -20, width: 40, height: 40 },
+      pins: [
+        {
+          name: "QBAR",
+          role: "output-complement",
+          at: { x: 20, y: 0 },
+          direction: "east",
+          presentation: {
+            visibility: "visible",
+            showName: true,
+            displayName: "Q",
+            textStyle: "math-symbol",
+            textSizeScale: 0.68,
+            leadLength: 10,
+          },
+        },
+      ],
+      primitives: [],
+      variants: [],
+    } satisfies SymbolDefinition;
+    const document = createEmptyDocument("doc", "Display pin");
+    document.instances.push({
+      id: "U1",
+      symbolId: namedPinSymbol.id,
+      placement: {
+        position: { x: 100, y: 100 },
+        rotation: 0,
+        mirror: "none",
+      },
+    });
+
+    const svg = renderDocumentSvg(
+      document,
+      new InMemorySymbolResolver([...builtInSymbols, namedPinSymbol]),
+    );
+
+    expect(svg).toContain('data-pin-name="QBAR"');
+    expect(svg).toContain(">Q</tspan>");
+    expect(svg).not.toContain(">QBAR</text>");
+    expect(svg).toContain("font-style:italic;font-weight:700");
+    expect(svg).toContain('font-size="10.28"');
+  });
+
   it("renders both Port assets as symbols and labels only from annotations", () => {
     const document = createEmptyDocument("doc", "Ports");
     document.instances.push(
