@@ -1,0 +1,132 @@
+@media (max-width: 1100px) {
+  .app-brand-copy h1 {
+    font-size: var(--icm-font-md);
+  }
+
+  .toolbar-button span {
+    display: none;
+  }
+
+  .toolbar-button {
+    min-width: 2rem;
+    justify-content: center;
+    padding-inline: 0.4rem;
+  }
+
+  .app-workspace {
+    grid-template-columns:
+      min(220px, var(--icm-shapes-width)) minmax(0, 1fr)
+      auto;
+  }
+
+  .app-brand {
+    min-width: 9rem;
+  }
+}
+
+@media (max-width: 860px) {
+  .app-chrome-main {
+    column-gap: var(--icm-space-2);
+    padding: 0 var(--icm-space-2);
+  }
+
+  .app-workspace,
+  .app-workspace.library-collapsed {
+    position: relative;
+    grid-template-rows: minmax(0, 1fr);
+    /* The dragged width stays authoritative here too; only the ceiling
+       narrows, so the Library can still be pulled open on a half-screen
+       window. */
+    grid-template-columns: min(var(--icm-shapes-width), 60vw) minmax(0, 1fr);
+    grid-template-areas: "shapes canvas";
+  }
+
+  .app-workspace.library-collapsed {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+
+  .app-workspace.library-collapsed .shapes-panel {
+    display: none;
+  }
+
+  .shapes-panel {
+    border-top: 0;
+  }
+
+  .shapes-fold-label-full {
+    display: none;
+  }
+
+  .shapes-fold-label-compact {
+    display: inline;
+  }
+
+  .shapes-chip {
+    grid-template-rows: 36px 1.15em;
+    gap: 3px;
+    padding: 0;
+    font-size: 10px;
+  }
+
+  .shapes-chip-art {
+    width: 46px;
+    height: 36px;
+  }
+
+  .selection-dock,
+  .selection-dock.open {
+    grid-area: auto;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--icm-props-collapsed);
+    max-height: none;
+    border-top: 0;
+    border-left: 1px solid var(--icm-border);
+  }
+
+  .selection-dock.open {
+    width: min(var(--icm-props-open), calc(100% - var(--icm-rail-width)));
+  }
+
+  .insert-component-dialog {
+    width: min(40rem, calc(100vw - 2rem));
+  }
+
+  .insert-dialog-body {
+    grid-template-columns: minmax(12rem, 0.85fr) minmax(15rem, 1.15fr);
+  }
+
+  .cell-manager-dialog {
+    width: calc(100vw - 1rem);
+    height: calc(100dvh - 1rem);
+  }
+
+  .cell-manager-body {
+    grid-template-columns: 11.5rem minmax(0, 1fr);
+  }
+
+  .cell-manager-detail {
+    padding: var(--icm-space-3);
+  }
+
+  .cell-manager-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cell-interface-grid,
+  .cell-external-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

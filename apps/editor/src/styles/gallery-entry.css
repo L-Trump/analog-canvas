@@ -1,0 +1,3 @@
+/* Gallery, Moderation, and My Submissions share one route presentation. */
+@import "../gallery.css";
+@import "../components/version-history-dialog.css";

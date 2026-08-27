@@ -1,0 +1,751 @@
+.menubar-row,
+.toolbar-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.menubar-row {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--icm-space-1);
+  width: 100%;
+  padding: var(--icm-space-1) var(--icm-space-3);
+  border-top: 1px solid var(--icm-border);
+  background: var(--icm-surface-muted);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.toolbar-row:has(.command-menu[open]) {
+  overflow: visible;
+}
+
+.draw-toolbar {
+  gap: 2px;
+  background: var(--icm-surface);
+}
+
+.draw-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--icm-space-1);
+  height: var(--icm-control-h);
+  padding: 0 var(--icm-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--icm-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--icm-font-sm);
+  white-space: nowrap;
+}
+
+.draw-tool:hover {
+  border-color: var(--icm-border);
+  background: var(--icm-surface-muted);
+}
+
+.draw-tool[aria-pressed="true"] {
+  border-color: var(--icm-accent);
+  background: var(--icm-accent-soft);
+  color: var(--icm-accent);
+  font-weight: 600;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 var(--icm-space-1);
+  background: var(--icm-border);
+}
+
+.toolbar-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 var(--icm-space-2);
+  background: var(--icm-border-strong);
+}
+
+.toolbar-button,
+.tool-rail-button,
+.menubar-help,
+.command-menu summary {
+  min-height: var(--icm-control-h);
+  border: 1px solid transparent;
+  border-radius: var(--icm-radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: var(--icm-text);
+  font-size: var(--icm-font-md);
+  font-weight: 500;
+  line-height: var(--icm-line-tight);
+  white-space: nowrap;
+}
+
+.toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--icm-space-1);
+  padding: 0 var(--icm-space-2);
+}
+
+.toolbar-button:hover:not(:disabled),
+.tool-rail-button:hover:not(:disabled),
+.menubar-help:hover:not(:disabled),
+.command-menu summary:hover {
+  border-color: transparent;
+  background: var(--icm-surface-hover);
+}
+
+.toolbar-button[aria-pressed="true"],
+.tool-rail-button[aria-pressed="true"],
+.command-menu[open] summary {
+  border-color: transparent;
+  color: var(--icm-accent);
+  background: var(--icm-accent-tint);
+  box-shadow: none;
+}
+
+.menubar-help {
+  height: var(--icm-control-h);
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+/* Check and Save reads as the one forward action in the bar, so it carries a
+   green run glyph rather than another word among words. */
+.toolbar-check-save {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--icm-space-1);
+  min-height: var(--icm-control-h);
+  padding: 0 var(--icm-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--icm-radius-sm);
+  background: transparent;
+  color: var(--icm-text);
+  font-size: var(--icm-font-md);
+  font-weight: 500;
+  line-height: var(--icm-line-tight);
+  white-space: nowrap;
+}
+
+.toolbar-check-save:hover:not(:disabled) {
+  background: var(--icm-surface-hover);
+}
+
+/* The check report had no styles at all, so each finding rendered its code
+   and its sentence as one unbroken run: "GROUND_NAME_MISMATCHGround marker
+   must connect to…". The code is a label for the sentence, so it sits above
+   it. */
+.preflight-findings {
+  display: grid;
+  gap: var(--icm-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preflight-findings button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: var(--icm-space-1) var(--icm-space-2);
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+  background: var(--icm-surface);
+  color: var(--icm-text);
+  text-align: left;
+}
+
+.preflight-findings strong {
+  font-size: var(--icm-font-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--icm-text-muted);
+}
+
+.preflight-findings button[data-severity="error"] strong {
+  color: var(--icm-danger, #b4232a);
+}
+
+/* Netlist review is a report workbench, not a component picker. Its summary
+   spans the dialog while preview and diagnostics each own one complete pane;
+   structural and electrical findings share the diagnostics rail instead of
+   becoming a third item in a two-column insertion grid. */
+.netlist-preflight-dialog {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: var(--icm-space-3);
+  width: min(72rem, calc(100vw - 2.5rem));
+  height: min(44rem, calc(100dvh - 2.5rem));
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--icm-border-strong);
+  border-radius: var(--icm-radius-lg);
+  color: var(--icm-text);
+  background: var(--icm-surface);
+  box-shadow: var(--icm-shadow-lg);
+}
+
+.netlist-preflight-header,
+.netlist-preflight-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--icm-space-3);
+}
+
+.netlist-preflight-header p,
+.netlist-preflight-header h2,
+.netlist-preflight-summary h3,
+.netlist-preflight-summary p,
+.netlist-preflight-diagnostics h3,
+.netlist-preflight-diagnostics p {
+  margin: 0;
+}
+
+.netlist-preflight-header p {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.netlist-preflight-header h2 {
+  margin-top: 0.15rem;
+  font-size: 16px;
+}
+
+.netlist-preflight-summary {
+  display: grid;
+  gap: var(--icm-space-1);
+  padding: var(--icm-space-3);
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-md);
+  background: var(--icm-surface-muted);
+}
+
+.netlist-preflight-summary h3,
+.netlist-preflight-diagnostics h3 {
+  font-size: var(--icm-font-md);
+}
+
+.netlist-preflight-summary p,
+.netlist-preflight-diagnostics p {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-sm);
+  line-height: 1.45;
+}
+
+.netlist-preflight-body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(20rem, 2fr);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-md);
+  background: var(--icm-surface-muted);
+}
+
+.netlist-preflight-body[data-has-preview="false"],
+.netlist-preflight-body[data-has-diagnostics="false"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.netlist-preflight-export {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--icm-space-3);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--icm-space-3);
+  background: var(--icm-surface);
+}
+
+.netlist-preflight-export-controls {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--icm-space-3);
+}
+
+.netlist-preflight-export-controls label {
+  display: grid;
+  gap: var(--icm-space-1);
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-sm);
+  font-weight: 650;
+}
+
+.netlist-preflight-export-controls select,
+.netlist-preflight-export-controls button,
+.netlist-preflight-actions button {
+  min-height: var(--icm-control-h-lg);
+}
+
+.netlist-preflight-export-controls select {
+  min-width: 9rem;
+}
+
+.netlist-preflight-export .netlist-preview {
+  min-height: 0;
+}
+
+.netlist-preflight-diagnostics {
+  display: grid;
+  align-content: start;
+  gap: var(--icm-space-4);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--icm-space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 1px solid var(--icm-border);
+  background: var(--icm-surface-muted);
+  scrollbar-width: thin;
+}
+
+.netlist-preflight-body[data-has-preview="false"]
+  .netlist-preflight-diagnostics {
+  border-left: 0;
+}
+
+.netlist-preflight-diagnostics > section {
+  display: grid;
+  gap: var(--icm-space-2);
+}
+
+@media (max-width: 52rem) {
+  .netlist-preflight-dialog {
+    width: calc(100vw - 1rem);
+    height: calc(100dvh - 1rem);
+  }
+
+  .netlist-preflight-body {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .netlist-preflight-export {
+    min-height: 24rem;
+  }
+
+  .netlist-preflight-diagnostics {
+    overflow: visible;
+    border-top: 1px solid var(--icm-border);
+    border-left: 0;
+  }
+}
+
+.toolbar-check-glyph {
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #1a8f4c;
+}
+
+.document-nav {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--icm-space-1);
+  min-width: 0;
+}
+
+.document-nav button {
+  height: var(--icm-control-h);
+  padding: 0 var(--icm-space-2);
+  white-space: nowrap;
+}
+
+/* One-click return to the gallery landing page from the editor. */
+.toolbar-gallery-link {
+  display: inline-flex;
+  align-items: center;
+  height: var(--icm-control-h);
+  padding: 0 var(--icm-space-2);
+  border: 1px solid var(--icm-border-strong);
+  border-radius: var(--icm-radius-sm);
+  background: var(--icm-surface);
+  color: var(--icm-text);
+  font-size: var(--icm-font-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.toolbar-gallery-link:hover {
+  border-color: var(--icm-border-hover);
+  background: var(--icm-surface-hover);
+}
+
+.document-nav select {
+  flex: 1 1 12rem;
+  min-width: 5rem;
+  max-width: 12rem;
+  height: var(--icm-control-h);
+  padding: 0 var(--icm-space-2);
+  border: 1px solid var(--icm-border-strong);
+  border-radius: var(--icm-radius-sm);
+  background: var(--icm-surface);
+  font: inherit;
+  font-size: var(--icm-font-sm);
+}
+
+.command-menu {
+  position: relative;
+}
+
+.command-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--icm-control-h);
+  padding: 0 10px;
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.command-menu summary::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: 0.45;
+  translate: 0 1px;
+}
+
+.command-menu[open] summary::after {
+  opacity: 0.75;
+  rotate: 180deg;
+}
+
+.command-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.command-popover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  min-width: 15rem;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--icm-border);
+  border-radius: 10px;
+  background: var(--icm-surface);
+  box-shadow:
+    0 0 0 1px rgb(15 15 15 / 3%),
+    0 12px 32px rgb(15 15 15 / 12%);
+}
+
+.command-popover button,
+.command-popover .file-import {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: var(--icm-font-md);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.document-nav .command-popover button {
+  height: auto;
+}
+
+.document-nav .command-menu {
+  flex: 0 0 auto;
+}
+
+.document-nav .command-popover {
+  right: 0;
+  left: auto;
+  width: max-content;
+  min-width: min(15rem, calc(100vw - var(--icm-space-6)));
+  max-width: calc(100vw - var(--icm-space-6));
+}
+
+.help-backdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgb(15 23 42 / 42%);
+  backdrop-filter: blur(3px);
+}
+
+.search-backdrop {
+  position: fixed;
+  z-index: 31;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding: min(14vh, 7rem) 1.25rem 1.25rem;
+  background: rgb(15 23 42 / 32%);
+  backdrop-filter: blur(2px);
+}
+
+.project-search-dialog {
+  display: grid;
+  gap: 0.8rem;
+  width: min(38rem, 100%);
+  max-height: min(32rem, calc(100vh - 4rem));
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: var(--icm-radius-lg);
+  background: var(--icm-surface);
+  box-shadow: var(--icm-shadow-lg);
+}
+
+.project-search-dialog > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.project-search-dialog h2,
+.project-search-dialog p {
+  margin: 0;
+}
+
+.project-search-dialog h2 {
+  margin-top: 0.15rem;
+  font-size: 1.1rem;
+}
+
+.project-search-dialog > input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--icm-border-strong);
+  border-radius: var(--icm-radius-sm);
+  color: var(--icm-text);
+  background: #fff;
+  font: inherit;
+}
+
+.project-search-results {
+  display: grid;
+  gap: 0.35rem;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.project-search-results > p {
+  padding: 0.75rem 0.25rem;
+  color: var(--icm-text-muted);
+  font-size: 0.88rem;
+}
+
+.project-search-results > button {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+  color: var(--icm-text);
+  background: var(--icm-surface-muted);
+  text-align: left;
+}
+
+.project-search-results > button:hover,
+.project-search-results > button:focus-visible {
+  border-color: var(--icm-accent);
+  background: #fff;
+}
+
+.project-search-results small {
+  color: var(--icm-text-muted);
+}
+
+/* A deliberately separate review surface: Properties keeps its compact,
+ * selection-led workflow while the table handles explicit project batches. */
+.instance-table-dialog {
+  display: grid;
+  grid-template-rows: auto auto minmax(12rem, 1fr) auto;
+  gap: 0.8rem;
+  width: min(70rem, 100%);
+  max-height: min(42rem, calc(100vh - 4rem));
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: var(--icm-radius-lg);
+  background: var(--icm-surface);
+  box-shadow: var(--icm-shadow-lg);
+}
+
+.instance-table-dialog > header,
+.instance-table-controls,
+.instance-table-batch {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.instance-table-dialog h2,
+.instance-table-dialog p {
+  margin: 0;
+}
+
+.instance-table-dialog h2 {
+  margin-top: 0.15rem;
+  font-size: 1.1rem;
+}
+
+.instance-table-controls label,
+.instance-table-batch label {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--icm-text-muted);
+  font-size: 0.78rem;
+}
+
+.instance-table-controls input,
+.instance-table-controls select,
+.instance-table-batch input,
+.instance-table-batch select {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--icm-border-strong);
+  border-radius: var(--icm-radius-sm);
+  color: var(--icm-text);
+  background: #fff;
+  font: inherit;
+}
+
+.instance-table-controls label:nth-child(2) {
+  flex: 1;
+}
+
+.instance-table-controls label:nth-child(2) input {
+  width: 100%;
+}
+
+.instance-table-scroll {
+  overflow: auto;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+}
+
+.instance-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.instance-table-scroll th,
+.instance-table-scroll td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--icm-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.instance-table-scroll th {
+  position: sticky;
+  top: 0;
+  background: var(--icm-surface-muted);
+}
+
+.instance-table-link {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  color: var(--icm-accent);
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+}
+
+.instance-table-batch {
+  flex-wrap: wrap;
+  justify-content: start;
+}
+
+.instance-table-batch > span {
+  color: var(--icm-text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 48rem) {
+  .instance-table-dialog {
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .instance-table-controls,
+  .instance-table-batch {
+    align-items: stretch;
+  }
+}
+
+.help-dialog {
+  width: min(42rem, 100%);
+  max-height: min(44rem, calc(100vh - 2.5rem));
+  overflow: auto;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: var(--icm-radius-lg);
+  background: var(--icm-surface);
+  box-shadow: var(--icm-shadow-lg);
+}
+
+.command-popover button:disabled {
+  opacity: 0.45;
+}
+
+.command-popover .tool-icon {
+  opacity: 0.85;
+}
+
+.command-popover small {
+  display: block;
+  margin: 4px 6px 2px;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.file-import {
+  padding: 0 var(--icm-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--icm-radius-sm);
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  font-size: var(--icm-font-md);
+}

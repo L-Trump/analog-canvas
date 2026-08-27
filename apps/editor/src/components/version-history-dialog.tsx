@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-import "./version-history-dialog.css";
-
 /**
  * Version history of one gallery entry, for reviewers and the entry's
  * owner: every update snapshotted the previous state; Restore adopts a
