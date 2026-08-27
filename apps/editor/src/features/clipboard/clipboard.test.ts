@@ -250,6 +250,16 @@ describe("schematic clipboard", () => {
     expect(routeBends(result.document.routes[1]!)).toEqual([
       { x: 120, y: 100 },
     ]);
+    const repeatedPreview = clipboardPreviewDocument(
+      result.document,
+      copied!,
+      { x: 40, y: 40 },
+      [],
+      resolver,
+      2,
+    );
+    expect(repeatedPreview.instances).toHaveLength(2);
+    expect(() => buildSvgScene(repeatedPreview, resolver)).not.toThrow();
   });
 
   it("creates an isolated translated document for a copy-placement ghost", () => {
@@ -467,8 +477,7 @@ describe("schematic clipboard", () => {
       },
       { symbolResolver: resolver },
     );
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    if (!result.ok) throw new Error(JSON.stringify(result, null, 2));
     const previewInstanceId = preview.instances[0]?.id;
     const previewLabel = preview.annotations.find(
       (annotation) =>
@@ -696,7 +705,7 @@ describe("schematic clipboard", () => {
     });
   });
 
-  it("keeps a copied MOS connected to its shared external bulk Net", () => {
+  it("keeps an implicit copied MOS bulk binding as a Cell-policy exception", () => {
     const document = createEmptyDocument("document-main", "Shared MOS bulk");
     document.instances.push(
       {
@@ -731,12 +740,6 @@ describe("schematic clipboard", () => {
 
     const copied = copySelection(document, ["M1"]);
     expect(copied?.nets).toEqual([]);
-    expect(copied?.boundaryNets).toEqual([
-      expect.objectContaining({
-        id: "net-global-0",
-        terminals: [{ instanceId: "M1", pinName: "B" }],
-      }),
-    ]);
 
     const preview = clipboardPreviewDocument(document, copied!, {
       x: 80,
@@ -757,8 +760,7 @@ describe("schematic clipboard", () => {
       },
       { symbolResolver: resolver },
     );
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    if (!result.ok) throw new Error(JSON.stringify(result, null, 2));
     expect(result.document.nets[0]?.terminals).toEqual([
       { instanceId: "M1", pinName: "B" },
       { instanceId: "M2", pinName: "B" },
@@ -768,6 +770,42 @@ describe("schematic clipboard", () => {
       origin: "supply-default",
       netId: "net-global-0",
     });
+  });
+
+  it("leaves an ordinary copied boundary terminal disconnected", () => {
+    const document = createEmptyDocument("document-main", "Boundary copy");
+    document.instances.push(
+      { id: "R1", symbolId: "resistor", placement: null },
+      { id: "R2", symbolId: "resistor", placement: null },
+    );
+    document.nets.push({
+      id: "signal",
+      terminals: [
+        { instanceId: "R1", pinName: "1" },
+        { instanceId: "R2", pinName: "1" },
+      ],
+    });
+
+    const copied = copySelection(document, ["R1"]);
+    const proposal = proposePaste(document, copied!, { x: 20, y: 0 }, 1);
+    const result = executeTransaction(
+      document,
+      {
+        transactionId: "paste-boundary-open",
+        documentId: document.id,
+        expectedRevision: 0,
+        actor: { kind: "human", id: "test" },
+        edits: proposal.edits,
+      },
+      { symbolResolver: resolver },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.document.nets.some((net) =>
+        net.terminals.some((terminal) => terminal.instanceId === "R1-copy-1"),
+      ),
+    ).toBe(false);
   });
 });
 

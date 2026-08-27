@@ -152,6 +152,7 @@ export interface UseSelectionInteractionOptions {
     anchor: Point,
   ) => void;
   setCopyPreviewPoint: (point: Point) => void;
+  advanceCopyPlacement: () => void;
   nextUniqueSuffix: () => number;
   endpointTestId: (endpoint: WireSource["endpoint"]) => string;
   tool: string;
@@ -200,7 +201,6 @@ export interface UseSelectionInteractionOptions {
 export function useSelectionInteraction(
   options: UseSelectionInteractionOptions,
 ) {
-  const copyCounter = useRef(0);
   const commandMoveSessionRef = useRef<CommandMoveSession | null>(null);
   const transactConnectivity = (
     intent: RoutingOperationIntent,
@@ -1148,7 +1148,6 @@ export function useSelectionInteraction(
     const interaction = options.getInteractionState();
     if (interaction.kind !== "copy-placement") return;
     const copyPlacement = interaction.copy;
-    copyCounter.current += 1;
     const proposal = proposePaste(
       options.document,
       copyPlacement.clipboard,
@@ -1156,10 +1155,9 @@ export function useSelectionInteraction(
         x: point.x - copyPlacement.anchor.x,
         y: point.y - copyPlacement.anchor.y,
       },
-      copyCounter.current,
+      copyPlacement.sequence,
     );
     if (proposal.errors.length > 0) {
-      copyCounter.current -= 1;
       options.setStatus(proposal.errors[0]!);
       options.cancelAllTransientInteraction();
       return;
@@ -1170,6 +1168,21 @@ export function useSelectionInteraction(
       copyPlacement.orientationOperations,
     );
     const edits = [...proposal.edits, ...orientationEdits];
+    const copyPlan = createRoutingOperationPlan(options.document, {
+      intent: "clone",
+      affected: proposal.operationPlan.affected,
+      expectedElectricalEffect: proposal.operationPlan.expectedElectricalEffect,
+      idRemap: proposal.idRemap,
+      diagnostics: proposal.operationPlan.diagnostics,
+      edits,
+    });
+    const gate = gateRoutingOperationPlan(options.document, copyPlan, {
+      symbolResolver: options.resolver,
+    });
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
     const editsCellInterface = edits.some(
       (edit) =>
         edit.kind === "add_cell_terminal" ||
@@ -1177,27 +1190,14 @@ export function useSelectionInteraction(
     );
     let result: TransactionResult;
     if (editsCellInterface) {
-      const gate = gateRoutingOperationPlan(
-        options.document,
-        createRoutingOperationPlan(options.document, {
-          intent: "clone",
-          diagnostics: [],
-          edits,
-        }),
-        { symbolResolver: options.resolver },
-      );
-      if (!gate.ok) {
-        options.setStatus(gate.message);
-        result = { ok: false, revision: options.document.revision };
-      } else {
-        result = options.transactProjectDocument("copy-cell-pin", gate.edits);
-      }
+      result = options.transactProjectDocument("copy-cell-pin", gate.edits);
     } else {
-      result = transactConnectivity("clone", edits, {
+      result = options.transact([...gate.edits], {
         preserveInteraction: true,
       });
     }
     if (result.ok) {
+      options.advanceCopyPlacement();
       options.selectOnly("instance", proposal.instanceIds);
       options.setCopyPreviewPoint(point);
       options.setStatus(

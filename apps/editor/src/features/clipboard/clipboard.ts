@@ -1,11 +1,16 @@
-import { deriveInternalGroupSelection } from "@icm/derived";
 import {
   createReferenceIndex,
   nextReference,
   referencePolicyForInstance,
   referenceSuffixForPolicy,
 } from "@icm/devices";
-import { executeTransaction } from "@icm/edit-engine";
+import {
+  captureRoutingCopyFragment,
+  createRoutingOperationPlan,
+  executeTransaction,
+  type OperationIdRemap,
+  type RoutingOperationPlan,
+} from "@icm/edit-engine";
 import type { SchematicEdit } from "@icm/edit-engine";
 import type {
   Annotation,
@@ -43,13 +48,6 @@ export interface SchematicClipboard {
    * copy is committed.
    */
   nets: Net[];
-  /**
-   * A projection of Nets that cross the selection boundary. Only terminals on
-   * copied instances are retained. These Nets make the isolated preview a
-   * valid document and, on paste, reconnect the copied terminals to the
-   * already-existing Net instead of cloning it.
-   */
-  boundaryNets: Net[];
   routes: RouteBranch[];
   junctions: SchematicDocument["junctions"];
   annotations: Annotation[];
@@ -61,6 +59,8 @@ export interface PasteProposal {
   edits: SchematicEdit[];
   instanceIds: string[];
   errors: string[];
+  idRemap: OperationIdRemap;
+  operationPlan: RoutingOperationPlan;
 }
 
 /**
@@ -203,7 +203,25 @@ function fallbackClipboardPreviewDocument(
           }
         : null,
     })),
-    nets: structuredClone([...clipboard.nets, ...clipboard.boundaryNets]),
+    nets: structuredClone([
+      ...clipboard.nets,
+      // Implicit MOS bulk bindings are a Cell policy, not an ordinary copied
+      // boundary Wire. Keep their referenced Base Net in the isolated ghost
+      // so preview validation matches the eventual add_instance semantics.
+      ...base.nets
+        .filter(
+          (net) =>
+            clipboard.instances.some(
+              (instance) => instance.mosBulkBinding?.netId === net.id,
+            ) && !clipboard.nets.some((copied) => copied.id === net.id),
+        )
+        .map((net) => ({
+          ...net,
+          terminals: net.terminals.filter((terminal) =>
+            copiedInstances.has(terminal.instanceId),
+          ),
+        })),
+    ]),
     routes: clipboard.routes.map((route) => ({
       ...structuredClone(route),
       legs: route.legs.map((leg) => ({
@@ -255,9 +273,10 @@ export function clipboardPreviewDocument(
   offset: Point,
   orientationOperations: readonly PlacementOrientationOperation[] = [],
   resolver?: SymbolResolver,
+  sequence = 0,
 ): SchematicDocument {
   if (resolver) {
-    const proposal = proposePaste(base, clipboard, offset, 0);
+    const proposal = proposePaste(base, clipboard, offset, sequence);
     if (proposal.errors.length === 0) {
       const result = executeTransaction(
         base,
@@ -279,17 +298,70 @@ export function clipboardPreviewDocument(
         { symbolResolver: resolver },
       );
       if (result.ok) {
-        const previewClipboard = copySelection(
-          result.document,
-          proposal.instanceIds,
+        const instanceIds = new Set(proposal.instanceIds);
+        const routeIds = new Set(Object.values(proposal.idRemap.routes));
+        const junctionIds = new Set(Object.values(proposal.idRemap.junctions));
+        const annotationIds = new Set(
+          Object.values(proposal.idRemap.annotations),
         );
-        if (previewClipboard) {
-          return fallbackClipboardPreviewDocument(
-            result.document,
-            previewClipboard,
-            { x: 0, y: 0 },
-          );
-        }
+        const evidenceIds = new Set(Object.values(proposal.idRemap.evidence));
+        const instances = result.document.instances.filter((instance) =>
+          instanceIds.has(instance.id),
+        );
+        const routes = result.document.routes.filter((route) =>
+          routeIds.has(route.id),
+        );
+        const annotations = result.document.annotations.filter((annotation) =>
+          annotationIds.has(annotation.id),
+        );
+        const cellTerminals =
+          result.document.netlist?.terminals.filter((terminal) =>
+            terminal.interfaceInstanceIds.some((id) => instanceIds.has(id)),
+          ) ?? [];
+        const netIds = new Set([
+          ...routes.map((route) => route.netId),
+          ...annotations.flatMap((annotation) =>
+            annotation.netId ? [annotation.netId] : [],
+          ),
+          ...cellTerminals.map((terminal) => terminal.netId),
+          ...result.document.nets.flatMap((net) =>
+            net.terminals.some((terminal) =>
+              instanceIds.has(terminal.instanceId),
+            )
+              ? [net.id]
+              : [],
+          ),
+        ]);
+        const previewClipboard: SchematicClipboard = structuredClone({
+          instances,
+          cellTerminals,
+          nets: result.document.nets
+            .filter((net) => netIds.has(net.id))
+            .map((net) => ({
+              ...net,
+              terminals: net.terminals.filter((terminal) =>
+                instanceIds.has(terminal.instanceId),
+              ),
+            })),
+          routes,
+          junctions: result.document.junctions.filter((junction) =>
+            junctionIds.has(junction.id),
+          ),
+          annotations,
+          noConnects: result.document.noConnects.filter(
+            (noConnect) =>
+              noConnect.endpoint.kind === "terminal" &&
+              instanceIds.has(noConnect.endpoint.instanceId),
+          ),
+          connectivityEvidence: result.document.connectivityEvidence.filter(
+            (evidence) => evidenceIds.has(evidence.id),
+          ),
+        });
+        return fallbackClipboardPreviewDocument(
+          result.document,
+          previewClipboard,
+          { x: 0, y: 0 },
+        );
       }
     }
   }
@@ -363,7 +435,6 @@ export function copyWholeDocument(
     instances: document.instances,
     cellTerminals: document.netlist?.terminals ?? [],
     nets: document.nets.filter((net) => netIds.has(net.id)),
-    boundaryNets: [],
     routes: document.routes,
     junctions: document.junctions,
     annotations: document.annotations,
@@ -385,10 +456,15 @@ export function copySelection(
     selectedIds.has(instance.id),
   );
   if (instances.length === 0) return null;
-  const internal = deriveInternalGroupSelection(document, instanceIds);
-  const netIds = new Set(internal.netIds);
-  const routeIds = new Set(internal.routeIds);
-  const junctionIds = new Set(internal.junctionIds);
+  const capture = captureRoutingCopyFragment(document, {
+    instanceIds,
+    routeIds: [],
+    junctionIds: [],
+  });
+  const netIds = new Set(capture.clonedNetIds);
+  const internalNetIds = new Set(capture.internalNetIds);
+  const routeIds = new Set(capture.affected.internalRoutes);
+  const junctionIds = new Set(capture.affected.internalJunctions);
   const attachedIds = new Set<string>([
     ...selectedIds,
     ...netIds,
@@ -415,20 +491,17 @@ export function copySelection(
           ? [{ ...terminal, interfaceInstanceIds }]
           : [];
       }) ?? [],
-    nets: document.nets.filter((net) => netIds.has(net.id)),
-    boundaryNets: document.nets
-      .filter(
-        (net) =>
-          !netIds.has(net.id) &&
-          net.terminals.some((terminal) =>
-            selectedIds.has(terminal.instanceId),
-          ),
-      )
+    nets: document.nets
+      .filter((net) => netIds.has(net.id))
       .map((net) => ({
         ...net,
-        terminals: net.terminals.filter((terminal) =>
-          selectedIds.has(terminal.instanceId),
-        ),
+        // Owner-retained boundary Nets become a new physical Base Net around
+        // the copied owner. Ordinary boundary terminals remain disconnected.
+        terminals: internalNetIds.has(net.id)
+          ? net.terminals
+          : net.terminals.filter((terminal) =>
+              selectedIds.has(terminal.instanceId),
+            ),
       })),
     routes: document.routes.filter((route) => routeIds.has(route.id)),
     junctions: document.junctions.filter((junction) =>
@@ -601,12 +674,6 @@ function mapEndpoint(
         junctionId: junctionIds.get(endpoint.junctionId) ?? endpoint.junctionId,
       };
   }
-}
-
-function firstNetEndpoint(net: Net): RouteEndpoint | null {
-  const terminal = net.terminals[0];
-  if (terminal) return { kind: "terminal", ...terminal };
-  return null;
 }
 
 export function proposePaste(
@@ -843,26 +910,33 @@ export function proposePaste(
       }
     }
   }
-  for (const boundaryNet of clipboard.boundaryNets) {
-    const target = document.nets.find(
-      (candidate) => candidate.id === boundaryNet.id,
+  // An implicit MOS bulk binding is a Cell policy, not a copied boundary
+  // Wire. Re-materialize that one declared policy connection explicitly;
+  // ordinary boundary terminals never enter this loop.
+  for (const instance of clipboard.instances) {
+    const binding = instance.mosBulkBinding;
+    if (!binding || netIds.has(binding.netId)) continue;
+    const sourceNet = document.nets.find((net) => net.id === binding.netId);
+    const sourceBulk = sourceNet?.terminals.find(
+      (terminal) => terminal.instanceId === instance.id,
     );
-    const anchor = target ? firstNetEndpoint(target) : null;
-    if (!anchor) {
+    const anchor = sourceNet?.terminals[0];
+    const copiedInstanceId = instanceIds.get(instance.id);
+    if (!sourceBulk || !anchor || !copiedInstanceId) {
       errors.push(
-        `Cannot paste: external Base Net ${boundaryNet.id} is no longer available`,
+        `Cannot copy implicit bulk policy for ${instance.id}: ${binding.netId} is unavailable`,
       );
       continue;
     }
-    for (const terminal of boundaryNet.terminals) {
-      const instanceId = instanceIds.get(terminal.instanceId);
-      if (!instanceId) continue;
-      edits.push({
-        kind: "connect_endpoints",
-        from: anchor,
-        to: { kind: "terminal", instanceId, pinName: terminal.pinName },
-      });
-    }
+    edits.push({
+      kind: "connect_endpoints",
+      from: { kind: "terminal", ...anchor },
+      to: {
+        kind: "terminal",
+        instanceId: copiedInstanceId,
+        pinName: sourceBulk.pinName,
+      },
+    });
   }
   edits.push(
     ...clipboard.noConnects.map((noConnect): SchematicEdit => {
@@ -1032,5 +1106,72 @@ export function proposePaste(
       };
     }),
   );
-  return { edits, instanceIds: [...instanceIds.values()], errors };
+  const clonedRoutesBySource = new Map(
+    clipboard.routes.flatMap((source) => {
+      const clonedId = routeIds.get(source.id);
+      const edit = edits.find(
+        (candidate) =>
+          candidate.kind === "set_route_path" &&
+          candidate.route.id === clonedId,
+      );
+      return edit?.kind === "set_route_path"
+        ? [[source, edit.route] as const]
+        : [];
+    }),
+  );
+  const idRemap: OperationIdRemap = {
+    instances: Object.fromEntries(instanceIds),
+    nets: Object.fromEntries(netIds),
+    routes: Object.fromEntries(routeIds),
+    legs: Object.fromEntries(
+      [...clonedRoutesBySource].flatMap(([source, clone]) =>
+        source.legs.map((leg, index) => [leg.id, clone.legs[index]!.id]),
+      ),
+    ),
+    bends: Object.fromEntries(
+      [...clonedRoutesBySource].flatMap(([source, clone]) =>
+        source.legs.flatMap((leg, index) => {
+          const target = clone.legs[index]?.to;
+          return leg.to.kind === "bend" && target?.kind === "bend"
+            ? [[leg.to.bendId, target.bendId] as const]
+            : [];
+        }),
+      ),
+    ),
+    junctions: Object.fromEntries(junctionIds),
+    annotations: Object.fromEntries(annotationIds),
+    evidence: Object.fromEntries(evidenceIds),
+  };
+  const operationPlan = createRoutingOperationPlan(document, {
+    intent: "clone",
+    affected: {
+      instances: clipboard.instances.map((item) => item.id),
+      internalRoutes: clipboard.routes.map((item) => item.id),
+      boundaryRoutes: [],
+      externalRoutes: [],
+      internalJunctions: clipboard.junctions.map((item) => item.id),
+      boundaryJunctions: [],
+      electricalAnnotationIds: clipboard.annotations.map((item) => item.id),
+      protectedObjectIds: [],
+    },
+    expectedElectricalEffect: {
+      kind: "clone",
+      mapping: idRemap.instances,
+      boundaryPolicy: "disconnect",
+    },
+    idRemap,
+    edits,
+    diagnostics: errors.map((message) => ({
+      code: "ROUTING_CLONE_SOURCE_UNAVAILABLE",
+      severity: "error" as const,
+      message,
+    })),
+  });
+  return {
+    edits,
+    instanceIds: [...instanceIds.values()],
+    errors,
+    idRemap,
+    operationPlan,
+  };
 }

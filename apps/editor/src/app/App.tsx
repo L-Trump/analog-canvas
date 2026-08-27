@@ -647,6 +647,7 @@ export function App({
     completeVddRailPlacement,
     beginCopyPlacement: beginCopyPlacementInteraction,
     setCopyPreviewPoint,
+    advanceCopyPlacement,
     rotateCopyPlacement,
     mirrorCopyPlacement,
     setWireSource,
@@ -833,6 +834,7 @@ export function App({
             offset,
             copyPlacement.orientationOperations,
             resolver,
+            copyPlacement.sequence,
           ),
           resolver,
           { bounds: viewBox },
@@ -1347,6 +1349,7 @@ export function App({
       seedCopyPreviewFromPointer();
     },
     setCopyPreviewPoint,
+    advanceCopyPlacement,
     nextUniqueSuffix: () => {
       uniqueSuffixCounter.current += 1;
       return uniqueSuffixCounter.current;
