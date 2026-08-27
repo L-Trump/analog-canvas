@@ -280,6 +280,9 @@ describe("Razavi symbol catalog", () => {
       { x: 50, y: -10 },
       { x: 50, y: 10 },
     ]);
+    expect(dff.pins.map((pin) => pin.presentation.leadLength)).toEqual([
+      25, 25, 25, 25,
+    ]);
     expect(dff.primitives[2]).toMatchObject({
       kind: "path",
       data: "M -25.000855 -25.0 L 25.000855 -25.0 L 25.000855 25.0 L -25.000855 25.0 Z",
