@@ -16,8 +16,8 @@ import {
   createRoutingOperationPlan,
   executeTransaction,
   gateRoutingOperationPlan,
+  planRoutingDeletion,
   planRoutingTransform,
-  proposeVisualRouteDeletion,
   type RoutingOperationIntent,
   type SchematicEdit,
   type WireSource,
@@ -33,11 +33,6 @@ import {
 } from "../../canvas/canvas-drag-session";
 import { startCanvasDragVisual } from "../../canvas/canvas-drag-visual";
 import type { ScreenFlip } from "../../interaction/shortcut-orientation";
-import {
-  explicitAnnotationRemovals,
-  proposeConnectedInstanceDeletion,
-  proposeVisualSelectionDeletion,
-} from "./delete-selection";
 import type { VisualSelection } from "./visual-selection";
 import {
   planSelectionMove,
@@ -863,16 +858,24 @@ export function useSelectionInteraction(
   const deleteSelectedJunction = (): void => {
     if (options.selectedEndpoint?.endpoint.kind !== "junction") return;
     const junctionId = options.selectedEndpoint.endpoint.junctionId;
-    const proposal = proposeVisualRouteDeletion(
+    const plan = planRoutingDeletion(
       options.document,
-      [],
-      [junctionId],
+      options.resolver,
+      { instanceIds: [], routeIds: [], junctionIds: [junctionId] },
+      options.nextUniqueSuffix(),
     );
-    const result = transactConnectivity("cut", proposal.edits);
+    const gate = gateRoutingOperationPlan(options.document, plan, {
+      symbolResolver: options.resolver,
+    });
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
+    const result = options.transact([...gate.edits]);
     if (result.ok) {
       options.setSelectedEndpoint(null);
       options.setStatus(
-        `Deleted junction and ${proposal.routeIds.length} attached routes`,
+        `Deleted junction and ${plan.affected.boundaryRoutes.length + plan.affected.internalRoutes.length} attached routes`,
       );
     }
   };
@@ -960,158 +963,87 @@ export function useSelectionInteraction(
   };
 
   const deleteSelection = (): void => {
-    const formalTerminals = (options.document.netlist?.terminals ?? []).filter(
-      (terminal) =>
-        terminal.interfaceInstanceIds.some((instanceId) =>
-          options.visualSelection.instanceIds.includes(instanceId),
-        ),
-    );
-    if (formalTerminals.length > 0) {
-      try {
-        const deletionEdits = proposeVisualSelectionDeletion(
-          options.document,
-          options.resolver,
-          options.visualSelection,
-          options.nextUniqueSuffix(),
-        );
-        if (
-          options.commitCellTerminalSelection(
-            formalTerminals.map((terminal) => terminal.id),
-            deletionEdits,
-          )
-        ) {
-          options.resetSelection();
-          options.setSelectedEndpoint(null);
-          options.setStatus("Deleted selected schematic objects");
-        }
-      } catch (error) {
-        options.setStatus(
-          error instanceof Error ? error.message : "Delete failed",
-        );
-      }
-      return;
-    }
-    const initialRouteIds = new Set(options.visualSelection.routeIds);
-    const selectedAnnotationIds = new Set(
-      options.visualSelection.annotationIds,
-    );
-    const selectedDraftingIds = new Set(options.visualSelection.draftingIds);
-    const selectedJunctionIds = new Set([
-      ...options.visualSelection.junctionIds,
-      ...(options.selectedEndpoint?.endpoint.kind === "junction"
-        ? [options.selectedEndpoint.endpoint.junctionId]
-        : []),
-    ]);
-    const hasMixedSelection =
-      initialRouteIds.size > 0 ||
-      selectedAnnotationIds.size > 0 ||
-      selectedDraftingIds.size > 0 ||
-      selectedJunctionIds.size > 0;
-    if (
-      initialRouteIds.size === 1 &&
-      selectedAnnotationIds.size === 0 &&
-      selectedDraftingIds.size === 0 &&
-      selectedJunctionIds.size === 0 &&
-      options.selectedIds.length === 0
-    ) {
-      options.deleteSelectedRouteConnection();
-      return;
-    }
-    if (hasMixedSelection) {
-      const visualRouteDeletion = proposeVisualRouteDeletion(
-        options.document,
-        [...initialRouteIds],
-        [...selectedJunctionIds],
-        { instanceIdsScheduledForDeletion: options.selectedIds },
-      );
-      try {
-        const instanceEdits =
-          options.selectedIds.length > 0
-            ? proposeConnectedInstanceDeletion(
-                options.document,
-                options.resolver,
-                options.selectedIds,
-                options.nextUniqueSuffix(),
-              )
-            : [];
-        const explicitAnnotationIds = explicitAnnotationRemovals(
-          options.document,
-          options.selectedIds,
-          [...selectedAnnotationIds].filter(
-            (annotationId) =>
-              !visualRouteDeletion.annotationIds.includes(annotationId),
-          ),
-        );
-        const result = transactConnectivity("delete", [
-          ...instanceEdits,
-          ...visualRouteDeletion.edits,
-          ...explicitAnnotationIds.map((annotationId): SchematicEdit => ({
-            kind: "remove_schematic_annotation",
-            annotationId,
-          })),
-          ...[...selectedDraftingIds].map((objectId): SchematicEdit => ({
-            kind: "remove_drafting_object",
-            objectId,
-          })),
-        ]);
-        if (result.ok) {
-          options.resetSelection();
-          options.setSelectedEndpoint(null);
-          options.setStatus("Deleted selected schematic objects");
-        }
-      } catch (error) {
-        options.setStatus(
-          error instanceof Error ? error.message : "Delete failed",
-        );
-      }
-      return;
-    }
-    if (options.selectedEndpoint?.endpoint.kind === "junction") {
-      deleteSelectedJunction();
-      return;
-    }
-    if (options.selectedAnnotationId) {
-      options.deleteSelectedAnnotation();
-      return;
-    }
-    if (options.selectedDraftingId) {
-      const result = options.transact([
-        {
-          kind: "remove_drafting_object",
-          objectId: options.selectedDraftingId,
-        },
-      ]);
-      if (result.ok) {
-        options.replaceSelectionKind("drafting", []);
-        options.setStatus(
-          `Deleted drafting object ${options.selectedDraftingId}`,
-        );
-      }
-      return;
-    }
-    if (options.selectedRouteId) {
-      options.deleteSelectedRouteConnection();
-      return;
-    }
-    if (options.selectedIds.length === 0) return;
+    const deletionSeed = {
+      instanceIds: [
+        ...new Set([
+          ...options.visualSelection.instanceIds,
+          ...options.selectedIds,
+        ]),
+      ],
+      routeIds: [
+        ...new Set([
+          ...options.visualSelection.routeIds,
+          ...(options.selectedRouteId ? [options.selectedRouteId] : []),
+        ]),
+      ],
+      junctionIds: [
+        ...new Set([
+          ...options.visualSelection.junctionIds,
+          ...(options.selectedEndpoint?.endpoint.kind === "junction"
+            ? [options.selectedEndpoint.endpoint.junctionId]
+            : []),
+        ]),
+      ],
+      annotationIds: [
+        ...new Set([
+          ...options.visualSelection.annotationIds,
+          ...(options.selectedAnnotationId
+            ? [options.selectedAnnotationId]
+            : []),
+        ]),
+      ],
+      draftingIds: [
+        ...new Set([
+          ...options.visualSelection.draftingIds,
+          ...(options.selectedDraftingId ? [options.selectedDraftingId] : []),
+        ]),
+      ],
+    };
+    let deletionPlan;
     try {
-      const deletion = proposeConnectedInstanceDeletion(
+      deletionPlan = planRoutingDeletion(
         options.document,
         options.resolver,
-        options.selectedIds,
+        deletionSeed,
         options.nextUniqueSuffix(),
       );
-      const result = transactConnectivity("delete", deletion);
-      if (result.ok) {
-        options.replaceSelectionKind("instance", []);
-        options.setStatus(
-          "Deleted component selection; connected wires remain dangling",
-        );
-      }
     } catch (error) {
       options.setStatus(
         error instanceof Error ? error.message : "Delete failed",
       );
+      return;
+    }
+    const formalTerminals = (options.document.netlist?.terminals ?? []).filter(
+      (terminal) =>
+        terminal.interfaceInstanceIds.some((instanceId) =>
+          deletionSeed.instanceIds.includes(instanceId),
+        ),
+    );
+    if (formalTerminals.length > 0) {
+      if (
+        options.commitCellTerminalSelection(
+          formalTerminals.map((terminal) => terminal.id),
+          [...deletionPlan.edits],
+        )
+      ) {
+        options.resetSelection();
+        options.setSelectedEndpoint(null);
+        options.setStatus("Deleted selected schematic objects");
+      }
+      return;
+    }
+    const gate = gateRoutingOperationPlan(options.document, deletionPlan, {
+      symbolResolver: options.resolver,
+    });
+    if (!gate.ok) {
+      options.setStatus(gate.message);
+      return;
+    }
+    const result = options.transact([...gate.edits]);
+    if (result.ok) {
+      options.resetSelection();
+      options.setSelectedEndpoint(null);
+      options.setStatus("Deleted selected schematic objects");
     }
   };
 

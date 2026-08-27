@@ -11,6 +11,7 @@ export * from "./batch-property-planner.js";
 export * from "./routing-operation-plan.js";
 export * from "./routing-transform-planner.js";
 export * from "./routing-copy-fragment.js";
+export * from "./routing-deletion-planner.js";
 export * from "./instance-lifecycle.js";
 export * from "./transaction.js";
 export * from "./project-transaction.js";

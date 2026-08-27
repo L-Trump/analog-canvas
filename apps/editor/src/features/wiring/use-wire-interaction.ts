@@ -10,7 +10,7 @@ import {
   createFreeWireAnchor,
   createRouteWireAnchor,
   gateRoutingOperationPlan,
-  proposeVisualRouteDeletion,
+  planRoutingDeletion,
   proposeLooseRouteTranslation,
   proposePowerRailEndpointResize,
   proposePowerRailTranslation,
@@ -386,12 +386,13 @@ export function useWireInteraction(capabilities: UseWireInteractionOptions) {
       (candidate) => candidate.id === options.selectedRouteId,
     );
     if (!route) return;
-    const deletion = proposeVisualRouteDeletion(
+    const deletion = planRoutingDeletion(
       options.document,
-      [route.id],
-      [],
+      options.resolver,
+      { instanceIds: [], routeIds: [route.id], junctionIds: [] },
+      options.nextRoutingSuffix(),
     );
-    const result = transactProposal(proposalFor("cut", deletion.edits));
+    const result = transactProposal(deletion);
     if (result.ok) {
       options.replaceRouteSelection([]);
       options.setStatus(`Deleted wire ${route.id}`);
