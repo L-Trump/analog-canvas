@@ -339,7 +339,8 @@
   white-space: nowrap;
 }
 
-.shapes-category:not([open]) > .shapes-grid {
+.shapes-category:not([open]) > .shapes-grid,
+.shapes-category:not([open]) > .shapes-subcategory-label {
   display: none;
 }
 
@@ -349,6 +350,14 @@
   font-size: 10px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+.shapes-subcategory-label {
+  padding: 0 2px 1px 12px;
+  color: var(--icm-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: var(--icm-line-tight);
 }
 
 /* Fixed-size tiles rather than fractional columns: dragging the panel wider

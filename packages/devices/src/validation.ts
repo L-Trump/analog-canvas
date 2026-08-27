@@ -146,6 +146,33 @@ export function validateDeviceDescriptors(
         message: "Only MOS devices may support bulk binding",
       });
     }
+    if (
+      descriptor.mosBulkClass !== undefined &&
+      descriptor.deviceClass !== "mos"
+    ) {
+      issues.push({
+        deviceId: descriptor.id,
+        message: "Only MOS devices may declare a MOS bulk class",
+      });
+    }
+    if (
+      descriptor.deviceClass === "mos" &&
+      descriptor.mosBulkClass === undefined
+    ) {
+      issues.push({
+        deviceId: descriptor.id,
+        message: "MOS devices must declare their bulk class",
+      });
+    }
+    if (
+      descriptor.capabilities.supportsBulkBinding &&
+      !descriptor.pinOrder.includes("B")
+    ) {
+      issues.push({
+        deviceId: descriptor.id,
+        message: "A bulk-binding MOS device must expose the B pin",
+      });
+    }
     if (descriptor.deviceClass === "net-marker") {
       if (
         descriptor.referencePrefix !== null ||

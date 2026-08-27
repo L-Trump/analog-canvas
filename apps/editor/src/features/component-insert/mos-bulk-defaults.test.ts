@@ -53,9 +53,16 @@ describe("initial MOS bulk defaults", () => {
         mosBulkBinding: { origin: "cell-default", netId: "net-zero" },
         placement: null,
       },
+      {
+        id: "M4",
+        symbolId: "pdmos",
+        mosBulkBinding: { origin: "cell-default", netId: "net-avdd" },
+        placement: null,
+      },
     );
     expect(planMosBulkDefaultUpdate(document, "pmos", "net-dvdd")).toEqual([
       { kind: "clear_mos_bulk_default", instanceId: "M1" },
+      { kind: "clear_mos_bulk_default", instanceId: "M4" },
       { kind: "set_mos_bulk_defaults", pmosNetId: "net-dvdd" },
       { kind: "reconcile_mos_bulk" },
     ]);

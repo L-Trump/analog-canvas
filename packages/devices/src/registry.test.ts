@@ -17,6 +17,7 @@ describe("built-in device registry", () => {
   it("preserves MOS electrical and netlist behavior", () => {
     expect(deviceDescriptor("nmos")).toMatchObject({
       deviceClass: "mos",
+      mosBulkClass: "nmos",
       referencePrefix: "M",
       pinOrder: ["D", "G", "S", "B"],
       targetPolicy: "required-model",
@@ -44,6 +45,20 @@ describe("built-in device registry", () => {
         },
       ],
       capabilities: { supportsBulkBinding: true },
+    });
+    expect(deviceDescriptor("ndmos")).toMatchObject({
+      deviceClass: "mos",
+      mosBulkClass: "nmos",
+      referencePrefix: "M",
+      pinOrder: ["D", "G", "S", "B"],
+      targetPolicy: "required-model",
+    });
+    expect(deviceDescriptor("pdmos")).toMatchObject({
+      deviceClass: "mos",
+      mosBulkClass: "pmos",
+      referencePrefix: "M",
+      pinOrder: ["D", "G", "S", "B"],
+      targetPolicy: "required-model",
     });
   });
 

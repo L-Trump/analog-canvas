@@ -5,7 +5,11 @@ import { planCheckBulkDefaults } from "./check-and-save";
 
 function documentWith(options: {
   nets: { id: string; powerDomain?: "vdd" | "ground" }[];
-  instances: { id: string; symbolId: "nmos" | "pmos"; bound?: boolean }[];
+  instances: {
+    id: string;
+    symbolId: "nmos" | "pmos" | "ndmos" | "pdmos";
+    bound?: boolean;
+  }[];
   defaults?: { nmosNetId?: string; pmosNetId?: string };
 }) {
   const document = createEmptyProject("check", "Check").documents[0]!;
@@ -64,6 +68,27 @@ describe("check-time MOS bulk defaults", () => {
         instances: [
           { id: "M1", symbolId: "nmos" },
           { id: "M2", symbolId: "pmos" },
+        ],
+      }),
+    );
+    expect(plan.edits).toEqual([
+      { kind: "set_mos_bulk_defaults", nmosNetId: "n-gnd" },
+      { kind: "set_mos_bulk_defaults", pmosNetId: "n-vdd" },
+      { kind: "reconcile_mos_bulk" },
+    ]);
+    expect(plan.ambiguous).toEqual({ nmos: false, pmos: false });
+  });
+
+  it("uses the same body defaults for expanded N- and P-channel DMOS", () => {
+    const plan = planCheckBulkDefaults(
+      documentWith({
+        nets: [
+          { id: "n-gnd", powerDomain: "ground" },
+          { id: "n-vdd", powerDomain: "vdd" },
+        ],
+        instances: [
+          { id: "M1", symbolId: "ndmos" },
+          { id: "M2", symbolId: "pdmos" },
         ],
       }),
     );

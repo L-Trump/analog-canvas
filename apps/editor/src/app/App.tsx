@@ -981,8 +981,7 @@ export function App({
     resolver,
     selectedInstance,
     selectedInstanceIsMos:
-      selectedPropertyDevice?.symbolId === "nmos" ||
-      selectedPropertyDevice?.symbolId === "pmos",
+      selectedPropertyDevice?.capabilities.supportsBulkBinding === true,
     selectedAnnotation,
     commitStructure,
     transact,

@@ -20,7 +20,7 @@ describe("shapes quick-place", () => {
       }),
     );
 
-    expect(symbols).toHaveLength(36);
+    expect(symbols).toHaveLength(38);
     expect(markup).toContain("All devices");
     expect(markup.match(/data-testid="shapes-chip-/g)).toHaveLength(
       symbols.length,
@@ -39,6 +39,7 @@ describe("shapes quick-place", () => {
       ["Switches", 2],
       ["Analog Blocks", 5],
       ["Logic Gates", 10],
+      ["Extended Devices", 2],
     ]);
     const categoryTestIds = [
       "transistors",
@@ -48,6 +49,7 @@ describe("shapes quick-place", () => {
       "switches",
       "analog-blocks",
       "logic-gates",
+      "extended-devices",
     ];
     for (let index = 0; index < categoryTestIds.length; index += 1) {
       const testId = `data-testid="shapes-category-${categoryTestIds[index]}"`;
@@ -60,8 +62,8 @@ describe("shapes quick-place", () => {
         );
       }
     }
-    expect(markup.match(/class="shapes-category" open=""/g)).toHaveLength(7);
-    expect(markup.match(/class="shapes-category-header"/g)).toHaveLength(7);
+    expect(markup.match(/class="shapes-category" open=""/g)).toHaveLength(8);
+    expect(markup.match(/class="shapes-category-header"/g)).toHaveLength(8);
     expect(markup).toContain('aria-label="Place Independent Voltage Source"');
     expect(markup).toContain('title="Place Capacitor"');
     expect(markup).toContain('aria-label="Place Variable Resistor"');
@@ -70,6 +72,11 @@ describe("shapes quick-place", () => {
     expect(markup).toContain('aria-label="Place Delay Cell"');
     expect(markup).toContain('aria-label="Place D Flip-Flop"');
     expect(markup).toContain('aria-label="Place Comparator"');
+    expect(markup).toContain('aria-label="Place N-channel DMOS"');
+    expect(markup).toContain('aria-label="Place P-channel DMOS"');
+    expect(markup).toContain(
+      '<div class="shapes-subcategory-label">High-voltage devices</div>',
+    );
     expect(markup).toContain(">V Src</span>");
     expect(markup).toContain(">Cap</span>");
     expect(markup).toContain(">Var Res</span>");
@@ -99,6 +106,15 @@ describe("shapes quick-place", () => {
       symbolId: "vdd",
       symbolName: "Power Rail",
       netName: "VDD",
+    });
+  });
+
+  it("quick-places high-voltage DMOS with MOS parameters", () => {
+    expect(quickPlaceRequest("razavi", "ndmos")).toMatchObject({
+      kind: "symbol",
+      symbolId: "ndmos",
+      symbolName: "N-channel DMOS",
+      parameters: { w: "1u", l: "150n", nf: "1", m: "1" },
     });
   });
 

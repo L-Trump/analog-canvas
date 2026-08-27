@@ -5,20 +5,28 @@ import {
   deriveMosBulkRouteFamily,
   hasExplicitMosBulkRoute,
   isMosBulkTerminal,
+  mosBulkKind,
   mosBulkShouldBeVisible,
   resolveMosBulkConnection,
 } from "./mos-bulk.js";
 
-function mos(id: string, symbolId: "nmos" | "pmos") {
+function mos(id: string, symbolId: "nmos" | "pmos" | "ndmos" | "pdmos") {
   return {
     id,
     symbolId,
-    symbolVariantId: "textbook-3terminal",
+    symbolVariantId: symbolId.endsWith("dmos")
+      ? "standard-3terminal"
+      : "textbook-3terminal",
     placement: null,
   };
 }
 
 describe("MOS bulk resolution", () => {
+  it("maps expanded DMOS artwork to the existing N/P bulk domains", () => {
+    expect(mosBulkKind(mos("M1", "ndmos"))).toBe("nmos");
+    expect(mosBulkKind(mos("M2", "pdmos"))).toBe("pmos");
+  });
+
   it("distinguishes MOS bulk B from BJT base B", () => {
     const document = createEmptyDocument("main", "Main");
     document.instances.push(mos("M1", "nmos"), {

@@ -113,7 +113,7 @@ export function InsertComponentDialog({
   const [railNetName, setRailNetName] = useState("VDD");
   const inputRef = useRef<HTMLInputElement>(null);
   const groups = useMemo<
-    { category: string; choices: InsertChoice[] }[]
+    { category: string; subcategory?: string; choices: InsertChoice[] }[]
   >(() => {
     const cellChoices = cells
       .filter((cell) => {
@@ -155,6 +155,7 @@ export function InsertComponentDialog({
         : componentCatalog(styleProfileId, query, recentSymbolIds).map(
             (group) => ({
               category: group.category,
+              ...(group.subcategory ? { subcategory: group.subcategory } : {}),
               choices: group.symbols.map<InsertChoice>((symbol) => ({
                 key: symbol.id,
                 kind: "symbol",
@@ -439,10 +440,11 @@ export function InsertComponentDialog({
                 >
                   {groups.map((group) => (
                     <section
-                      key={group.category}
+                      key={`${group.category}:${group.subcategory ?? ""}`}
                       className="insert-option-group"
                     >
                       <h3>{group.category}</h3>
+                      {group.subcategory ? <h4>{group.subcategory}</h4> : null}
                       {group.choices.map((choice) => (
                         <button
                           type="button"

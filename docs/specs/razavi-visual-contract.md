@@ -181,11 +181,15 @@ A Razavi palette entry is eligible only when all conditions hold:
    hash-checked;
 5. the symbol is present in `razaviProductSymbols`.
 
-`razaviProductSymbols` is the sole runtime device collection and the sole
-Component Library source. Legacy symbols are not retained or resolvable. An
-unsupported SPICE device blocks import with an explicit diagnostic. PDK
-mappings separately declare model scope, terminal count, and complete ordered
-pin lists; a visual name never implies electrical pin order.
+`razaviProductSymbols` is the sole source for the Reference-calibrated Razavi
+section of the Component Library. Optional families may appear only through a
+separate, explicitly named library such as `Extended Devices`; they remain
+outside Razavi authority and its fidelity claims. `builtInSymbols` combines
+the resolvable collections without weakening either boundary. Legacy symbols
+are not retained or resolvable. An unsupported SPICE device blocks import with
+an explicit diagnostic. PDK mappings separately declare model scope, terminal
+count, and complete ordered pin lists; a visual name never implies electrical
+pin order.
 
 ## Pixel-alignment and IoU contract
 

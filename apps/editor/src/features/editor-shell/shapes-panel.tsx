@@ -23,9 +23,11 @@ const COMPACT_LIBRARY_LABELS: Readonly<Record<string, string>> = {
   capacitor: "Cap",
   "closed-switch": "Closed",
   "current-source": "I Src",
+  "d-flip-flop": "DFF",
   "ideal-switch": "Open",
   inductor: "Ind L",
   "inductor-compact": "Ind",
+  ndmos: "NDMOS",
   npn: "NPN",
   opamp: "OpAmp",
   "opamp-differential": "FD Amp",
@@ -39,6 +41,7 @@ const COMPACT_LIBRARY_LABELS: Readonly<Record<string, string>> = {
   "xnor-gate": "XNOR",
   "xor-gate": "XOR",
   pnp: "PNP",
+  pdmos: "PDMOS",
   port: "Pin",
   "port-filled": "Pin \u2022",
   resistor: "Res",
@@ -177,6 +180,11 @@ export function ShapesPanel({
                       {group.symbols.length}
                     </span>
                   </summary>
+                  {group.subcategory ? (
+                    <div className="shapes-subcategory-label">
+                      {group.subcategory}
+                    </div>
+                  ) : null}
                   <div className="shapes-grid">
                     {group.symbols.map((symbol) => (
                       <button

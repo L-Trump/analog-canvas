@@ -20,6 +20,8 @@ describe("editor shell", () => {
   it("uses one canonical Razavi presentation for manually placed MOS", () => {
     expect(defaultRazaviSymbolVariantId("nmos")).toBe("textbook-3terminal");
     expect(defaultRazaviSymbolVariantId("pmos")).toBe("textbook-3terminal");
+    expect(defaultRazaviSymbolVariantId("ndmos")).toBe("standard-3terminal");
+    expect(defaultRazaviSymbolVariantId("pdmos")).toBe("standard-3terminal");
     expect(defaultRazaviSymbolVariantId("resistor")).toBeUndefined();
   });
 

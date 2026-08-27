@@ -1,4 +1,10 @@
-import { razaviProductSymbols } from "@icm/symbols";
+import {
+  expandedDeviceCatalogEntry,
+  expandedDeviceSymbols,
+  EXTENDED_DEVICE_CATEGORY,
+  HIGH_VOLTAGE_DEVICE_SUBCATEGORY,
+  razaviProductSymbols,
+} from "@icm/symbols";
 import type { SymbolDefinition } from "@icm/symbols";
 
 import { vddRailPreviewSymbol } from "./vdd-rail-preview-symbol";
@@ -8,22 +14,34 @@ import { vddRailPreviewSymbol } from "./vdd-rail-preview-symbol";
  * Razavi-style schematic come first, and the composite blocks and logic gates
  * that are reached for least often sit at the end.
  */
-const CATEGORY_ORDER = [
-  "Transistors",
-  "Passives",
-  "Power and Ports",
-  "Sources",
-  "Switches",
-  "Analog Blocks",
-  "Logic Gates",
-] as const;
+interface CatalogSection {
+  readonly category: string;
+  readonly subcategory?: string;
+}
+
+const CATALOG_SECTIONS: readonly CatalogSection[] = [
+  { category: "Transistors" },
+  { category: "Passives" },
+  { category: "Power and Ports" },
+  { category: "Sources" },
+  { category: "Switches" },
+  { category: "Analog Blocks" },
+  { category: "Logic Gates" },
+  {
+    category: EXTENDED_DEVICE_CATEGORY,
+    subcategory: HIGH_VOLTAGE_DEVICE_SUBCATEGORY,
+  },
+];
 
 export interface ComponentCatalogGroup {
   category: string;
+  subcategory?: string;
   symbols: SymbolDefinition[];
 }
 
 export function symbolCategory(symbolId: string): string {
+  const expanded = expandedDeviceCatalogEntry(symbolId);
+  if (expanded) return expanded.category;
   if (["nmos", "pmos", "npn", "pnp"].includes(symbolId)) {
     return "Transistors";
   }
@@ -77,6 +95,10 @@ export function symbolCategory(symbolId: string): string {
   return "Power and Ports";
 }
 
+export function symbolSubcategory(symbolId: string): string | undefined {
+  return expandedDeviceCatalogEntry(symbolId)?.subcategory;
+}
+
 /**
  * Library display names, where the catalog's own name does not say what the
  * entry is *for*.
@@ -104,7 +126,11 @@ export function libraryDescription(symbolId: string): string | undefined {
 }
 
 export function paletteSymbols(_styleProfileId: string): SymbolDefinition[] {
-  return [vddRailPreviewSymbol, ...razaviProductSymbols];
+  return [
+    vddRailPreviewSymbol,
+    ...razaviProductSymbols,
+    ...expandedDeviceSymbols,
+  ];
 }
 
 /**
@@ -115,6 +141,8 @@ export function paletteSymbols(_styleProfileId: string): SymbolDefinition[] {
 const SYMBOL_ORDER: readonly string[] = [
   "nmos",
   "pmos",
+  "ndmos",
+  "pdmos",
   "vdd-port",
   "vdd",
   "ground",
@@ -154,9 +182,14 @@ export function componentCatalog(
       return left.name.localeCompare(right.name);
     });
 
-  return CATEGORY_ORDER.map((category) => ({
+  return CATALOG_SECTIONS.map(({ category, ...location }) => ({
     category,
-    symbols: symbols.filter((symbol) => symbolCategory(symbol.id) === category),
+    ...location,
+    symbols: symbols.filter(
+      (symbol) =>
+        symbolCategory(symbol.id) === category &&
+        symbolSubcategory(symbol.id) === location.subcategory,
+    ),
   })).filter((group) => group.symbols.length > 0);
 }
 
