@@ -29,6 +29,8 @@
     "@icm/symbols": "workspace:*",
     "@resvg/resvg-js": "2.6.2",
     "dejavu-fonts-ttf": "2.37.3",
-    "pdf-lib": "1.17.1"
+    "jspdf": "4.2.1",
+    "pdf-lib": "1.17.1",
+    "svg2pdf.js": "2.8.0"
   }
 }

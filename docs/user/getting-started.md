@@ -75,8 +75,9 @@ when you need to import them again.
 ## Export
 
 The **File** menu exports SVG, PNG, and PDF containing only formal schematic
-layers. PNG uses 3x raster scale. PDF contains that same high-resolution raster
-on a page matching the SVG viewBox.
+layers. PNG uses 3x raster scale. Browser PDF converts the same formal SVG to
+vector paths and text on a page matching the SVG viewBox, so circuit geometry
+stays sharp when enlarged.
 
 For an electrical design netlist, choose **Netlist / Check Report**. **Check and
 Save** is separate: it settles available MOS-body defaults and keeps a copy on

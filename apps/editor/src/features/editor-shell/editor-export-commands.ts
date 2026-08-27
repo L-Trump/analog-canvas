@@ -68,7 +68,7 @@ export function planDesignNetlistExport({
   };
 }
 
-export async function createRasterExportArtifact(
+export async function createVisualExportArtifact(
   format: "png" | "pdf",
   document: SchematicDocument,
   resolver: SymbolResolver,

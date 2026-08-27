@@ -3484,6 +3484,8 @@ test("exports one formal visual scene as Project, SVG, PNG, and PDF", async ({
   page,
 }) => {
   await page.goto("/editor");
+  await placeComponent(page, "resistor", { x: 420, y: 240 });
+  await page.keyboard.press("Escape");
 
   const projectBytes = await downloadBytes(page, "File", "Save Project");
   expect(JSON.parse(projectBytes.toString("utf8")).topDocumentId).toBeTruthy();
@@ -3497,6 +3499,11 @@ test("exports one formal visual scene as Project, SVG, PNG, and PDF", async ({
   expect([...png.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
   const pdf = await downloadBytes(page, "File", "Export PDF");
   expect(pdf.subarray(0, 5).toString("ascii")).toBe("%PDF-");
+  const pdfText = pdf.toString("latin1");
+  // A page-cover PNG was the former PDF implementation. The browser PDF must
+  // retain the formal SVG as PDF paths/text, so it cannot contain an image XObject.
+  expect(pdfText).not.toContain("/Subtype /Image");
+  expect(pdfText).toContain("/Type /Font");
 });
 
 test("exports structural SPICE and Spectre netlists while exposing instance authoring", async ({
