@@ -218,7 +218,7 @@
       "automaticMappings": [],
       "manualOnlyReason": "Visual delay-stage block; timing and structural netlist semantics require an explicit implementation mapping.",
       "assetPath": "delay-cell.symbol.json",
-      "assetHash": "5ff41946c5ea6cadfdac4e49d5c6f978220de9ceebf9ef8a2a67fdbb4f23c19d",
+      "assetHash": "b660cf9d097ec89283ac2a9f1f15d7a3589defada238bf2df98aa75e577d789a",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",

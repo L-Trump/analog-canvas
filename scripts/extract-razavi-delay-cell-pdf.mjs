@@ -124,10 +124,10 @@ try {
     },
     normalization: {
       sourceOriginPdf: { x: 285.4381, y: 321.50585 },
-      logicalUnitsPerPdfPoint: 1.162156,
+      logicalUnitsPerPdfPoint: 1.549541,
       pinAnchorsLogical: [
-        { name: "A", x: -30, y: 0 },
-        { name: "Y", x: 30, y: 0 },
+        { name: "A", x: -40, y: 0 },
+        { name: "Y", x: 40, y: 0 },
       ],
       strokeMapping: {
         normal: { sourcePdfPt: 0.6453, targetRole: "normal" },
@@ -137,28 +137,28 @@ try {
         schemaVersion: 1,
         id: "delay-cell",
         name: "Delay Cell",
-        viewBox: { x: -34, y: -14, width: 68, height: 28 },
+        viewBox: { x: -44, y: -24, width: 88, height: 48 },
         pins: [
           {
             name: "A",
             role: "input",
-            at: { x: -30, y: 0 },
+            at: { x: -40, y: 0 },
             direction: "west",
-            presentation: { visibility: "visible", leadLength: 12 },
+            presentation: { visibility: "visible", leadLength: 16 },
           },
           {
             name: "Y",
             role: "output",
-            at: { x: 30, y: 0 },
+            at: { x: 40, y: 0 },
             direction: "east",
-            presentation: { visibility: "visible", leadLength: 12 },
+            presentation: { visibility: "visible", leadLength: 16 },
           },
         ],
         primitives: [
           {
             kind: "line",
-            from: { x: -30, y: 0 },
-            to: { x: -18, y: 0 },
+            from: { x: -40, y: 0 },
+            to: { x: -24, y: 0 },
             style: {
               strokeRole: "normal",
               lineCap: "butt",
@@ -167,7 +167,7 @@ try {
           },
           {
             kind: "path",
-            data: "M -18 -9 L 18 -9 L 18 9 L -18 9 Z",
+            data: "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
             style: {
               strokeRole: "emphasis",
               lineCap: "butt",
@@ -177,8 +177,8 @@ try {
           },
           {
             kind: "line",
-            from: { x: 18, y: 0 },
-            to: { x: 30, y: 0 },
+            from: { x: 24, y: 0 },
+            to: { x: 40, y: 0 },
             style: {
               strokeRole: "normal",
               lineCap: "butt",
@@ -188,10 +188,10 @@ try {
           {
             kind: "polygon",
             points: [
-              { x: -0.713254, y: -2.900975 },
-              { x: -1.112745, y: -1.04879 },
-              { x: -3.455215, y: 3.999324 },
-              { x: -4.163404, y: 4.525925 },
+              { x: -0.951005, y: -3.867967 },
+              { x: -1.48366, y: -1.398387 },
+              { x: -4.606953, y: 5.332432 },
+              { x: -5.551205, y: 6.034567 },
             ],
             fill: "foreground",
             stroke: "none",
@@ -199,10 +199,10 @@ try {
           {
             kind: "polygon",
             points: [
-              { x: -0.713254, y: -2.900975 },
-              { x: 2.319245, y: 4.525925 },
-              { x: 0.975503, y: 3.999324 },
-              { x: -1.112745, y: -1.04879 },
+              { x: -0.951005, y: -3.867967 },
+              { x: 3.092327, y: 6.034567 },
+              { x: 1.300671, y: 5.332432 },
+              { x: -1.48366, y: -1.398387 },
             ],
             fill: "foreground",
             stroke: "none",
@@ -210,10 +210,10 @@ try {
           {
             kind: "polygon",
             points: [
-              { x: -4.163404, y: 4.525925 },
-              { x: -3.455215, y: 3.999324 },
-              { x: 0.975503, y: 3.999324 },
-              { x: 2.319245, y: 4.525925 },
+              { x: -5.551205, y: 6.034567 },
+              { x: -4.606953, y: 5.332432 },
+              { x: 1.300671, y: 5.332432 },
+              { x: 3.092327, y: 6.034567 },
             ],
             fill: "foreground",
             stroke: "none",
@@ -221,14 +221,14 @@ try {
           {
             kind: "polygon",
             points: [
-              { x: 4.957771, y: 3.636595 },
-              { x: 3.632187, y: 3.636595 },
-              { x: 4.739867, y: -1.720216 },
-              { x: 2.851364, y: -1.720216 },
-              { x: 3.087427, y: -2.791578 },
-              { x: 8.153699, y: -2.791578 },
-              { x: 7.935794, y: -1.720216 },
-              { x: 6.06545, y: -1.720216 },
+              { x: 6.610361, y: 4.848793 },
+              { x: 4.842916, y: 4.848793 },
+              { x: 6.319823, y: -2.293621 },
+              { x: 3.801819, y: -2.293621 },
+              { x: 4.116569, y: -3.722104 },
+              { x: 10.871599, y: -3.722104 },
+              { x: 10.581059, y: -2.293621 },
+              { x: 8.087267, y: -2.293621 },
             ],
             fill: "foreground",
             stroke: "none",
@@ -239,7 +239,7 @@ try {
     },
     derivation: {
       pinExtension:
-        "the two native horizontal lead segments are extended collinearly to x=+/-30 electrical anchors",
+        "the two native horizontal lead segments are extended collinearly to x=+/-40 electrical anchors",
       semantics:
         "A/Y pin identity is reconstructed explicitly; timing and netlist behavior remain intentionally unspecified",
       internalMark:
@@ -250,13 +250,13 @@ try {
       sourcePdfPage: pdfPage,
       dpi: 200.820546,
       pixels: { width: 164, height: 66 },
-      pixelsPerLogical: 2.4,
+      pixelsPerLogical: 1.8,
       originPx: { x: 82.136598, y: 38.735838 },
       window: {
-        width: 68.333333,
-        height: 27.5,
-        minX: -34.223583,
-        minY: -16.139933,
+        width: 91.111111,
+        height: 36.666667,
+        minX: -45.631443,
+        minY: -21.51991,
       },
       rotation: 0,
       sourceCropPx: { x: 714, y: 858 },

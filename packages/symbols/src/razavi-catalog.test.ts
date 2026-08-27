@@ -279,26 +279,26 @@ describe("Razavi symbol catalog", () => {
     const delayCell = requireRazaviCatalogSymbol("delay-cell");
     expect(delayCell.pins.map((pin) => pin.name)).toEqual(["A", "Y"]);
     expect(delayCell.pins.map((pin) => pin.at)).toEqual([
-      { x: -30, y: 0 },
-      { x: 30, y: 0 },
+      { x: -40, y: 0 },
+      { x: 40, y: 0 },
     ]);
     const [inputLead, body, outputLead, ...glyphPolygons] =
       delayCell.primitives;
     expect(inputLead).toMatchObject({
       kind: "line",
-      from: { x: -30, y: 0 },
-      to: { x: -18, y: 0 },
+      from: { x: -40, y: 0 },
+      to: { x: -24, y: 0 },
       style: { strokeRole: "normal" },
     });
     expect(body).toMatchObject({
       kind: "path",
-      data: "M -18 -9 L 18 -9 L 18 9 L -18 9 Z",
+      data: "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
       style: { strokeRole: "emphasis" },
     });
     expect(outputLead).toMatchObject({
       kind: "line",
-      from: { x: 18, y: 0 },
-      to: { x: 30, y: 0 },
+      from: { x: 24, y: 0 },
+      to: { x: 40, y: 0 },
       style: { strokeRole: "normal" },
     });
     expect(glyphPolygons).toHaveLength(4);
