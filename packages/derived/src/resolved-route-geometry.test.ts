@@ -7,6 +7,8 @@ import {
   resolveDocumentRoutingGeometry,
   resolveRouteGeometry,
 } from "./resolved-route-geometry.js";
+import { resolveRouteAttachment } from "./route-attachment.js";
+import { electricalTopologyHash } from "./topology-hash.js";
 
 const resolver = new InMemorySymbolResolver([
   {
@@ -35,6 +37,84 @@ function document(id: string): SchematicDocument {
 }
 
 describe("resolved route geometry", () => {
+  it("characterizes the schema-25 route contract before stable-leg migration", () => {
+    const project = createEmptyProject(
+      "route-contract",
+      "Route contract",
+      "doc",
+    );
+    const schematic = project.documents[0]!;
+    schematic.nets.push({ id: "n", terminals: [] });
+    schematic.junctions.push(
+      { id: "j1", netId: "n", position: { x: 0, y: 0 } },
+      { id: "j2", netId: "n", position: { x: 100, y: 100 } },
+    );
+    schematic.routes.push({
+      id: "route-contract",
+      netId: "n",
+      from: { kind: "junction", junctionId: "j1" },
+      to: { kind: "junction", junctionId: "j2" },
+      waypoints: [
+        { x: 40, y: 0 },
+        { x: 40, y: 100 },
+      ],
+      segmentModes: ["escape", "manual", "trunk"],
+    });
+
+    const topologyBefore = electricalTopologyHash(project);
+    const serializedRoute = JSON.parse(
+      JSON.stringify(schematic.routes[0]),
+    ) as unknown;
+    const geometry = resolveRouteGeometry(
+      schematic,
+      resolver,
+      schematic.routes[0]!,
+    );
+
+    expect(serializedRoute).toEqual({
+      id: "route-contract",
+      netId: "n",
+      from: { kind: "junction", junctionId: "j1" },
+      to: { kind: "junction", junctionId: "j2" },
+      waypoints: [
+        { x: 40, y: 0 },
+        { x: 40, y: 100 },
+      ],
+      segmentModes: ["escape", "manual", "trunk"],
+    });
+    expect(geometry?.centerline).toEqual([
+      { x: 0, y: 0 },
+      { x: 40, y: 0 },
+      { x: 40, y: 100 },
+      { x: 100, y: 100 },
+    ]);
+    expect(geometry?.segments.map((segment) => segment.mode)).toEqual([
+      "escape",
+      "manual",
+      "trunk",
+    ]);
+    expect(
+      geometry &&
+        resolveRouteAttachment(geometry, {
+          routeId: "route-contract",
+          segmentIndex: 1,
+          t: 0.25,
+          direction: "forward",
+          normalOffset: 10,
+        }),
+    ).toEqual({
+      conductorPoint: { x: 40, y: 25 },
+      labelPoint: { x: 30, y: 25 },
+      rotation: 90,
+    });
+
+    schematic.routes[0]!.waypoints = [
+      { x: 60, y: 0 },
+      { x: 60, y: 100 },
+    ];
+    expect(electricalTopologyHash(project)).toBe(topologyBefore);
+  });
+
   it("resolves one canonical centerline with ordered segments and vertices", () => {
     const schematic = document("orthogonal-route");
     schematic.junctions.push(

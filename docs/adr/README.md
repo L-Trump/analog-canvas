@@ -100,6 +100,10 @@ The schema-25 independent Cell-Pin authoring contract and read-only Formal Port
 name projection, superseding ADR 0037 and the remaining shared-marker clauses
 of ADRs 0043/0045, is
 [`0046-independent-cell-pins-and-formal-port-projection.md`](0046-independent-cell-pins-and-formal-port-projection.md).
+The schema-26 stable Route leg and bend identity decision, replacing parallel
+waypoint/mode arrays and persisted segment-index attachments while preserving
+the existing electrical endpoint and Junction model, is
+[`0047-stable-route-leg-model.md`](0047-stable-route-leg-model.md).
 The arbitrary-angle Route authoring decision is
 [`0039-any-angle-route-authoring.md`](0039-any-angle-route-authoring.md).
 
