@@ -23,7 +23,7 @@
     },
     "d-flip-flop": {
       "assetPath": "d-flip-flop-reference.png",
-      "pixelsPerLogical": 2.4,
+      "pixelsPerLogical": 1.92,
       "originPx": {
         "x": 94.339643,
         "y": 58.470765
@@ -31,8 +31,8 @@
       "window": {
         "width": 187,
         "height": 115,
-        "minX": -39,
-        "minY": -24
+        "minX": -48.75,
+        "minY": -30
       },
       "rotation": 0
     }

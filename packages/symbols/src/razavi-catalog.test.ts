@@ -273,6 +273,17 @@ describe("Razavi symbol catalog", () => {
     expect(
       dff.primitives.filter((primitive) => primitive.kind === "line"),
     ).toHaveLength(5);
+    expect(dff.viewBox).toEqual({ x: -55, y: -30, width: 110, height: 60 });
+    expect(dff.pins.map((pin) => pin.at)).toEqual([
+      { x: -50, y: -10 },
+      { x: -50, y: 10 },
+      { x: 50, y: -10 },
+      { x: 50, y: 10 },
+    ]);
+    expect(dff.primitives[2]).toMatchObject({
+      kind: "path",
+      data: "M -25.000855 -25.0 L 25.000855 -25.0 L 25.000855 25.0 L -25.000855 25.0 Z",
+    });
   });
 
   it("keeps the page-331 Delay Cell proportions and source glyph outlines", () => {

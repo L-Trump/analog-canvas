@@ -235,7 +235,7 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral logic symbol; structural SPICE realization requires an explicit subcircuit or PDK mapping.",
     assetPath: "d-flip-flop.symbol.json",
     assetHash:
-      "1d980b4f14d3e1dc38e2b452fb87541d91854c3d80b967368816b43ec3af5e4f",
+      "85603291545fcbb468c7957ba6cd625618739b7da8d3e1e5b8870b37385e8df3",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
@@ -2115,17 +2115,17 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
     id: "d-flip-flop",
     name: "D Flip-Flop",
     viewBox: {
-      x: -44,
-      y: -24,
-      width: 88,
-      height: 48,
+      x: -55,
+      y: -30,
+      width: 110,
+      height: 60,
     },
     pins: [
       {
         name: "D",
         role: "input",
         at: {
-          x: -40,
+          x: -50,
           y: -10,
         },
         direction: "west",
@@ -2141,7 +2141,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         name: "CK",
         role: "clock",
         at: {
-          x: -40,
+          x: -50,
           y: 10,
         },
         direction: "west",
@@ -2157,7 +2157,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         name: "Q",
         role: "output",
         at: {
-          x: 40,
+          x: 50,
           y: -10,
         },
         direction: "east",
@@ -2173,7 +2173,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         name: "QBAR",
         role: "output-complement",
         at: {
-          x: 40,
+          x: 50,
           y: 10,
         },
         direction: "east",
@@ -2191,11 +2191,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: -40,
+          x: -50,
           y: -10,
         },
         to: {
-          x: -20.000684,
+          x: -25.000855,
           y: -10,
         },
         style: {
@@ -2207,11 +2207,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: -40,
+          x: -50,
           y: 10,
         },
         to: {
-          x: -20.000684,
+          x: -25.000855,
           y: 10,
         },
         style: {
@@ -2222,7 +2222,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "path",
-        data: "M -20.000684 -20.0 L 20.000684 -20.0 L 20.000684 20.0 L -20.000684 20.0 Z",
+        data: "M -25.000855 -25.0 L 25.000855 -25.0 L 25.000855 25.0 L -25.000855 25.0 Z",
         style: {
           strokeRole: "emphasis",
           lineCap: "butt",
@@ -2233,11 +2233,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 20.000684,
+          x: 25.000855,
           y: -10,
         },
         to: {
-          x: 40,
+          x: 50,
           y: -10,
         },
         style: {
@@ -2249,11 +2249,11 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 20.000684,
+          x: 25.000855,
           y: 10,
         },
         to: {
-          x: 40,
+          x: 50,
           y: 10,
         },
         style: {
@@ -2265,12 +2265,12 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 8.687,
-          y: 4.24947,
+          x: 10.85875,
+          y: 5.3118375,
         },
         to: {
-          x: 17.354168,
-          y: 4.24947,
+          x: 21.69271,
+          y: 5.3118375,
         },
         style: {
           strokeRole: "normal",

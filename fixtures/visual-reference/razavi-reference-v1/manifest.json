@@ -305,7 +305,7 @@
         "figure": "16.23(a)"
       },
       "extractPath": "d-flip-flop-vector-source.json",
-      "extractSha256": "fcd9cd46b1e2799d65d088e4b576e0d19a1606a4b272cf85f29cab3ca1004380",
+      "extractSha256": "5a3d4989f5d904daf9f05f384217313759f7eb27c7c448700c68b3ec96135255",
       "rasterPath": "d-flip-flop-reference.png",
       "rasterSha256": "b3a7caab14b71944766da26cac934902a96fa7a304b4963cbb43ac49fe97fa2e",
       "scope": [
@@ -336,7 +336,7 @@
   "logicGateGeometryPath": "logic-gate-geometry.json",
   "logicGateGeometrySha256": "82ab85760e6c5db3f1201a792fbad19d7a3dad32dfc42c90bd69603f693c88f8",
   "bufferDffGeometryPath": "buffer-dff-geometry.json",
-  "bufferDffGeometrySha256": "eafca52e46e90a020b5fc6aa934a3d07785df907d3313fcecb86ceb9cc42c3be",
+  "bufferDffGeometrySha256": "9748f512ca9deffbf2bd8e5a5fb9bc8c86bca27eec9b3e900d9f42545863e1eb",
   "delayCellGeometryPath": "delay-cell-geometry.json",
   "delayCellGeometrySha256": "b64afe75141020b265bc7826a1c21fa5f13cb9f898e9e6bc013f1e0ef3f84985",
   "fidelityTargetsPath": "fidelity-targets.json",

@@ -190,7 +190,7 @@
       "automaticMappings": [],
       "manualOnlyReason": "Behavioral logic symbol; structural SPICE realization requires an explicit subcircuit or PDK mapping.",
       "assetPath": "d-flip-flop.symbol.json",
-      "assetHash": "1d980b4f14d3e1dc38e2b452fb87541d91854c3d80b967368816b43ec3af5e4f",
+      "assetHash": "85603291545fcbb468c7957ba6cd625618739b7da8d3e1e5b8870b37385e8df3",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
