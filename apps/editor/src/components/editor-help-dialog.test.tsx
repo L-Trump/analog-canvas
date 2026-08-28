@@ -48,4 +48,16 @@ describe("EditorHelpDialog", () => {
     expect(shortcuts).not.toContain("File and history");
     expect(shortcuts).not.toContain("Select all placed components");
   });
+
+  it("describes explicit Cell authoring without a rectangle conversion", () => {
+    const markup = renderToStaticMarkup(
+      <EditorHelpDialog closeButtonRef={{ current: null }} onClose={vi.fn()} />,
+    );
+
+    expect(markup).toContain("Manage Cells…");
+    expect(markup).toContain("Place Cell");
+    expect(markup).toContain("Select a hierarchical block");
+    expect(markup).not.toContain("Select a rectangle");
+    expect(markup).not.toContain("convert it into a hierarchical block");
+  });
 });

@@ -43,9 +43,9 @@ only the selected Cell Pin; a matching name never attaches markers, merges
 Nets, or synchronizes directions. The bound name is edited in place and its
 Razavi RichText projection retains conventional subscripts.
 
-Rectangle-to-Cell is likewise a convenience
-gesture that commits an ordinary hierarchical Instance; rectangles remain
-visual-only drafting objects.
+Reusable hierarchy is authored through **New Cell** and **Place Cell**. **Enter
+Cell** opens only a selected hierarchical Instance; it never changes a
+drafting object.
 
 There is no separate Cell Interface authoring surface. A child Cell Pin shows
 only its object-anchored terminal-name annotation in the normal Reference slot;

@@ -147,9 +147,9 @@ export function EditorHelpDialog({
             </p>
             <h3>Hierarchical Cells</h3>
             <p>
-              Select a rectangle and press <kbd>E</kbd> to convert it into a
-              hierarchical block and enter its new child Cell. Select an
-              existing hierarchical block and press <kbd>E</kbd>, or
+              Use <strong>Manage Cells…</strong> to create a reusable Cell and
+              <strong>Place Cell</strong> to add an instance to the canvas.
+              Select a hierarchical block and press <kbd>E</kbd>, or
               double-click it, to enter it. Use <strong>Up</strong> or
               <kbd>Shift+E</kbd> to return to the parent Cell.
             </p>

@@ -10,16 +10,16 @@ each caller with **Jump to caller**. A referenced Cell's delete control is
 disabled; delete its caller Instances normally before deleting the now
 unreferenced definition.
 
-Use **New Cell** in the Cell Manager to create a module without first drawing
-a rectangle. **Cell → Place Cell** opens the normal Insert dialog with a
-searchable **Cells** section. Select a definition, then place its ordinary
-hierarchical Instance on the canvas using the same grid preview, `R` rotation,
-mirror shortcuts, and `Esc` cancellation as a library component. The commit
-keeps the `Xn` reference as internal netlist identity and shows only the Cell
-name at the normal instance-label position. **Enter Cell** opens the child of a selected hierarchical
-Instance. **Up** follows the actual parent Instance path; **Top** returns to
-the root. Opening a shared Cell from the selector has no caller context when
-more than one path reaches it, which is reported in the status bar.
+Use **New Cell** in the Cell Manager to create a module. **Cell → Place Cell**
+opens the normal Insert dialog with a searchable **Cells** section. Select a
+definition, then place its ordinary hierarchical Instance on the canvas using
+the same grid preview, `R` rotation, mirror shortcuts, and `Esc` cancellation
+as a library component. The commit keeps the `Xn` reference as internal
+netlist identity and shows only the Cell name at the normal instance-label
+position. **Enter Cell** opens the child of a selected hierarchical Instance.
+**Up** follows the actual parent Instance path; **Top** returns to the root.
+Opening a shared Cell from the selector has no caller context when more than
+one path reaches it, which is reported in the status bar.
 
 The top Cell is the Project export root and is not instantiated as a symbol,
 but it is still emitted as a reusable structural subcircuit. **Port** and
