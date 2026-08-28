@@ -18,6 +18,10 @@ The family extractors currently cover:
   derived by the family generator from these direct sources.
 - `extract-razavi-buffer-dff.py`: direct Buffer geometry from Figure 16.53(a)
   and the generic D/CK/Q/Q-bar flip-flop block from Figure 16.23(a).
+- `extract-razavi-digital-simulation.py`: square clock-pulse treatment from
+  Figure 16.8 and stacked timing-waveform treatment from Figure 20.54 of
+  _Analysis and Design of Data Converters_. These are scoped visual references,
+  not executable simulation semantics.
 
 Each extractor writes:
 

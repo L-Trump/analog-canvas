@@ -316,6 +316,15 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/simulation:
+    dependencies:
+      "@icm/derived":
+        specifier: workspace:*
+        version: link:../derived
+      "@icm/model":
+        specifier: workspace:*
+        version: link:../model
+
   packages/symbols:
     dependencies:
       "@icm/model":

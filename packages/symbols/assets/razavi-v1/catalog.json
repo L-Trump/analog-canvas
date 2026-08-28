@@ -933,6 +933,35 @@
       }
     },
     {
+      "symbolId": "pulse-voltage-source",
+      "name": "Pulse Voltage Source",
+      "category": "source",
+      "reviewStatus": "reviewed",
+      "pinOrder": ["+", "-"],
+      "palette": true,
+      "automaticMappings": [],
+      "manualOnlyReason": "Pulse semantics require authored timing parameters and must not replace imported DC voltage sources automatically.",
+      "assetPath": "pulse-voltage-source.symbol.json",
+      "assetHash": "6fd7e349e50a2661f602077753387f6d865b84b4d03360027c16f7116976df29",
+      "visualAuthority": {
+        "kind": "razavi-reference-v1",
+        "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+        "referencePaths": [
+          "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+          "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-vector-source.json",
+          "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-reference.png"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/peripheral-geometry.json"
+      },
+      "generation": {
+        "kind": "razavi-pdf-vector-reference",
+        "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+        "referencePath": "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-vector-source.json",
+        "converterPath": "scripts/generate-razavi-peripheral-assets.mjs",
+        "converterVersion": 2
+      }
+    },
+    {
       "symbolId": "voltage-source",
       "name": "Independent Voltage Source",
       "category": "source",

@@ -10,6 +10,7 @@ export { npnDevice } from "./npn.js";
 export { pdmosDevice } from "./pdmos.js";
 export { pmosDevice } from "./pmos.js";
 export { pnpDevice } from "./pnp.js";
+export { pulseVoltageSourceDevice } from "./pulse-voltage-source.js";
 export { resistorDevice } from "./resistor.js";
 export { variableCapacitorDevice } from "./variable-capacitor.js";
 export { variableInductorDevice } from "./variable-inductor.js";
