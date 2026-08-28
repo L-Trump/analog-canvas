@@ -133,6 +133,7 @@ describe("createRecoveryCoordinator", () => {
       serializeProject(projectA),
     );
     expect(read.sessions[0]?.latest?.source).toBe("new");
+    expect(read.sessions[0]?.latest?.unsavedAtSnapshot).toBe(true);
   });
 
   it("coalesces a burst of commits into the newest Project", async () => {
@@ -162,6 +163,17 @@ describe("createRecoveryCoordinator", () => {
     expect(read.sessions[0]?.latest?.projectText).toBe(
       serializeProject(projectA),
     );
+  });
+
+  it("marks identical content clean without consuming the previous generation", async () => {
+    const harness = createHarness();
+    harness.coordinator.stage(projectA);
+    await harness.coordinator.flushNow();
+    harness.coordinator.stage(projectA, { unsavedAtSnapshot: false });
+    await harness.coordinator.flushNow();
+    const read = await harness.coordinator.store.readAll();
+    expect(read.sessions[0]?.previous).toBeNull();
+    expect(read.sessions[0]?.latest?.unsavedAtSnapshot).toBe(false);
   });
 
   it("rotates previous generations across separate writes", async () => {
@@ -328,6 +340,7 @@ describe("createRecoveryCoordinator", () => {
     expect(byName).toEqual(["Alpha", "Beta"]);
     expect(harness.sessions[0]?.latest?.review).toBe("valid");
     expect(harness.sessions[0]?.latest?.revision).not.toBeNull();
+    expect(harness.sessions[0]?.latest?.unsavedAtSnapshot).toBe(true);
   });
 
   it("classifies corrupt and unsupported-schema generations in summaries", async () => {

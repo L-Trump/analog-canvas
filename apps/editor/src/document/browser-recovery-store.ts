@@ -331,7 +331,7 @@ export function createBrowserRecoveryStore(
         generation: "latest",
       };
       try {
-        let rotated = false;
+        let written = false;
         let deletedRecordIds: string[] = [];
         await runMutation(async (objectStore, stored) => {
           const sessions = buildSessions(stored);
@@ -355,11 +355,12 @@ export function createBrowserRecoveryStore(
           await deleteStoredRecords(objectStore, stored, (record) =>
             plannedIds.has(record.recordId),
           );
-          if (rotation.status === "rotated") {
-            rotated = true;
+          if (rotation.status === "rotated" || rotation.status === "updated") {
+            written = true;
             // A previous generation dropped by retention must not be
             // re-written into its new slot.
-            const previousCandidate = rotation.session.previous;
+            const previousCandidate =
+              rotation.status === "rotated" ? rotation.session.previous : null;
             const previous =
               previousCandidate !== null &&
               !plannedIds.has(previousCandidate.recordId)
@@ -382,7 +383,7 @@ export function createBrowserRecoveryStore(
           }
           deletedRecordIds = plan.deleteRecordIds;
         });
-        if (!rotated) return { status: "unchanged" };
+        if (!written) return { status: "unchanged" };
         return {
           status: "stored",
           record: asLatest,

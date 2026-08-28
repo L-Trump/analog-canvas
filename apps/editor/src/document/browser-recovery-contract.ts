@@ -71,6 +71,8 @@ export interface BrowserRecoveryRecordV2 {
   /** UTF-8 byte length of `projectText`; always recomputed, never trusted. */
   byteLength: number;
   projectText: string;
+  /** Whether this snapshot represents work not confirmed in a formal file. */
+  unsavedAtSnapshot?: boolean;
   formalFileHint?: BrowserRecoveryFormalFileHint;
 }
 
@@ -87,6 +89,7 @@ export interface BrowserRecoveryRecordDraft {
   source: BrowserRecoverySource;
   updatedAt: string;
   projectText: string;
+  unsavedAtSnapshot?: boolean;
   formalFileHint?: BrowserRecoveryFormalFileHint;
 }
 
@@ -124,6 +127,9 @@ export function finalizeBrowserRecoveryRecord(
     updatedAt: draft.updatedAt,
     byteLength: browserRecoveryByteLength(draft.projectText),
     projectText: draft.projectText,
+    ...(draft.unsavedAtSnapshot === undefined
+      ? {}
+      : { unsavedAtSnapshot: draft.unsavedAtSnapshot }),
     ...(draft.formalFileHint === undefined
       ? {}
       : { formalFileHint: draft.formalFileHint }),
@@ -233,6 +239,12 @@ export function decodeBrowserRecoveryRecord(
       }
     }
   }
+  if (
+    raw.unsavedAtSnapshot !== undefined &&
+    typeof raw.unsavedAtSnapshot !== "boolean"
+  ) {
+    return corrupt("unsavedAtSnapshot is not a boolean");
+  }
 
   const projectText = raw.projectText as string;
   const record: BrowserRecoveryRecordV2 = {
@@ -249,6 +261,9 @@ export function decodeBrowserRecoveryRecord(
     updatedAt: raw.updatedAt as string,
     byteLength: browserRecoveryByteLength(projectText),
     projectText,
+    ...(raw.unsavedAtSnapshot === undefined
+      ? {}
+      : { unsavedAtSnapshot: raw.unsavedAtSnapshot as boolean }),
     ...(raw.formalFileHint === undefined
       ? {}
       : {
@@ -352,6 +367,7 @@ export interface BrowserRecoverySession {
 
 export type BrowserRecoveryRotation =
   | { status: "unchanged"; session: BrowserRecoverySession }
+  | { status: "updated"; session: BrowserRecoverySession }
   | { status: "rotated"; session: BrowserRecoverySession }
   | {
       status: "rejected-too-large";
@@ -381,7 +397,25 @@ export function rotateBrowserRecoverySession(
     session.latest !== null &&
     session.latest.projectText === candidate.projectText
   ) {
-    return { status: "unchanged", session };
+    const sameHint =
+      session.latest.formalFileHint?.name === candidate.formalFileHint?.name &&
+      session.latest.formalFileHint?.lastConfirmedWriteAt ===
+        candidate.formalFileHint?.lastConfirmedWriteAt &&
+      session.latest.formalFileHint?.lastDownloadRequestedAt ===
+        candidate.formalFileHint?.lastDownloadRequestedAt;
+    if (
+      session.latest.unsavedAtSnapshot === candidate.unsavedAtSnapshot &&
+      sameHint
+    ) {
+      return { status: "unchanged", session };
+    }
+    return {
+      status: "updated",
+      session: {
+        ...session,
+        latest: candidate,
+      },
+    };
   }
   return {
     status: "rotated",

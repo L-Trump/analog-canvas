@@ -57,6 +57,13 @@ export interface RecoveryGenerationSummary {
   review: "valid" | "corrupt" | "unsupported-schema";
   /** Top-document revision at the time of the snapshot, when known. */
   revision: number | null;
+  /** `null` means the field predates this additive recovery metadata. */
+  unsavedAtSnapshot: boolean | null;
+}
+
+export interface RecoveryStageOptions {
+  /** Defaults to true because normal staging follows a committed edit. */
+  unsavedAtSnapshot?: boolean;
 }
 
 export interface RecoverySessionSummary {
@@ -103,7 +110,7 @@ export interface RecoveryCoordinator {
   readonly state: RecoveryState;
   readonly sessions: RecoverySessionSummary[];
   /** Schedule a debounced recovery write for a successfully committed Project. */
-  stage(project: CircuitProject): void;
+  stage(project: CircuitProject, options?: RecoveryStageOptions): void;
   /** Drop a pending write without storing it (replacement boundary). */
   cancelPending(): void;
   /** Flush any pending write and wait for the write chain to settle. */
@@ -169,6 +176,7 @@ function summarizeGeneration(
         : "unsupported-schema",
     revision:
       review.status === "valid" ? (readTopRevision(record) ?? null) : null,
+    unsavedAtSnapshot: record.unsavedAtSnapshot ?? null,
   };
 }
 
@@ -217,12 +225,17 @@ export function createRecoveryCoordinator(
   // never race two write transactions against the same session.
   let writeChain: Promise<void> = Promise.resolve();
 
-  function enqueueWrite(project: CircuitProject): void {
+  interface RecoveryCandidate {
+    project: CircuitProject;
+    unsavedAtSnapshot: boolean;
+  }
+
+  function enqueueWrite(candidate: RecoveryCandidate): void {
     publishState("pending");
     writeChain = writeChain.then(async () => {
       let record: BrowserRecoveryRecordV2;
       try {
-        record = buildRecord(project);
+        record = buildRecord(candidate);
       } catch (error) {
         publishState("failed");
         events.onNotice?.(
@@ -254,7 +267,8 @@ export function createRecoveryCoordinator(
     });
   }
 
-  function buildRecord(project: CircuitProject): BrowserRecoveryRecordV2 {
+  function buildRecord(candidate: RecoveryCandidate): BrowserRecoveryRecordV2 {
+    const { project } = candidate;
     recordCounter += 1;
     const documentRevisions: Record<string, number> = {};
     for (const document of project.documents) {
@@ -272,11 +286,12 @@ export function createRecoveryCoordinator(
       source: currentSource,
       updatedAt: now(),
       projectText: serializeProject(project),
+      unsavedAtSnapshot: candidate.unsavedAtSnapshot,
       ...(formalFileHint === undefined ? {} : { formalFileHint }),
     });
   }
 
-  const scheduler = createRecoveryScheduler<CircuitProject>({
+  const scheduler = createRecoveryScheduler<RecoveryCandidate>({
     delayMs: options.delayMs ?? RECOVERY_WRITE_DELAY_MS,
     write: enqueueWrite,
     ...(options.setTimeout === undefined
@@ -302,8 +317,11 @@ export function createRecoveryCoordinator(
       return sessions;
     },
 
-    stage(project: CircuitProject): void {
-      scheduler.schedule(project);
+    stage(project: CircuitProject, options: RecoveryStageOptions = {}): void {
+      scheduler.schedule({
+        project,
+        unsavedAtSnapshot: options.unsavedAtSnapshot ?? true,
+      });
     },
 
     cancelPending(): void {
@@ -423,7 +441,7 @@ export interface UseRecoveryCoordinatorResult {
   /** True once startup discovery (after any migration) has settled. */
   ready: boolean;
   workingCopyId: string;
-  stage: (project: CircuitProject) => void;
+  stage: (project: CircuitProject, options?: RecoveryStageOptions) => void;
   cancelPending: () => void;
   flushNow: () => Promise<RecoveryState>;
   beginWorkingCopy: (source: BrowserRecoverySource) => string;
@@ -508,7 +526,7 @@ export function useRecoveryCoordinator(
     sessions,
     ready,
     workingCopyId: currentWorkingCopyId,
-    stage: (project) => coordinator.stage(project),
+    stage: (project, stageOptions) => coordinator.stage(project, stageOptions),
     cancelPending: () => coordinator.cancelPending(),
     flushNow: () => coordinator.flushNow(),
     beginWorkingCopy: (source) => {

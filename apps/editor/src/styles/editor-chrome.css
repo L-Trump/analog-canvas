@@ -813,6 +813,12 @@
   outline: 0;
 }
 
+.project-unsaved-indicator {
+  color: var(--icm-accent);
+  font-size: 0.62rem;
+  vertical-align: middle;
+}
+
 @media (max-width: 1100px) {
   .app-brand-copy h1 {
     font-size: var(--icm-font-md);

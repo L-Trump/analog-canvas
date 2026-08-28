@@ -24,9 +24,15 @@ lives in [`docs/specs/persistence-and-recovery.md`](../specs/persistence-and-rec
   and reports `Download requested`, because browsers do not confirm durable
   download completion. Saving or downloading never deletes safety copies.
 - Opening, importing, or accepting an Agent replacement of a Project with
-  unsaved changes first confirms a recovery write; if storage fails, the
-  editor offers Download current Project / Replace anyway / Cancel, defaulting
-  to Cancel. A rejected file keeps its diagnostic code and path.
+  unsaved changes first flushes a recovery write, then offers Save and continue
+  / Discard and continue / Cancel, defaulting to Cancel. Save failure or
+  cancellation keeps the foreground Project in place. A rejected file keeps
+  its diagnostic code and path.
+- A small dot marks dirty work. Browser Back, Refresh, and tab/window close use
+  the native leave confirmation only while dirty. After an unexpected exit, a
+  non-modal startup banner offers an explicitly unsaved latest recovery copy;
+  older records without save-state metadata remain available from the File
+  menu without triggering the banner.
 - Storage failures (quota, unavailable) show a persistent warning with a
   direct download action; they never change or crash the live Project.
 - The legacy `icm.recovery.v1` localStorage slot migrates into IndexedDB on

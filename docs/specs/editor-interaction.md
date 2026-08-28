@@ -345,6 +345,15 @@ Selection, viewport, active tool, previews, Agent tokens, and approval UI are
 transient and never enter Project JSON. Recovery is scheduled only after a
 successful transaction or explicit replacement and stores no bearer token.
 
+The Project-name area shows a small unsaved marker derived from the same file
+lifecycle that controls Save. While that marker is present, browser Back,
+Refresh, and tab/window close use the browser-native leave confirmation;
+ordinary in-app navigation, selection, zoom, and panel changes do not affect
+it. New, Open, Revert, recovery restore, and approved staged replacement use
+one application dialog with Save and continue, Discard and continue, and
+Cancel. A startup recovery offer is a non-modal overlay and never silently
+replaces the active Project.
+
 ## Agent semantic control
 
 API 2.0 may advertise optional `semanticControl` for transient review focus:

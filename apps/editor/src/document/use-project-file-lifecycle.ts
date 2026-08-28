@@ -23,6 +23,7 @@ import {
 } from "./project-file-service";
 import type {
   ProjectFileState,
+  ProjectSaveOutcome,
   ProjectSaveTarget,
 } from "./project-file-service";
 import { projectChangeToken } from "./project-session-lifecycle";
@@ -46,6 +47,7 @@ interface PreviousProjectSnapshot extends FormalProjectBaseline {
 interface ReplaceGuardState {
   intent: string;
   perform: () => void | Promise<void>;
+  recoveryProtected: boolean;
 }
 
 export interface ReplaceProjectOptions {
@@ -115,7 +117,12 @@ export function useProjectFileLifecycle({
   const [replaceGuard, setReplaceGuard] = useState<ReplaceGuardState | null>(
     null,
   );
+  const [replaceGuardSaving, setReplaceGuardSaving] = useState(false);
   const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
+  const [
+    dismissedStartupRecoveryRecordId,
+    setDismissedStartupRecoveryRecordId,
+  ] = useState<string | null>(null);
 
   function isDirtyWork(): boolean {
     return fileState === "dirty" || fileState === "write-failed";
@@ -149,18 +156,25 @@ export function useProjectFileLifecycle({
     const prepared = materializeRazaviProjectBulkConnections(nextProject);
     const nextDocument = installProject(prepared.project, nextViewBox);
     saveTargetRef.current = null;
-    setFileState(
+    const nextFileState =
       options.fileState ??
-        (options.source === "opened-file" ? "opened" : "new"),
-    );
+      (options.source === "opened-file"
+        ? "opened"
+        : options.source === "spice-import" || options.source === "recovered"
+          ? "dirty"
+          : "new");
+    setFileState(nextFileState);
     setFormalProjectBaseline(options.formalBaseline ?? null);
-    recovery.stage(prepared.project);
+    recovery.stage(prepared.project, {
+      unsavedAtSnapshot:
+        nextFileState === "dirty" || nextFileState === "write-failed",
+    });
     return nextDocument;
   }
 
   async function saveProjectFile(
     options: { pickLocation?: boolean } = {},
-  ): Promise<void> {
+  ): Promise<ProjectSaveOutcome> {
     const outcome = await saveProjectArtifact(
       project,
       {},
@@ -176,9 +190,11 @@ export function useProjectFileLifecycle({
         name: outcome.fileName,
         lastConfirmedWriteAt: outcome.at,
       });
+      recovery.stage(project, { unsavedAtSnapshot: false });
+      await recovery.flushNow();
       setFileState("write-confirmed");
       setStatus(`Saved ${outcome.fileName} (write confirmed)`);
-      return;
+      return outcome;
     }
     if (outcome.status === "download-requested") {
       setFormalProjectBaseline({
@@ -189,32 +205,35 @@ export function useProjectFileLifecycle({
         name: outcome.fileName,
         lastDownloadRequestedAt: new Date().toISOString(),
       });
+      recovery.stage(project, { unsavedAtSnapshot: false });
+      await recovery.flushNow();
       setFileState("download-requested");
       setStatus(`Download requested: ${outcome.fileName}`);
-      return;
+      return outcome;
     }
     if (outcome.status === "picker-cancelled") {
       setStatus("Save cancelled");
-      return;
+      return outcome;
     }
     if (outcome.status === "permission-denied") {
       setStatus(
         `Save location unavailable and download failed: ${outcome.message}`,
       );
-      return;
+      return outcome;
     }
     if (outcome.status === "write-failed") {
       setFileState("write-failed");
       setStatus(
         `Save failed at ${outcome.stage}: ${outcome.message} — recovery kept; download the Project instead`,
       );
-      return;
+      return outcome;
     }
     if (outcome.status === "target-unavailable") {
       setStatus("Save location is no longer available — choose one again");
-      return;
+      return outcome;
     }
     setStatus(`Project could not be serialized: ${outcome.message}`);
+    return outcome;
   }
 
   async function reportExport(message: string): Promise<void> {
@@ -230,12 +249,33 @@ export function useProjectFileLifecycle({
           name: outcome.fileName,
           lastConfirmedWriteAt: outcome.at,
         });
+        recovery.stage(project, { unsavedAtSnapshot: false });
+        await recovery.flushNow();
         setFileState("write-confirmed");
         setStatus(`${message} — also saved ${outcome.fileName}`);
         return;
       }
     }
     setStatus(`${message} — the Project file still has unsaved changes`);
+  }
+
+  function downloadCurrentProjectBackup(): void {
+    const outcome = requestProjectDownload(project);
+    if (outcome.status !== "download-requested") {
+      setStatus(`Download failed: ${outcome.message}`);
+      return;
+    }
+    setFormalProjectBaseline({
+      project: structuredClone(project),
+      viewBox: { ...viewBox },
+    });
+    recovery.noteFormalFileHint({
+      name: outcome.fileName,
+      lastDownloadRequestedAt: new Date().toISOString(),
+    });
+    recovery.stage(project, { unsavedAtSnapshot: false });
+    setFileState("download-requested");
+    setStatus(`Download requested: ${outcome.fileName}`);
   }
 
   async function guardDirtyReplacement(
@@ -246,30 +286,43 @@ export function useProjectFileLifecycle({
       await perform();
       return;
     }
-    recovery.stage(project);
-    await recovery.flushNow();
-    setReplaceGuard({ intent, perform });
+    recovery.stage(project, { unsavedAtSnapshot: true });
+    const recoveryState = await recovery.flushNow();
+    setReplaceGuard({
+      intent,
+      perform,
+      recoveryProtected: recoveryState === "stored",
+    });
   }
 
   function cancelReplaceGuard(): void {
+    if (replaceGuardSaving) return;
     setReplaceGuard(null);
   }
 
   function confirmReplaceGuard(): void {
+    if (replaceGuardSaving) return;
     const guard = replaceGuard;
     if (!guard) return;
     setReplaceGuard(null);
     void guard.perform();
   }
 
-  function downloadCurrentProjectFromGuard(): void {
-    const outcome = requestProjectDownload(project);
-    if (outcome.status === "download-requested") {
-      setFileState("download-requested");
-      setStatus(`Download requested: ${outcome.fileName}`);
-    } else {
-      setStatus(`Download failed: ${outcome.message}`);
-    }
+  function saveAndContinueReplaceGuard(): void {
+    const guard = replaceGuard;
+    if (!guard || replaceGuardSaving) return;
+    setReplaceGuardSaving(true);
+    void (async () => {
+      const outcome = await saveProjectFile();
+      if (
+        outcome.status === "write-confirmed" ||
+        outcome.status === "download-requested"
+      ) {
+        setReplaceGuard(null);
+        await guard.perform();
+      }
+      setReplaceGuardSaving(false);
+    })();
   }
 
   function createNewProject(): void {
@@ -359,7 +412,7 @@ export function useProjectFileLifecycle({
           const recoveredDocument = replaceActiveProject(
             read.project,
             defaultViewBox,
-            { source: "recovered" },
+            { source: "recovered", fileState: "dirty" },
           );
           setRecoveryDialogOpen(false);
           await recovery.discover();
@@ -413,7 +466,7 @@ export function useProjectFileLifecycle({
 
   function refreshApp(): void {
     void (async () => {
-      recovery.stage(project);
+      recovery.stage(project, { unsavedAtSnapshot: isDirtyWork() });
       await recovery.flushNow();
       window.sessionStorage.setItem(REFRESH_RESTORE_STORAGE_KEY, "true");
       window.location.reload();
@@ -442,8 +495,8 @@ export function useProjectFileLifecycle({
           project: structuredClone(staged.project),
           viewBox: { ...defaultViewBox },
         },
+        fileState: staged.migrated ? "dirty" : "opened",
       });
-      if (staged.migrated) setFileState("dirty");
       setStatus(
         staged.migrated
           ? `Opened and upgraded ${staged.fileName} from schema ${staged.sourceSchemaVersion} to schema ${staged.project.schemaVersion} — save the Project to keep the upgrade`
@@ -511,6 +564,8 @@ export function useProjectFileLifecycle({
           source: "recovered",
           keepWorkingCopy: true,
           rememberPrevious: false,
+          fileState:
+            read.record.unsavedAtSnapshot === false ? "opened" : "dirty",
         },
       );
       setStatus(`Restored recovery revision ${restoredDocument.revision}`);
@@ -538,21 +593,39 @@ export function useProjectFileLifecycle({
     }
   }, [currentProjectChangeToken, projectSessionId]);
 
+  const startupRecovery =
+    !restoreAfterRefresh && !isDirtyWork()
+      ? (recovery.sessions.find(
+          (session) =>
+            session.workingCopyId === recovery.workingCopyId &&
+            session.latest?.review === "valid" &&
+            session.latest.unsavedAtSnapshot === true &&
+            session.latest.recordId !== dismissedStartupRecoveryRecordId,
+        ) ?? null)
+      : null;
+
   return {
     fileState,
     formalProjectBaseline,
     previousProject,
     replaceGuard,
+    replaceGuardSaving,
     recoveryDialogOpen,
+    startupRecovery,
     setRecoveryDialogOpen,
     isDirtyWork,
     replaceActiveProject,
     saveProjectFile,
+    downloadCurrentProjectBackup,
     reportExport,
     guardDirtyReplacement,
     cancelReplaceGuard,
     confirmReplaceGuard,
-    downloadCurrentProjectFromGuard,
+    saveAndContinueReplaceGuard,
+    dismissStartupRecovery: () =>
+      setDismissedStartupRecoveryRecordId(
+        startupRecovery?.latest?.recordId ?? null,
+      ),
     createNewProject,
     restorePreviousProject,
     revertToFormalProjectBaseline,

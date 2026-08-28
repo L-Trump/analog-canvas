@@ -3,7 +3,10 @@ import { Suspense, type ComponentProps } from "react";
 import type { AgentFileCandidateSummary } from "@icm/agent-adapter";
 import type { CellResetPlan } from "@icm/edit-engine";
 
-import { RecoveryFailureBanner } from "../components/recovery-banners";
+import {
+  RecoveryAvailableBanner,
+  RecoveryFailureBanner,
+} from "../components/recovery-banners";
 import {
   LazyCellManagerDialog,
   LazyConnectAgentPanel,
@@ -21,6 +24,7 @@ import {
 export interface EditorDialogLayerProps {
   help: ComponentProps<typeof LazyEditorHelpDialog> | null;
   recoveryFailure: ComponentProps<typeof RecoveryFailureBanner> | null;
+  recoveryAvailable: ComponentProps<typeof RecoveryAvailableBanner> | null;
   recentRecovery: ComponentProps<typeof LazyRecentRecoveryDialog> | null;
   replaceGuard: ComponentProps<typeof LazyReplaceGuardDialog> | null;
   search: ComponentProps<typeof LazyProjectSearchDialog> | null;
@@ -48,6 +52,7 @@ export interface EditorDialogLayerProps {
 export function EditorDialogLayer({
   help,
   recoveryFailure,
+  recoveryAvailable,
   recentRecovery,
   replaceGuard,
   search,
@@ -67,6 +72,9 @@ export function EditorDialogLayer({
         {help ? <LazyEditorHelpDialog {...help} /> : null}
         {recoveryFailure ? (
           <RecoveryFailureBanner {...recoveryFailure} />
+        ) : null}
+        {recoveryAvailable ? (
+          <RecoveryAvailableBanner {...recoveryAvailable} />
         ) : null}
         {recentRecovery ? (
           <LazyRecentRecoveryDialog {...recentRecovery} />

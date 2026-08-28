@@ -6,6 +6,14 @@ export interface RecoveryFailureBannerProps {
   onDismiss(): void;
 }
 
+export interface RecoveryAvailableBannerProps {
+  projectName: string;
+  updatedAt: string;
+  onRestore(): void;
+  onDownload(): void;
+  onDismiss(): void;
+}
+
 function failureMessage(state: RecoveryState): string {
   switch (state) {
     case "quota-exceeded":
@@ -48,15 +56,47 @@ export function RecoveryFailureBanner({
   );
 }
 
+/** Non-modal startup offer for a newer, explicitly unsaved working copy. */
+export function RecoveryAvailableBanner({
+  projectName,
+  updatedAt,
+  onRestore,
+  onDownload,
+  onDismiss,
+}: RecoveryAvailableBannerProps) {
+  return (
+    <aside
+      className="recovery-banner"
+      data-testid="startup-recovery-banner"
+      aria-label="Unsaved recovery available"
+    >
+      <p>
+        Unsaved work for <strong>{projectName}</strong> was recovered from{" "}
+        <time dateTime={updatedAt}>{new Date(updatedAt).toLocaleString()}</time>
+        .
+      </p>
+      <div className="recovery-banner-actions">
+        <button type="button" onClick={onRestore}>
+          Restore
+        </button>
+        <button type="button" onClick={onDownload}>
+          Download backup
+        </button>
+        <button type="button" onClick={onDismiss}>
+          Ignore
+        </button>
+      </div>
+    </aside>
+  );
+}
+
 /** Concise statusbar label derived from coordinator recovery state. */
 export function recoveryStateLabel(state: RecoveryState): string | null {
   switch (state) {
     case "idle":
-      return null;
     case "pending":
-      return "Saving recovery…";
     case "stored":
-      return "Recovery saved";
+      return null;
     case "quota-exceeded":
       return "Recovery full — download now";
     case "unavailable":

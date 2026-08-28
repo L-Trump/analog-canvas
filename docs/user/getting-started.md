@@ -59,8 +59,17 @@ palette-first manual authoring; no Project file needs to be opened first.
 file. In browsers without an explicitly authorised file handle, this is a
 download; keep the downloaded file as your authoritative Project. Edits also
 stage an origin-local recovery copy. A recovery copy is not a formal save and
-can be lost if browser site data is cleared. On a later start the File menu
-offers recovery choices; recovery never silently replaces a formal file.
+can be lost if browser site data is cleared. A dot beside the Project name
+means the formal Project has unsaved changes. Browser Back, Refresh, and tab or
+window close then show the browser's standard leave warning; after a successful
+save or requested download, they do not.
+
+New, Open, and Revert ask whether to **Save and continue**, **Discard and
+continue**, or **Cancel** when the current Project is dirty. If a newer
+unsaved recovery copy is found on a later start, a small banner offers
+**Restore**, **Download backup**, or **Ignore**. The same copies remain
+available through **File / Recover recent work…**; recovery never silently
+replaces a formal file.
 
 Use **File / Open Project** to validate and reopen a formal Project file.
 Opening an invalid or future-version file leaves the current Document

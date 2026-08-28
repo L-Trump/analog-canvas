@@ -89,6 +89,16 @@ describe("finalizeBrowserRecoveryRecord", () => {
       ).formalFileHint,
     ).toEqual({ name: "amp.icproj.json" });
   });
+
+  it("preserves additive unsaved-state metadata without requiring it", () => {
+    expect(
+      finalizeBrowserRecoveryRecord(draft()).unsavedAtSnapshot,
+    ).toBeUndefined();
+    expect(
+      finalizeBrowserRecoveryRecord(draft({ unsavedAtSnapshot: true }))
+        .unsavedAtSnapshot,
+    ).toBe(true);
+  });
 });
 
 describe("decodeBrowserRecoveryRecord", () => {
@@ -152,6 +162,9 @@ describe("decodeBrowserRecoveryRecord", () => {
         ...record,
         documentRevisions: { "document-main": -1 },
       }),
+    ).toMatchObject({ status: "corrupt" });
+    expect(
+      decodeBrowserRecoveryRecord({ ...record, unsavedAtSnapshot: "yes" }),
     ).toMatchObject({ status: "corrupt" });
     expect(
       decodeBrowserRecoveryRecord({
@@ -298,6 +311,30 @@ describe("rotateBrowserRecoverySession", () => {
     expect(rotation.status).toBe("unchanged");
     if (rotation.status === "unchanged") {
       expect(rotation.session.latest?.recordId).toBe("record-1");
+    }
+  });
+
+  it("updates save metadata in place without rotating identical content", () => {
+    const first = finalizeBrowserRecoveryRecord(
+      draft({ recordId: "record-1", unsavedAtSnapshot: true }),
+    );
+    const saved = finalizeBrowserRecoveryRecord(
+      draft({
+        recordId: "record-2",
+        updatedAt: "2026-08-14T10:05:00.000Z",
+        unsavedAtSnapshot: false,
+        formalFileHint: { name: "amp.icproj.json" },
+      }),
+    );
+    const rotation = rotateBrowserRecoverySession(
+      session("working-copy-a", { latest: first }),
+      saved,
+    );
+    expect(rotation.status).toBe("updated");
+    if (rotation.status === "updated") {
+      expect(rotation.session.latest?.recordId).toBe("record-2");
+      expect(rotation.session.latest?.unsavedAtSnapshot).toBe(false);
+      expect(rotation.session.previous).toBeNull();
     }
   });
 
