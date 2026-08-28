@@ -47,7 +47,6 @@ export type PersistenceState =
 interface ReplaceGuardState {
   intent: string;
   perform: () => void | Promise<void>;
-  recoveryProtected: boolean;
 }
 
 export interface ReplaceProjectOptions {
@@ -294,11 +293,10 @@ export function useProjectFileLifecycle({
       return;
     }
     recovery.stage(project, { unsavedAtSnapshot: true, cloudBinding });
-    const recoveryState = await recovery.flushNow();
+    await recovery.flushNow();
     setReplaceGuard({
       intent,
       perform,
-      recoveryProtected: recoveryState === "stored",
     });
   }
 
@@ -636,7 +634,10 @@ export function useProjectFileLifecycle({
             session.workingCopyId === recovery.workingCopyId &&
             session.latest?.review === "valid" &&
             session.latest.unsavedAtSnapshot === true &&
-            session.latest.recordId !== dismissedStartupRecoveryRecordId,
+            session.latest.recordId !== dismissedStartupRecoveryRecordId &&
+            // Tiny sketches are not worth a banner; the manual Recover menu
+            // still lists every snapshot.
+            session.latest.meaningfulContent,
         ) ?? null)
       : null;
   const canRestoreStartupCloudProject =

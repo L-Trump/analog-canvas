@@ -24,10 +24,32 @@ test("blocks destructive browser refresh shortcuts and uses the stronger grid", 
     "fill",
     "rgb(196, 199, 201)",
   );
+  // A blank circuit has nothing to protect: the editor does not intercept
+  // the refresh shortcut (a real browser would reload here; synthetic keys
+  // cannot drive the browser accelerator, so assert the guard stays silent).
+  await awaitEditorReady(page);
+  await page.keyboard.press("Control+r");
+  await expect(page.getByTestId("status")).not.toHaveText(
+    "Refresh blocked to protect the current circuit",
+  );
+
+  // With meaningful content (three objects) the guard takes over. Clear the
+  // selection first: Ctrl+R on a mirrorable selection means mirror, not
+  // refresh.
+  for (const x of [220, 320, 420]) {
+    await chooseComponent(page, "resistor");
+    await page
+      .getByTestId("schematic-canvas")
+      .click({ position: { x, y: 220 } });
+    await page.keyboard.press("Escape");
+  }
+  await page.keyboard.press("Escape");
+  await page
+    .getByTestId("schematic-canvas")
+    .click({ position: { x: 60, y: 60 } });
   await page.evaluate(() => {
     document.body.dataset.refreshGuard = "alive";
   });
-
   await page.keyboard.press("Control+r");
   await expect(page.getByTestId("status")).toHaveText(
     "Refresh blocked to protect the current circuit",
@@ -289,11 +311,58 @@ test("keeps quick-start shortcuts in the corner until the first component is ins
   await page.keyboard.press("i");
   const reopened = page.getByRole("dialog", { name: "Insert Component" });
   await expect(reopened.locator(".insert-tile-grid")).toBeVisible();
-  // Recent picks float to the front of the flat grid.
+  // The grid reads in Library order — transistors first — not recency, even
+  // though a resistor was just placed.
   await expect(reopened.getByRole("option").first()).toHaveAttribute(
     "data-testid",
-    "insert-component-resistor",
+    "insert-component-nmos",
   );
+});
+
+test("category chips multi-select which kinds the quick pick shows", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await awaitEditorReady(page);
+  await page.keyboard.press("i");
+  const dialog = page.getByRole("dialog", { name: "Insert Component" });
+  await expect(dialog.getByTestId("insert-component-nmos")).toBeVisible();
+
+  // Hiding one category removes only its tiles.
+  await dialog.getByTestId("insert-category-transistors").click();
+  await expect(dialog.getByTestId("insert-component-nmos")).toHaveCount(0);
+  await expect(dialog.getByTestId("insert-component-resistor")).toBeVisible();
+
+  // The filter is a free multi-select, not a single choice.
+  await dialog.getByTestId("insert-category-passives").click();
+  await expect(dialog.getByTestId("insert-component-resistor")).toHaveCount(0);
+  await expect(dialog.getByTestId("insert-component-and-gate")).toBeVisible();
+
+  // Toggling back restores the tiles, and typing still filters afterwards.
+  await dialog.getByTestId("insert-category-transistors").click();
+  await expect(dialog.getByTestId("insert-component-nmos")).toBeVisible();
+  await dialog.getByLabel("Component search").fill("nmos");
+  await expect(dialog.getByTestId("insert-component-resistor")).toHaveCount(0);
+  await expect(dialog.getByTestId("insert-component-nmos")).toBeVisible();
+
+  // Clear all starts from zero: nothing shows until kinds are picked back.
+  await dialog.getByLabel("Component search").fill("");
+  await dialog.getByTestId("insert-category-clear").click();
+  await expect(dialog.getByRole("option")).toHaveCount(0);
+  await expect(dialog.getByText("No matching components")).toBeVisible();
+  await dialog.getByTestId("insert-category-logic-gates").click();
+  await expect(dialog.getByTestId("insert-component-and-gate")).toBeVisible();
+  await expect(dialog.getByTestId("insert-component-nmos")).toHaveCount(0);
+
+  // Reopening resets to everything shown.
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await page.keyboard.press("i");
+  await expect(dialog.getByTestId("insert-category-passives")).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(dialog.getByTestId("insert-component-resistor")).toBeVisible();
 });
 
 test("groups and places high-voltage DMOS from Extended Devices", async ({
@@ -1127,7 +1196,8 @@ test("shows the complete foldable categorized Library, quick-places a device, an
   const transistorChips = transistorCategory.locator(
     '[data-testid^="shapes-chip-"]',
   );
-  await expect(transistorChips).toHaveCount(4);
+  // NMOS, PMOS, NPN, PNP, and the diode that belongs with them.
+  await expect(transistorChips).toHaveCount(5);
   const transistorGrid = transistorCategory.locator(".shapes-grid");
   // Tiles keep a fixed square size; a wider panel fits more of them per row
   // instead of stretching each tile.

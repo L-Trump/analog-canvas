@@ -2,9 +2,9 @@ import { CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
 
 export interface Schema28To29MigrationReport {
   /**
-   * Schema 29 adds optional per-instance `styleOverride` color overrides.
-   * The new fields are optional, so every valid schema-28 project is already
-   * valid schema-29 data.
+   * Schema 29 relaxes annotation and drafting anchors to 1-unit precision and
+   * adds optional per-instance appearance overrides. Existing data is
+   * unchanged because both changes are backward-compatible.
    */
   readonly changed: false;
 }
@@ -15,9 +15,9 @@ export interface Schema28To29MigrationResult {
 }
 
 /**
- * Upgrade schema 28 to 29. The new `styleOverride` field on Instance is
- * optional, so every valid schema-28 project is already valid schema-29
- * data — no structural transformation is needed.
+ * Upgrade schema 28 to 29. Fine-grid annotation/drafting coordinates are a
+ * validation relaxation, and instance appearance overrides are optional, so
+ * every valid schema-28 project is already valid schema-29 data.
  */
 export function upgradeSchema28To29WithReport(
   raw: Record<string, unknown>,

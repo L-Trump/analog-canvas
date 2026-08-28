@@ -37,8 +37,8 @@ export type {
 export {
   upgradeSchema28To29,
   upgradeSchema28To29WithReport,
-} from "./transforms/instance-style.js";
+} from "./transforms/annotation-grid.js";
 export type {
   Schema28To29MigrationReport,
   Schema28To29MigrationResult,
-} from "./transforms/instance-style.js";
+} from "./transforms/annotation-grid.js";

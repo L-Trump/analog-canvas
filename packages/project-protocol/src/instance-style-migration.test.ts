@@ -8,14 +8,13 @@ import { parseProject, tryParseProjectWithMetadata } from "./index.js";
 import {
   upgradeSchema28To29,
   upgradeSchema28To29WithReport,
-} from "./transforms/instance-style.js";
+} from "./transforms/annotation-grid.js";
 
 describe("schema 28 to 29 migration (instance style override)", () => {
   it("upgrades schemaVersion from 28 to 29 without changing data", () => {
     const current = JSON.parse(
       serializeProject(createEmptyProject("test", "Test")),
     ) as Record<string, unknown>;
-    // Downgrade to 28
     const v28 = { ...current, schemaVersion: 28 };
     const upgraded = upgradeSchema28To29(v28);
     expect(upgraded.schemaVersion).toBe(CURRENT_PROJECT_SCHEMA_VERSION);
@@ -72,7 +71,6 @@ describe("schema 28 to 29 migration (instance style override)", () => {
     const current = JSON.parse(
       serializeProject(createEmptyProject("test", "Test")),
     ) as Record<string, unknown>;
-    // Add an instance without styleOverride (as schema 28 would have)
     const doc = (current.documents as Array<Record<string, unknown>>)[0]!;
     doc.instances = [
       {

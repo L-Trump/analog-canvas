@@ -1172,19 +1172,17 @@ test("an ordinary user sees blocking quality gates on an empty project", async (
     )
     .toEqual(toolbarStyleBeforeDialog);
 
-  // The empty canvas fails the content gate, evaluated locally.
+  // The empty canvas trips the content check — listed as advice, never as a
+  // hard gate: the checker has false positives and sketches are shareable.
   const gates = page.getByTestId("publish-gallery-gates");
   await expect(gates).toBeVisible();
-  await expect(gates).toContainText("Fix these before publishing");
+  await expect(gates).toContainText("publishing stays open");
   await expect(gates).toContainText("Too little content");
-  await expect(gates).toHaveCSS("border-top-color", "rgb(235, 87, 87)");
-  await expect(gates).toHaveCSS("background-color", "rgba(235, 87, 87, 0.08)");
   const tags = dialog.getByTestId("publish-tags");
   await expect(tags).toHaveCSS("display", "flex");
   await expect(tags).toHaveCSS("flex-direction", "column");
   await expect(dialog.getByLabel("Owner passphrase")).toHaveCount(0);
-  // The gates still hold, but the button says what actually happens next.
-  await expect(dialog.getByRole("button", { name: "Publish" })).toBeDisabled();
+  await expect(dialog.getByRole("button", { name: "Publish" })).toBeEnabled();
 });
 
 test("the publish dialog resolves internal Cell instances from the open Project", async ({
@@ -1690,14 +1688,14 @@ test("the Examples panel guards dirty work before opening an entry", async ({
 
   await card.click();
   const dialog = page.getByRole("dialog", {
-    name: "Protect the current Project",
+    name: "Unsaved changes",
   });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Cancel (keep editing)" }).click();
+  await dialog.getByRole("button", { name: "Stay" }).click();
   await expect(page.getByTestId("hit-R1")).toHaveCount(1);
 
   await card.click();
-  await dialog.getByRole("button", { name: "Discard and continue" }).click();
+  await dialog.getByRole("button", { name: "Continue without saving" }).click();
   await expect(page.getByTestId("status")).toContainText(
     `Opened gallery circuit: ${ENTRY.name}`,
   );

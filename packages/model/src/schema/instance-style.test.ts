@@ -39,12 +39,16 @@ describe("InstanceStyleOverrideSchema", () => {
   });
 
   it("accepts only foreground", () => {
-    const result = InstanceStyleOverrideSchema.safeParse({ foreground: "#FF0000" });
+    const result = InstanceStyleOverrideSchema.safeParse({
+      foreground: "#FF0000",
+    });
     expect(result.success).toBe(true);
   });
 
   it("accepts only background", () => {
-    const result = InstanceStyleOverrideSchema.safeParse({ background: "#00FF00" });
+    const result = InstanceStyleOverrideSchema.safeParse({
+      background: "#00FF00",
+    });
     expect(result.success).toBe(true);
   });
 

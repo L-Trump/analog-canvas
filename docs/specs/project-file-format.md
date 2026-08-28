@@ -8,10 +8,11 @@ Primary owners: `packages/model` (current shape) and
 `packages/project-protocol` (file boundary)
 
 An `.icproj.json` file is canonical JSON for one complete `CircuitProject`.
-`@icm/project-protocol` exposes `parseProject`. It accepts schemas 28 and 29,
-adds the optional instance-style color override when reading schema 28, supplies
-only schema 29 in memory, and writes only schema 29. Older project files are
-rejected.
+`@icm/project-protocol` exposes `parseProject`. It accepts schemas 28 and 29.
+Schema 29 relaxes annotation and drafting anchors to 1-unit precision and adds
+optional per-instance appearance overrides; both changes are backward-compatible,
+so schema 28 upgrades by a version stamp. The protocol supplies only schema 29
+in memory and writes only schema 29. Older project files are rejected.
 
 ## Current authorities
 

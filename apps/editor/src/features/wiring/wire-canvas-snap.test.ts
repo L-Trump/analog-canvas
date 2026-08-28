@@ -129,4 +129,28 @@ describe("wire canvas snap", () => {
     expect(result.endpoint).toBeUndefined();
     expect(result.point).toEqual({ x: 0, y: 0 });
   });
+
+  it("keeps a one-grid offset exactly where it was put", () => {
+    // Offsetting a wire a single grid is ordinary drawing, not a wobble to be
+    // corrected. An earlier axis hold straightened these away.
+    const document = createEmptyDocument("document", "Document");
+    document.presentation.grid = 10;
+    const context = {
+      document,
+      resolver,
+      wiringEndpoints: [],
+      routeGeometryRecords: [],
+      contactComponents: [],
+      wireSource: source(),
+      wireWaypoints: [{ x: -20, y: 0 }],
+      captureTolerance: 7,
+    };
+
+    expect(
+      resolveWireCanvasSnap(context, { x: -10, y: 40 }, false).point,
+    ).toEqual({ x: -10, y: 40 });
+    expect(
+      resolveWireCanvasSnap(context, { x: 40, y: 10 }, false).point,
+    ).toEqual({ x: 40, y: 10 });
+  });
 });
