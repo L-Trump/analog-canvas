@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 import type { SchematicDocument } from "@icm/model";
@@ -13,6 +13,13 @@ const COLOR_PRESETS = [
   { label: "Violet", value: "#7c3aed" },
   { label: "White", value: "#ffffff" },
 ] as const;
+
+/**
+ * How long the choice has to settle before it reaches the document. Long
+ * enough to cover a drag across the picker or a typed channel, short enough
+ * that the canvas keeps up with the hand.
+ */
+const COLOR_SETTLE_MS = 250;
 
 interface RgbColor {
   r: number;
@@ -63,19 +70,61 @@ function ColorOverrideControl({
   onChange: (value: string | undefined) => void;
 }) {
   const effective = value ?? fallback;
-  const [rgb, setRgb] = useState(() => hexToRgb(effective));
+  /**
+   * One colour is chosen over many events: a drag across the picker fires an
+   * input event per step, and a typed channel fires one per keystroke.
+   * Committing each of them made a single choice cost nineteen undo steps,
+   * and with history bounded at 64 a few colour picks pushed real editing
+   * out of reach. The choice is held here and reaches the document once,
+   * when the interaction ends.
+   */
+  const [draft, setDraft] = useState<string | null>(null);
+  const draftRef = useRef<string | null>(null);
+  const settleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The settle timer fires after the render that armed it, so it must reach
+  // the caller's current handler rather than the one it closed over.
+  const latestRef = useRef({ value, onChange });
+  latestRef.current = { value, onChange };
+  const shown = draft ?? effective;
+  const rgb = hexToRgb(shown);
 
-  useEffect(() => {
-    setRgb(hexToRgb(effective));
-  }, [effective]);
+  const cancelSettle = (): void => {
+    if (settleRef.current === null) return;
+    clearTimeout(settleRef.current);
+    settleRef.current = null;
+  };
+  const commitNow = (next: string | undefined): void => {
+    cancelSettle();
+    draftRef.current = null;
+    setDraft(null);
+    const latest = latestRef.current;
+    if (next !== latest.value) latest.onChange(next);
+  };
+  const commitPending = (): void => {
+    const pending = draftRef.current;
+    if (pending === null) return;
+    commitNow(pending);
+  };
+  /**
+   * Each step of the choice updates what is shown and restarts the clock; the
+   * document hears about it once the hand stops. Leaving the field, pressing
+   * Enter, or picking a preset ends it immediately.
+   */
+  const setPending = (next: string): void => {
+    draftRef.current = next;
+    setDraft(next);
+    cancelSettle();
+    settleRef.current = setTimeout(commitPending, COLOR_SETTLE_MS);
+  };
+
+  // A control that unmounts mid-choice must not leave a timer behind.
+  useEffect(() => cancelSettle, []);
 
   const updateChannel = (channel: keyof RgbColor, raw: string): void => {
     if (raw.trim() === "") return;
     const parsed = Number(raw);
     if (!Number.isFinite(parsed)) return;
-    const next = { ...rgb, [channel]: clampChannel(parsed) };
-    setRgb(next);
-    onChange(rgbToHex(next));
+    setPending(rgbToHex({ ...rgb, [channel]: clampChannel(parsed) }));
   };
 
   return (
@@ -85,11 +134,12 @@ function ColorOverrideControl({
         <input
           aria-label={`${label} color picker`}
           type="color"
-          value={effective}
-          onChange={(event) => onChange(event.currentTarget.value)}
+          value={shown}
+          onChange={(event) => setPending(event.currentTarget.value)}
+          onBlur={commitPending}
         />
         <output aria-label={`${label} hex value`}>
-          {value ?? (transparentDefault ? "Transparent" : "Automatic")}
+          {draft ?? value ?? (transparentDefault ? "Transparent" : "Automatic")}
         </output>
         <button
           type="button"
@@ -100,7 +150,7 @@ function ColorOverrideControl({
               ? "Remove the component background"
               : "Use the document ink color"
           }
-          onClick={() => onChange(undefined)}
+          onClick={() => commitNow(undefined)}
         >
           Auto
         </button>
@@ -117,9 +167,9 @@ function ColorOverrideControl({
               } as CSSProperties
             }
             aria-label={`Use ${preset.label} for ${label.toLowerCase()}`}
-            aria-pressed={value?.toLowerCase() === preset.value}
+            aria-pressed={shown.toLowerCase() === preset.value}
             title={`${preset.label} · ${preset.value}`}
-            onClick={() => onChange(preset.value)}
+            onClick={() => commitNow(preset.value)}
           >
             <span aria-hidden="true" />
           </button>
@@ -141,6 +191,10 @@ function ColorOverrideControl({
               onChange={(event) =>
                 updateChannel(channel, event.currentTarget.value)
               }
+              onBlur={commitPending}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") commitPending();
+              }}
             />
           </label>
         ))}
