@@ -285,7 +285,7 @@ test("dialog closes with Escape and keeps focus labels", async ({ page }) => {
   await expect(dialog).toBeHidden();
 });
 
-test("storage failure offers a direct download and clears the dirty warning afterward", async ({
+test("storage failure offers a backup without acknowledging Cloud Save", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -314,8 +314,12 @@ test("storage failure offers a direct download and clears the dirty warning afte
   await warning.getByRole("button", { name: "Download Backup" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain(".icproj.json");
-  // The canonical backup marks the foreground file lifecycle clean, so the
-  // recovery failure no longer needs to interrupt the user.
+  // A portable backup mitigates data loss but is not the Cloud Save
+  // authority. Keep both the dirty truth and the still-actionable storage
+  // warning until the user explicitly dismisses it.
+  await expect(warning).toBeVisible();
+  await expect(page.getByTestId("project-unsaved-indicator")).toBeVisible();
+  await warning.getByRole("button", { name: "Dismiss warning" }).click();
   await expect(warning).toBeHidden();
-  await expect(page.getByTestId("project-unsaved-indicator")).toHaveCount(0);
+  await expect(page.getByTestId("project-unsaved-indicator")).toBeVisible();
 });
