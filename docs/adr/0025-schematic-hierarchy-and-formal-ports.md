@@ -118,10 +118,10 @@ edits or maintain a parallel hierarchy model.
 
 ### Formal blocks use the Instance/Symbol path
 
-The Rectangle drawing tool remains drafting-only. A hierarchy creation gesture
-may use rectangle geometry as transient input, but the committed result is a
+The Rectangle drawing tool remains drafting-only. Hierarchy is created through
+explicit Cell definitions and placement; a committed result is always a
 subcircuit Instance rendered and selected through the existing hierarchical
-Symbol path. No persisted DraftRectangle is an intermediate hierarchy state.
+Symbol path. There is no rectangle-based hierarchy creation state.
 
 Hierarchy navigation carries concrete Instance frames. A child definition
 opened without a caller path has no guessed parent; callers are selected

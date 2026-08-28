@@ -114,24 +114,24 @@ export function EditorHelpDialog({
             <p>
               Use <strong>File / Open Project</strong> to continue an exported
               project, or <strong>File / Import SPICE</strong> to create
-              editable Documents from SPICE source files. Use
+              editable Documents from SPICE source files. Use{" "}
               <strong>File / Save Project</strong> to download an editable
               project file; use <strong>File / Export</strong> for SVG, PNG, or
               PDF drawings. Because raw browser refresh shortcuts are blocked to
-              protect unsaved work, use <strong>File / Refresh app</strong>
-              when you deliberately want to reload; it saves and restores the
-              current recovery snapshot.
+              protect unsaved work, use <strong>File / Refresh app</strong> when
+              you deliberately want to reload; it saves and restores the current
+              recovery snapshot.
             </p>
             <h3>Place, select, and connect</h3>
             <p>
-              Select a symbol in the left Library, or a drawing tool from
+              Select a symbol in the left Library, or a drawing tool from{" "}
               <strong>Draw</strong>, then click the canvas to place or draw. On
-              compact screens, Library starts folded; use the left
+              compact screens, Library starts folded; use the left{" "}
               <strong>Library</strong> button to open its single-column list.
               Selecting an object opens Properties on the right; it overlays the
-              canvas and closes Library while compact. Choose Wire (or
+              canvas and closes Library while compact. Choose Wire (or{" "}
               <kbd>W</kbd>), click a terminal to start, click to add bends, then
-              press <kbd>Enter</kbd> to finish. <kbd>Delete</kbd> or
+              press <kbd>Enter</kbd> to finish. <kbd>Delete</kbd> or{" "}
               <kbd>Backspace</kbd> removes the selection, or removes the latest
               wire bend while drawing.
             </p>
@@ -147,10 +147,10 @@ export function EditorHelpDialog({
             </p>
             <h3>Hierarchical Cells</h3>
             <p>
-              Select a rectangle and press <kbd>E</kbd> to convert it into a
-              hierarchical block and enter its new child Cell. Select an
-              existing hierarchical block and press <kbd>E</kbd>, or
-              double-click it, to enter it. Use <strong>Up</strong> or
+              Use <strong>Manage Cells…</strong> to create a reusable Cell and{" "}
+              <strong>Place Cell</strong> to add an instance to the canvas.
+              Select a hierarchical block and press <kbd>E</kbd>, or
+              double-click it, to enter it. Use <strong>Up</strong> or{" "}
               <kbd>Shift+E</kbd> to return to the parent Cell.
             </p>
             <h3>View and drawing tools</h3>
@@ -164,8 +164,8 @@ export function EditorHelpDialog({
               top/bottom. <kbd>M</kbd> makes the current selection follow the
               pointer; click to place it, or press <kbd>Esc</kbd> to cancel.{" "}
               <kbd>F</kbd> always fits the circuit in view. <kbd>C</kbd> starts
-              a mouse-following copy; click places it and
-              <kbd>Esc</kbd> cancels.
+              a mouse-following copy; click places it and <kbd>Esc</kbd>{" "}
+              cancels.
             </p>
           </section>
           <section id="help-shortcuts" className="help-shortcuts">
