@@ -654,7 +654,9 @@ test("same-name Cell Pins stay independent while the final interface groups them
 
   await expect(page.getByTestId("status")).toContainText("Renamed Cell Pin");
   const saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as {
     documents: Array<{
       netlist: {

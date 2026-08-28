@@ -458,7 +458,9 @@ test("initializes PMOS bulk from the first explicitly drawn VDD rail", async ({
   await page.keyboard.press("Escape");
 
   const saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as {
     documents: Array<{
       mosBulkDefaults?: { pmosNetId?: string };
@@ -726,7 +728,9 @@ test("Cell Pin deletion releases its interface and Base Net lifecycle", async ({
   await placeNamedPort("BUS", { x: 260, y: 180 });
 
   let saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as {
     documents: Array<{
       nets: Array<{
@@ -759,7 +763,9 @@ test("Cell Pin deletion releases its interface and Base Net lifecycle", async ({
   await page.getByTestId("hit-P1").click();
   await page.keyboard.press("Delete");
   saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as typeof saved;
   expect(saved.documents[0]!.nets).toEqual([]);
   expect(saved.documents[0]!.connectivityEvidence).toEqual([]);
@@ -789,7 +795,9 @@ test("Ctrl+R mirrors a selected component instead of refreshing", async ({
   await page.getByTestId("hit-M1").click();
   await page.keyboard.press("Control+r");
   const saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   );
   expect(saved.documents[0].instances[0].placement).toMatchObject({
     rotation: 180,
@@ -826,7 +834,9 @@ test("treats hollow and filled Cell Pins as equivalent interface variants", asyn
   await page.keyboard.press("Delete");
   await expect(page.getByTestId("hit-P2")).toHaveCount(0);
   const saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as {
     documents: Array<{
       nets: Array<{ terminals: Array<{ instanceId: string }> }>;
@@ -1281,7 +1291,9 @@ test("initializes NMOS bulk from the first explicitly placed Ground", async ({
   );
 
   const saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as {
     documents: Array<{
       mosBulkDefaults?: { nmosNetId?: string };
@@ -1513,7 +1525,7 @@ test("connects copied multi-pin groups through a manually bent wire", async ({
     .toContain(`"revision": ${revision}`);
   await page.reload();
   const fileMenu = await openMenu(page, "File");
-  await fileMenu.getByRole("button", { name: "Recover recent work…" }).click();
+  await fileMenu.getByRole("button", { name: "Recover Local Work…" }).click();
   await page
     .getByRole("dialog", { name: "Recover recent work" })
     .getByRole("button", { name: "Restore" })
@@ -1752,7 +1764,9 @@ test("drags a current marker directly along and around its route", async ({
   await placeComponent(page, "resistor", { x: 420, y: 420 });
   const markerBeforeSplit = await hit.boundingBox();
   const projectBeforeSplit = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   );
   const markerDataBeforeSplit =
     projectBeforeSplit.documents[0].annotations.find(
@@ -1763,7 +1777,9 @@ test("drags a current marker directly along and around its route", async ({
   await page.getByTestId("terminal-R3-1").click();
   const markerAfterSplit = await hit.boundingBox();
   const projectAfterSplit = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   );
   const markerDataAfterSplit = projectAfterSplit.documents[0].annotations.find(
     (annotation: { id: string }) => annotation.id === "current-1",
@@ -2219,7 +2235,9 @@ test("stacks complementary scripts under one uninterrupted overbar", async ({
     denominator?: { runs: SavedRichTextRun[] };
   };
   const project = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ) as {
     documents: Array<{
       drafting: {
@@ -3084,7 +3102,11 @@ test("deletes imported Net Labels with non-editor ids", async ({ page }) => {
   );
   await page.keyboard.press("Control+z");
 
-  const savedWithoutLabel = await downloadBytes(page, "File", "Save Project");
+  const savedWithoutLabel = await downloadBytes(
+    page,
+    "File",
+    "Export Project File…",
+  );
   const savedDocument = JSON.parse(savedWithoutLabel.toString("utf8"))
     .documents[0];
   expect(savedDocument.annotations).toHaveLength(0);
@@ -3540,7 +3562,11 @@ test("exports one formal visual scene as Project, SVG, PNG, and PDF", async ({
   await placeComponent(page, "resistor", { x: 420, y: 240 });
   await page.keyboard.press("Escape");
 
-  const projectBytes = await downloadBytes(page, "File", "Save Project");
+  const projectBytes = await downloadBytes(
+    page,
+    "File",
+    "Export Project File…",
+  );
   expect(JSON.parse(projectBytes.toString("utf8")).topDocumentId).toBeTruthy();
   const svg = (await downloadBytes(page, "File", "Export SVG")).toString(
     "utf8",
@@ -3612,7 +3638,9 @@ test("selects a reviewed SKY130 MOS through the existing Model field", async ({
   ).toHaveCount(0);
 
   const saved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   );
   expect(saved.externalSubcircuitDefinitions).toEqual([
     expect.objectContaining({
@@ -3648,7 +3676,7 @@ test("uses automatic recovery and guards shortcuts while typing", async ({
 
   await page.reload();
   const fileMenu = await openMenu(page, "File");
-  await fileMenu.getByRole("button", { name: "Recover recent work…" }).click();
+  await fileMenu.getByRole("button", { name: "Recover Local Work…" }).click();
   await page
     .getByRole("dialog", { name: "Recover recent work" })
     .getByRole("button", { name: "Restore" })
@@ -3704,7 +3732,7 @@ test("retains recovery across save and project replacement", async ({
 
   // Saving downloads the formal Project but never clears the browser
   // recovery copies; waiting past the debounce proves they survive.
-  await downloadBytes(page, "File", "Save Project");
+  await downloadBytes(page, "File", "Export Project File…");
   await page.waitForTimeout(500);
   await expect
     .poll(() => recoveryProjectTexts(page))
@@ -3754,7 +3782,7 @@ test("discard recovery clears the recovery slot", async ({ page }) => {
     .toContain('"revision": 1');
 
   await page.reload();
-  await clickCommand(page, "File", "Recover recent work…");
+  await clickCommand(page, "File", "Recover Local Work…");
   await page
     .getByRole("dialog", { name: "Recover recent work" })
     .getByRole("button", { name: "Delete" })

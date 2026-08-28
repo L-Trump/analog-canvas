@@ -157,7 +157,11 @@ test("adds formatted drafting text and undo/redo restores it", async ({
   );
   await expect(page.getByTestId("revision")).toHaveText("2");
 
-  const projectBytes = await downloadBytes(page, "File", "Save Project");
+  const projectBytes = await downloadBytes(
+    page,
+    "File",
+    "Export Project File…",
+  );
   const project = JSON.parse(projectBytes.toString("utf8"));
   const doc = project.documents[0];
   const textObject = doc.drafting.objects.find(
@@ -208,7 +212,11 @@ test("snaps quick Text creation after a non-grid viewport zoom", async ({
   await expect(page.getByTestId("revision")).toHaveText("1");
   await expect(page.getByTestId("status")).toContainText("Added drafting text");
 
-  const projectBytes = await downloadBytes(page, "File", "Save Project");
+  const projectBytes = await downloadBytes(
+    page,
+    "File",
+    "Export Project File…",
+  );
   const project = JSON.parse(projectBytes.toString("utf8"));
   const textObject = project.documents[0].drafting.objects.find(
     (object: { kind: string }) => object.kind === "text",
@@ -365,7 +373,9 @@ test("existing text drag commits once and undoes atomically", async ({
   await expect(page.getByTestId("revision")).toHaveText("1");
 
   const before = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ).documents[0].drafting.objects[0].anchor.position;
   await dragLocator(page.getByTestId(/^drafting-hit-note-/), {
     x: 70,
@@ -373,14 +383,18 @@ test("existing text drag commits once and undoes atomically", async ({
   });
   await expect(page.getByTestId("revision")).toHaveText("2");
   const moved = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ).documents[0].drafting.objects[0].anchor.position;
   expect(moved).not.toEqual(before);
 
   await page.keyboard.press("Control+z");
   await expect(page.getByTestId("revision")).toHaveText("3");
   const undone = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   ).documents[0].drafting.objects[0].anchor.position;
   expect(undone).toEqual(before);
 });
@@ -537,7 +551,11 @@ test("drafting content and anchor survive save and reopen", async ({
   await page.getByRole("button", { name: "Apply text changes" }).click();
   await expect(page.getByTestId("revision")).toHaveText("2");
 
-  const projectBytes = await downloadBytes(page, "File", "Save Project");
+  const projectBytes = await downloadBytes(
+    page,
+    "File",
+    "Export Project File…",
+  );
   const project = JSON.parse(projectBytes.toString("utf8"));
   const textObject = project.documents[0].drafting.objects.find(
     (object: { kind: string }) => object.kind === "text",
@@ -564,7 +582,11 @@ test("drafting content and anchor survive save and reopen", async ({
     "Opened saved-drafting.icproj.json",
   );
   await expect(page.locator('[data-kind="draft-text"]')).toHaveCount(1);
-  const reopenedBytes = await downloadBytes(page, "File", "Save Project");
+  const reopenedBytes = await downloadBytes(
+    page,
+    "File",
+    "Export Project File…",
+  );
   const reopened = JSON.parse(reopenedBytes.toString("utf8"));
   const reopenedText = reopened.documents[0].drafting.objects.find(
     (object: { kind: string }) => object.kind === "text",
@@ -893,7 +915,9 @@ test("drawing Properties unlocks a protected drawing and Delete overrides its lo
     .getByRole("combobox", { name: "Line style" })
     .selectOption("dotted");
   const styledProject = JSON.parse(
-    (await downloadBytes(page, "File", "Save Project")).toString("utf8"),
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
   );
   expect(
     styledProject.documents[0].drafting.objects[0].styleOverride.lineStyle,

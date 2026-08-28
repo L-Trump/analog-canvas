@@ -199,9 +199,10 @@ import type { EditorTool } from "../interaction/interaction-state";
 import { resolveTextEditingTarget } from "../features/text-editing/text-editing";
 import { planMosBulkDefaultUpdate } from "../features/component-insert/mos-bulk-defaults";
 import {
-  listWorkspaceShelf,
-  type WorkspaceSlot,
-} from "../features/editor-shell/workspace-shelf";
+  deleteCloudProject,
+  listCloudProjects,
+  type CloudProjectSummary,
+} from "../features/editor-shell/cloud-projects";
 import {
   defaultRazaviSymbolVariantId,
   materializeRazaviProjectBulkConnections,
@@ -516,8 +517,8 @@ export function App({
       if (cancelled) return;
       setPublishSession(user);
       if (!user) return;
-      const slots = await listWorkspaceShelf();
-      if (!cancelled) setWorkspaceSlots(slots);
+      const projects = await listCloudProjects();
+      if (!cancelled) setCloudProjects(projects);
     });
     return () => {
       cancelled = true;
@@ -555,8 +556,8 @@ export function App({
     [editorDocumentController, projectSessionId],
   );
   const {
-    fileState,
-    formalProjectBaseline,
+    cloudBinding,
+    savedProjectBaseline,
     previousProject,
     replaceGuard,
     replaceGuardSaving,
@@ -565,9 +566,9 @@ export function App({
     setRecoveryDialogOpen,
     isDirtyWork,
     replaceActiveProject,
-    saveProjectFile,
+    saveProjectToCloud,
+    exportProjectFile,
     downloadCurrentProjectBackup,
-    reportExport,
     guardDirtyReplacement,
     cancelReplaceGuard,
     confirmReplaceGuard,
@@ -575,20 +576,25 @@ export function App({
     dismissStartupRecovery,
     createNewProject,
     restorePreviousProject,
-    revertToFormalProjectBaseline,
+    revertToSavedProjectBaseline,
     openRecoveryDialog,
     restoreRecoverySession,
     downloadRecoveryBackup,
     deleteRecoverySessionFromDialog,
     refreshApp,
     openProjectFile,
-    openShelvedCircuit,
+    openCloudProjectById,
   } = useProjectFileLifecycle({
     project,
     projectSessionId,
     viewBox,
     defaultViewBox: DEFAULT_VIEWBOX,
     setStatus,
+    onCloudProjectSaved: (saved) =>
+      setCloudProjects((current) => [
+        saved,
+        ...current.filter((candidate) => candidate.id !== saved.id),
+      ]),
     recovery: {
       ready: recoveryReady,
       sessions: recoverySessions,
@@ -762,9 +768,9 @@ export function App({
    * than meaning rotate sometimes and draw a rectangle the rest of the time.
    */
   const [rotateArmed, setRotateArmed] = useState(false);
-  /** The signed-in account's last few checked circuits, newest first. */
-  const [workspaceSlots, setWorkspaceSlots] = useState<
-    readonly WorkspaceSlot[]
+  /** The signed-in account's private formal Projects, newest first. */
+  const [cloudProjects, setCloudProjects] = useState<
+    readonly CloudProjectSummary[]
   >([]);
   const [selectedEndpoint, setSelectedEndpoint] = useState<WireSource | null>(
     null,
@@ -2374,34 +2380,24 @@ export function App({
       report: setStatus,
     },
   });
-  const {
-    exportSvg,
-    checkAndSave,
-    exportDesignNetlist,
-    exportRaster,
-    importSpiceFiles,
-  } = createEditorFileCommands({
-    project,
-    getCurrentProject: () => editorDocumentController.project,
-    document,
-    resolver,
-    defaultViewBox: DEFAULT_VIEWBOX,
-    publishSessionPresent: publishSession !== null,
-    netlistIr: netlistAnalysis.ir,
-    exportWarningsPresent:
-      netlistAnalysis.diagnostics.length > 0 ||
-      electricalDiagnostics.length > 0,
-    transact,
-    reportExport,
-    guardDirtyReplacement,
-    replaceActiveProject,
-    setWorkspaceSlots,
-    setNetlistPreflightOpen,
-    setImportReport,
-    setImportReviewOpen,
-    setSelectionOpen,
-    setStatus,
-  });
+  const { exportSvg, exportDesignNetlist, exportRaster, importSpiceFiles } =
+    createEditorFileCommands({
+      project,
+      document,
+      resolver,
+      defaultViewBox: DEFAULT_VIEWBOX,
+      netlistIr: netlistAnalysis.ir,
+      exportWarningsPresent:
+        netlistAnalysis.diagnostics.length > 0 ||
+        electricalDiagnostics.length > 0,
+      guardDirtyReplacement,
+      replaceActiveProject,
+      setNetlistPreflightOpen,
+      setImportReport,
+      setImportReviewOpen,
+      setSelectionOpen,
+      setStatus,
+    });
 
   // Single entry point for selecting a drafting object. Editing is opened
   // separately (double-click/Enter) so selection and text caret ownership do
@@ -2549,7 +2545,7 @@ export function App({
           setStatus("Browser bookmark shortcut blocked while editing");
           return;
         case "save":
-          void saveProjectFile();
+          void saveProjectToCloud();
           return;
         case "open":
           projectInputRef.current?.click();
@@ -2707,26 +2703,42 @@ export function App({
         onProjectNameCommit={commitProjectName}
         onProjectNameCancel={() => setProjectNameDraft(null)}
         fileCommands={{
-          workspaceSlots,
+          cloudProjects,
+          activeCloudProjectId: cloudBinding?.id ?? null,
           previousProjectName: previousProject?.project.name ?? null,
-          canRevert: formalProjectBaseline !== null && isDirtyWork(),
+          canRevert: savedProjectBaseline !== null && isDirtyWork(),
           hasRecoverySessions: recoverySessions.length > 0,
           projectInputRef,
           onNewProject: createNewProject,
-          onSaveProject: (pickLocation) =>
-            void saveProjectFile({ pickLocation }),
-          onOpenShelfSlot: (slot) => void openShelvedCircuit(slot),
+          onSave: () => void saveProjectToCloud(),
+          onSaveAsCopy: () => void saveProjectToCloud({ asCopy: true }),
+          onOpenCloudProject: (summary) => void openCloudProjectById(summary),
+          onDeleteCloudProject: (summary) => {
+            if (!window.confirm(`Delete Cloud Project "${summary.name}"?`)) {
+              return;
+            }
+            void deleteCloudProject(summary.id).then((outcome) => {
+              if (outcome.status === "deleted") {
+                setCloudProjects(outcome.projects);
+                setStatus(`Deleted Cloud Project ${summary.name}`);
+                return;
+              }
+              setStatus(`Could not delete Cloud Project (${outcome.message})`);
+            });
+          },
           onRefresh: () => {
             allowNextBrowserUnload();
             refreshApp();
           },
-          onOpenProject: (file) => void openProjectFile(file),
+          onImportProject: (file) => void openProjectFile(file),
           onImportSpice: (files) => void importSpiceFiles(files),
+          onExportProject: exportProjectFile,
+          onDownloadBackup: downloadCurrentProjectBackup,
           onExportSvg: exportSvg,
           onExportRaster: (format) => void exportRaster(format),
           onExportNetlist: exportDesignNetlist,
           onRestorePrevious: restorePreviousProject,
-          onRevert: revertToFormalProjectBaseline,
+          onRevert: revertToSavedProjectBaseline,
           onOpenRecovery: openRecoveryDialog,
         }}
         searchOpen={searchOpen}
@@ -2812,7 +2824,6 @@ export function App({
               }
             : null
         }
-        onCheckAndSave={() => void checkAndSave()}
         publishGalleryOpen={publishGalleryOpen}
         onPublishGallery={() => setPublishGalleryOpen(true)}
         helpButtonRef={helpButtonRef}

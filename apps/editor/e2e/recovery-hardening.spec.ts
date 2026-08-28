@@ -27,7 +27,7 @@ async function restoreThroughDialog(
   if ((await fileMenu.getAttribute("open")) === null) {
     await fileMenu.locator("summary").click();
   }
-  await fileMenu.getByRole("button", { name: "Recover recent work…" }).click();
+  await fileMenu.getByRole("button", { name: "Recover Local Work…" }).click();
   const dialog = page.getByRole("dialog", { name: "Recover recent work" });
   await expect(dialog).toBeVisible();
   const card = dialog
@@ -200,7 +200,7 @@ test("quota-exceeded keeps the editor alive with a persistent warning", async ({
   await expect(warning).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
-  await warning.getByRole("button", { name: "Download Project" }).click();
+  await warning.getByRole("button", { name: "Download Backup" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain(".icproj.json");
 });

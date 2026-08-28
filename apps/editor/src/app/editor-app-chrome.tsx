@@ -26,7 +26,7 @@ export interface EditorAppChromeProps {
   onProjectNameDraftChange: (value: string) => void;
   onProjectNameCommit: () => void;
   onProjectNameCancel: () => void;
-  fileCommands: Omit<ComponentProps<typeof FileCommandMenu>, "onCheckAndSave">;
+  fileCommands: ComponentProps<typeof FileCommandMenu>;
   searchOpen: boolean;
   onManageCells: () => void;
   onOpenSearch: () => void;
@@ -43,7 +43,6 @@ export interface EditorAppChromeProps {
   onOpenInstanceTable: () => void;
   onOpenNetlistPreflight: () => void;
   agentAction: { label: string; execute: () => void } | null;
-  onCheckAndSave: () => void;
   publishGalleryOpen: boolean;
   onPublishGallery: () => void;
   helpButtonRef: RefObject<HTMLButtonElement | null>;
@@ -80,7 +79,6 @@ export function EditorAppChrome({
   onOpenInstanceTable,
   onOpenNetlistPreflight,
   agentAction,
-  onCheckAndSave,
   publishGalleryOpen,
   onPublishGallery,
   helpButtonRef,
@@ -149,10 +147,7 @@ export function EditorAppChrome({
           }}
         >
           <div className="menubar-row">
-            <FileCommandMenu
-              {...fileCommands}
-              onCheckAndSave={onCheckAndSave}
-            />
+            <FileCommandMenu {...fileCommands} />
             <details className="command-menu" name="editor-command-menu">
               <summary>Edit</summary>
               <div className="command-popover">

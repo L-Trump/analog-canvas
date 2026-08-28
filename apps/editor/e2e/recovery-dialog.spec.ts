@@ -161,7 +161,7 @@ test("a damaged latest copy restores the previous generation", async ({
   }, target!.workingCopyId);
 
   await page.reload();
-  await clickCommand(page, "File", "Recover recent work…");
+  await clickCommand(page, "File", "Recover Local Work…");
   const dialog = page.getByRole("dialog", { name: "Recover recent work" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByTestId("recovery-session-card")).toContainText(
@@ -193,7 +193,7 @@ test("a newer-schema copy is downloadable but not restorable", async ({
     },
   ]);
   await page.reload();
-  await clickCommand(page, "File", "Recover recent work…");
+  await clickCommand(page, "File", "Recover Local Work…");
   const dialog = page.getByRole("dialog", { name: "Recover recent work" });
   await expect(dialog).toBeVisible();
   const card = dialog.getByTestId("recovery-session-card").filter({
@@ -253,7 +253,7 @@ test("deleting one session keeps the other project's copy", async ({
     .toContain('"name": "Phase 1 Manual Editor"');
   await page.reload();
 
-  await clickCommand(page, "File", "Recover recent work…");
+  await clickCommand(page, "File", "Recover Local Work…");
   const dialog = page.getByRole("dialog", { name: "Recover recent work" });
   await expect(dialog.getByTestId("recovery-session-card")).toHaveCount(2);
   const firstCard = dialog.getByTestId("recovery-session-card").first();
@@ -275,7 +275,7 @@ test("dialog closes with Escape and keeps focus labels", async ({ page }) => {
     .toContain('"revision": 1');
   await page.reload();
 
-  await clickCommand(page, "File", "Recover recent work…");
+  await clickCommand(page, "File", "Recover Local Work…");
   const dialog = page.getByRole("dialog", { name: "Recover recent work" });
   await expect(dialog).toBeVisible();
   await expect(
@@ -311,7 +311,7 @@ test("storage failure offers a direct download and clears the dirty warning afte
   );
 
   const downloadPromise = page.waitForEvent("download");
-  await warning.getByRole("button", { name: "Download Project" }).click();
+  await warning.getByRole("button", { name: "Download Backup" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain(".icproj.json");
   // The canonical backup marks the foreground file lifecycle clean, so the
