@@ -12,8 +12,28 @@
 
 .timing-panel.collapsed {
   display: block;
-  min-height: 34px;
-  height: 34px;
+  min-height: 0;
+  height: 0;
+  border-top: 0;
+  overflow: visible;
+}
+
+.timing-panel.collapsed .timing-panel-header {
+  position: fixed;
+  right: calc(var(--icm-props-collapsed) + var(--icm-space-2));
+  bottom: var(--icm-statusbar-h);
+  z-index: 19;
+  width: auto;
+  min-height: 30px;
+  padding: 2px var(--icm-space-2);
+  border: 1px solid var(--icm-border-strong);
+  border-bottom: 0;
+  border-radius: var(--icm-radius-sm) var(--icm-radius-sm) 0 0;
+  box-shadow: var(--icm-shadow-sm);
+}
+
+.timing-panel.collapsed .timing-run-state {
+  display: none;
 }
 
 .timing-panel-header {
