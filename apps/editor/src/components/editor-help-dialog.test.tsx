@@ -62,4 +62,24 @@ describe("EditorHelpDialog", () => {
     expect(markup).toContain("Cell and <strong>Place Cell</strong>");
     expect(markup).toContain("Up</strong> or <kbd>Shift+E</kbd>");
   });
+
+  it("keeps prose separated from inline emphasis and shortcut keys", () => {
+    const markup = renderToStaticMarkup(
+      <EditorHelpDialog closeButtonRef={{ current: null }} onClose={vi.fn()} />,
+    );
+
+    for (const boundary of [
+      "files. Use <strong>File / Save Project</strong>",
+      "File / Refresh app</strong> when",
+      "tool from <strong>Draw</strong>",
+      "the left <strong>Library</strong>",
+      "Wire (or <kbd>W</kbd>)",
+      "Delete</kbd> or <kbd>Backspace</kbd>",
+      "places it and <kbd>Esc</kbd>",
+      "Cell and <strong>Place Cell</strong>",
+      "Up</strong> or <kbd>Shift+E</kbd>",
+    ]) {
+      expect(markup).toContain(boundary);
+    }
+  });
 });
