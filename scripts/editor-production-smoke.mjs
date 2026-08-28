@@ -78,9 +78,11 @@ async function main() {
       preview: { host: "127.0.0.1", port: 4174, strictPort: true },
     });
     const url = server.resolvedUrls?.local[0] ?? "http://127.0.0.1:4174/";
-    browser = await chromium.launch({
-      channel: process.env.CI ? undefined : "chrome",
-    });
+    browser = await chromium.launch(
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+        ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+        : { channel: process.env.CI ? undefined : "chrome" },
+    );
     const page = await browser.newPage();
     page.on("console", (message) => {
       if (message.type() === "error") consoleErrors.push(message.text());
