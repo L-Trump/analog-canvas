@@ -127,9 +127,9 @@ function previousVersionText(): string {
 }
 
 function previousRouteVersionText(): string {
-  // A structurally valid previous-window (schema 26) document: 26 already
-  // uses stable Route legs, so the boundary's migration is the version
-  // stamp — the assertions protect the leg and anchor round-trip.
+  // A structurally valid previous-window document. Route legs already use
+  // the current shape, so the bounded upgrade is a version stamp — the
+  // assertions protect the leg and anchor round-trip.
   const project = createEmptyProject("gallery-fixture", "Legacy Route");
   const document = project.documents[0]! as any;
   document.nets.push({ id: "net-route", terminals: [] });

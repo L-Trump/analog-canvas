@@ -68,7 +68,8 @@ for readability; these groups do not create separate mutation endpoints:
   `place_instance`, `unplace_instance`, `move_instance`, `rotate_instance`,
   `mirror_instance`,
   `set_instance_reference`, `set_instance_schematic_reference`,
-  `set_instance_schematic_name`, `set_instance_binding`,
+  `set_instance_schematic_name`, `set_instance_style_override`,
+  `set_instance_binding`,
   `patch_instance_netlist_parameters`, `bulk_patch_instance_netlist`,
   `set_instance_netlist`;
 - Cell interface: `add_cell_terminal`, `update_cell_terminal`,

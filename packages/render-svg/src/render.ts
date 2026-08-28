@@ -232,7 +232,9 @@ function primitiveStyle(
 function renderPrimitive(
   primitive: SymbolPrimitive,
   profile: SchematicStyleProfile,
+  foregroundOverride?: string,
 ): string {
+  const fg = foregroundOverride ?? profile.foreground;
   const style = primitiveStyle(primitive, profile);
   switch (primitive.kind) {
     case "line":
@@ -240,11 +242,11 @@ function renderPrimitive(
     case "polyline":
       return `<polyline points="${pointList(primitive.points)}"${style}/>`;
     case "circle":
-      return `<circle cx="${primitive.center.x}" cy="${primitive.center.y}" r="${primitive.radius}"${primitive.fill === undefined ? "" : ` fill="${primitive.fill === "foreground" ? profile.foreground : "none"}"`}${primitive.stroke === undefined ? "" : ` stroke="${primitive.stroke === "foreground" ? profile.foreground : "none"}"`}${style}/>`;
+      return `<circle cx="${primitive.center.x}" cy="${primitive.center.y}" r="${primitive.radius}"${primitive.fill === undefined ? "" : ` fill="${primitive.fill === "foreground" ? fg : "none"}"`}${primitive.stroke === undefined ? "" : ` stroke="${primitive.stroke === "foreground" ? fg : "none"}"`}${style}/>`;
     case "path":
       return `<path d="${escapeXml(primitive.data)}"${style}/>`;
     case "polygon":
-      return `<polygon points="${pointList(primitive.points)}" fill="${primitive.fill === "foreground" ? profile.foreground : "none"}"${primitive.stroke === undefined ? "" : ` stroke="${primitive.stroke === "foreground" ? profile.foreground : "none"}"`}${style}/>`;
+      return `<polygon points="${pointList(primitive.points)}" fill="${primitive.fill === "foreground" ? fg : "none"}"${primitive.stroke === undefined ? "" : ` stroke="${primitive.stroke === "foreground" ? fg : "none"}"`}${style}/>`;
   }
 }
 
@@ -253,11 +255,12 @@ export function renderSymbolDefinitionBody(
   hiddenPrimitiveParts: readonly string[] = [],
   additionalPrimitives: readonly SymbolPrimitive[] = [],
   profile: SchematicStyleProfile = razaviTextbookProfile,
+  foregroundOverride?: string,
 ): string {
   const hidden = new Set(hiddenPrimitiveParts);
   return [...definition.primitives, ...additionalPrimitives]
     .filter((primitive) => !primitive.part || !hidden.has(primitive.part))
-    .map((primitive) => renderPrimitive(primitive, profile))
+    .map((primitive) => renderPrimitive(primitive, profile, foregroundOverride))
     .join("");
 }
 
@@ -320,6 +323,7 @@ export function renderVisiblePinNames(
   hiddenPinNames: readonly string[],
   instance: SchematicDocument["instances"][number],
   profile: SchematicStyleProfile,
+  foregroundOverride?: string,
 ): string {
   const hierarchyVerticalPinNameInset = 10;
   const placement = instance.placement;
@@ -376,7 +380,10 @@ export function renderVisiblePinNames(
               ],
             }
           : { runs: [{ kind: "text" as const, value: displayName }] };
-      return `<text data-pin-name="${escapeXml(pin.name)}" x="${x}" y="${y}" text-anchor="${alignment}"${sizeAttribute}>${renderRichTextDocument(content, profile)}</text>`;
+      const colorStyle = foregroundOverride
+        ? ` style="fill:${escapeXml(foregroundOverride)}"`
+        : "";
+      return `<text data-pin-name="${escapeXml(pin.name)}" x="${x}" y="${y}" text-anchor="${alignment}"${sizeAttribute}${colorStyle}>${renderRichTextDocument(content, profile)}</text>`;
     })
     .join("");
 }
@@ -656,19 +663,36 @@ export function buildSvgScene(
       if (!resolved) {
         throw new Error(`Unresolved symbol: ${instance.symbolId}`);
       }
+      const styleOverride = instance.styleOverride;
+      const foregroundOverride = styleOverride?.foreground;
       const primitives = renderSymbolDefinitionBody(
         resolved.definition,
         resolved.variant?.hiddenPrimitiveParts,
         resolved.variant?.additionalPrimitives,
         profile,
+        foregroundOverride,
       );
       const pinNames = renderVisiblePinNames(
         resolved.definition,
         resolved.variant?.hiddenPinNames ?? [],
         instance,
         profile,
+        foregroundOverride,
       );
-      return `<g data-object-id="${escapeXml(instance.id)}" data-symbol-id="${escapeXml(resolved.definition.id)}"><g transform="${instanceTransform(instance)}"><g fill="none" stroke="${profile.foreground}" stroke-width="${profile.strokes.symbol}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${profileMiterAttribute(profile)}>${primitives}</g></g>${pinNames}</g>`;
+      const strokeColor = foregroundOverride ?? profile.foreground;
+      // Background fill: drawn inside the instance transform using the
+      // symbol's local viewBox so it moves with the instance and stays
+      // aligned with the artwork in all orientations and mirrors. When no
+      // override is set, no rect is emitted (identical markup to pre-override
+      // rendering).
+      const viewBox = resolved.definition.viewBox;
+      const backgroundRect =
+        styleOverride?.background !== undefined
+          ? `<rect data-role="instance-background" x="${viewBox.x}" y="${viewBox.y}" width="${viewBox.width}" height="${viewBox.height}" fill="${styleOverride.background}"/>`
+          : "";
+      const symbolRole =
+        styleOverride === undefined ? "" : ' data-role="instance-symbol"';
+      return `<g data-object-id="${escapeXml(instance.id)}" data-symbol-id="${escapeXml(resolved.definition.id)}"><g transform="${instanceTransform(instance)}">${backgroundRect}<g${symbolRole} fill="none" stroke="${strokeColor}" stroke-width="${profile.strokes.symbol}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${profileMiterAttribute(profile)}>${primitives}</g></g>${pinNames}</g>`;
     })
     .join("");
   const annotations = [...document.annotations]

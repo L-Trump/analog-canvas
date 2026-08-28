@@ -41,6 +41,9 @@ export type ExternalSubcircuitDefinition = z.infer<
   typeof Schema.ExternalSubcircuitDefinitionSchema
 >;
 export type MosBulkBinding = z.infer<typeof Schema.MosBulkBindingSchema>;
+export type InstanceStyleOverride = z.infer<
+  typeof Schema.InstanceStyleOverrideSchema
+>;
 export type TerminalRef = z.infer<typeof Schema.TerminalRefSchema>;
 export type Instance = z.infer<typeof Schema.InstanceSchema>;
 export type Net = z.infer<typeof Schema.NetSchema>;

@@ -3519,6 +3519,25 @@ export function App({
                     onAdditionalParametersApply: applyAdditionalParameters,
                     onAdditionalParametersCancel: cancelAdditionalParameters,
                   },
+                  style: {
+                    instance: selectedInstance,
+                    onChange: (styleOverride) => {
+                      const result = transact([
+                        {
+                          kind: "set_instance_style_override",
+                          instanceId: selectedInstance.id,
+                          styleOverride,
+                        },
+                      ]);
+                      if (result.ok) {
+                        setStatus(
+                          styleOverride
+                            ? `Updated appearance for ${selectedInstance.id}`
+                            : `Reset appearance for ${selectedInstance.id}`,
+                        );
+                      }
+                    },
+                  },
                   placement: {
                     instance: selectedInstance,
                     x: instancePropertyDraft.x,

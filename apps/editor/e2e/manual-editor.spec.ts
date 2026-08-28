@@ -2378,7 +2378,10 @@ test("Properties toggles reference label visibility for one or many components",
   });
   await expect(
     componentProperties.locator(":scope > .property-card"),
-  ).toHaveCount(3);
+  ).toHaveCount(4);
+  await expect(
+    componentProperties.getByText("Appearance", { exact: true }),
+  ).toBeVisible();
   await expect(
     componentProperties.getByLabel("Component identity"),
   ).toContainText("TargetBuilt-in primitive: resistor");
@@ -2435,6 +2438,47 @@ test("Properties toggles reference label visibility for one or many components",
   await expect(
     page.getByTestId("annotation-hit-instance-label-R2"),
   ).toHaveCount(1);
+});
+
+test("Properties colors one component with presets and custom RGB", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await placeComponent(page, "resistor", { x: 280, y: 180 });
+  await page.getByTestId("hit-R1").click();
+  await openSelectionShelf(page);
+
+  const properties = page.getByRole("complementary", { name: "Properties" });
+  const component = page.locator('[data-object-id="R1"]');
+  const symbol = component.locator('[data-role="instance-symbol"]');
+
+  await properties
+    .getByRole("button", { name: "Use Red for line / foreground" })
+    .click();
+  await expect(symbol).toHaveAttribute("stroke", "#dc2626");
+
+  await properties
+    .getByRole("button", { name: "Use Blue for background / fill" })
+    .click();
+  await expect(
+    component.locator('[data-role="instance-background"]'),
+  ).toHaveAttribute("fill", "#2563eb");
+
+  await properties.getByLabel("Line / foreground red").fill("12");
+  await properties.getByLabel("Line / foreground green").fill("128");
+  await properties.getByLabel("Line / foreground blue").fill("255");
+  await expect(symbol).toHaveAttribute("stroke", "#0c80ff");
+
+  await properties
+    .getByRole("button", { name: "Reset line / foreground" })
+    .click();
+  await expect(symbol).toHaveAttribute("stroke", "#000");
+  await properties
+    .getByRole("button", { name: "Reset background / fill" })
+    .click();
+  await expect(
+    component.locator('[data-role="instance-background"]'),
+  ).toHaveCount(0);
 });
 
 test("shows fixed and variable capacitor plate terminals as read-only Properties", async ({
