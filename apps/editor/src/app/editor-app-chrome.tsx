@@ -21,6 +21,7 @@ interface ResetAction {
 export interface EditorAppChromeProps {
   projectName: string;
   projectNameDraft: string | null;
+  hasUnsavedWork: boolean;
   documentName: string;
   onProjectNameDraftChange: (value: string) => void;
   onProjectNameCommit: () => void;
@@ -57,6 +58,7 @@ export interface EditorAppChromeProps {
 export function EditorAppChrome({
   projectName,
   projectNameDraft,
+  hasUnsavedWork,
   documentName,
   onProjectNameDraftChange,
   onProjectNameCommit,
@@ -119,6 +121,16 @@ export function EditorAppChrome({
                   if (event.key === "Escape") onProjectNameCancel();
                 }}
               />{" "}
+              {hasUnsavedWork ? (
+                <span
+                  className="project-unsaved-indicator"
+                  data-testid="project-unsaved-indicator"
+                  aria-label="Unsaved changes"
+                  title="Unsaved changes"
+                >
+                  ●
+                </span>
+              ) : null}{" "}
               / <span data-testid="active-document-name">{documentName}</span>
             </p>
           </div>

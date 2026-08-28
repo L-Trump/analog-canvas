@@ -3,22 +3,26 @@ import { useEffect, useRef } from "react";
 export interface ReplaceGuardDialogProps {
   /** What is about to replace the dirty work, e.g. "Open amp.icproj.json". */
   intent: string;
+  saving: boolean;
+  recoveryProtected: boolean;
   onCancel(): void;
-  onConfirm(): void;
-  onDownload(): void;
+  onSaveAndContinue(): void;
+  onDiscard(): void;
 }
 
 /**
  * Outgoing dirty-work protection. Recovery is a safety copy, not permission to
  * discard the foreground Project, so every dirty replacement pauses here.
- * Defaults to Cancel; Escape cancels; the download action keeps the dialog open
- * so the user can still decide.
+ * Defaults to Cancel; Escape cancels. Save must succeed (or request a browser
+ * download) before the replacement is allowed to continue.
  */
 export function ReplaceGuardDialog({
   intent,
+  saving,
+  recoveryProtected,
   onCancel,
-  onConfirm,
-  onDownload,
+  onSaveAndContinue,
+  onDiscard,
 }: ReplaceGuardDialogProps) {
   const cancelRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
@@ -29,7 +33,7 @@ export function ReplaceGuardDialog({
     <div
       className="help-backdrop"
       onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
+        if (!saving && event.target === event.currentTarget) onCancel();
       }}
     >
       <section
@@ -38,7 +42,7 @@ export function ReplaceGuardDialog({
         aria-modal="true"
         aria-labelledby="replace-guard-title"
         onKeyDown={(event) => {
-          if (event.key === "Escape") {
+          if (!saving && event.key === "Escape") {
             event.preventDefault();
             onCancel();
           }
@@ -46,7 +50,7 @@ export function ReplaceGuardDialog({
       >
         <header className="help-dialog-header">
           <div>
-            <p className="help-kicker">Unsaved work</p>
+            <p className="help-kicker">Unsaved changes</p>
             <h2 id="replace-guard-title">Protect the current Project</h2>
           </div>
         </header>
@@ -56,14 +60,30 @@ export function ReplaceGuardDialog({
             safety copy. Choose what happens before <strong>{intent}</strong>{" "}
             continues.
           </p>
+          {!recoveryProtected ? (
+            <p className="replace-guard-warning" role="alert">
+              A current browser recovery copy could not be confirmed. Saving is
+              strongly recommended before continuing.
+            </p>
+          ) : null}
           <div className="replace-guard-actions">
-            <button type="button" ref={cancelRef} onClick={onCancel}>
+            <button
+              type="button"
+              ref={cancelRef}
+              onClick={onCancel}
+              disabled={saving}
+            >
               Cancel (keep editing)
             </button>
-            <button type="button" onClick={onDownload}>
-              Download current Project
+            <button type="button" onClick={onSaveAndContinue} disabled={saving}>
+              {saving ? "Saving…" : "Save and continue"}
             </button>
-            <button type="button" onClick={onConfirm}>
+            <button
+              type="button"
+              className="danger"
+              onClick={onDiscard}
+              disabled={saving}
+            >
               Discard and continue
             </button>
           </div>

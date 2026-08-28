@@ -84,7 +84,7 @@ test.beforeEach(async ({ page }) => {
   await emulateDownloadOnlyBrowser(page);
 });
 
-test("recovery stays reachable after reload and restore forks a working copy", async ({
+test("startup recovery is visible after reload and restore forks a working copy", async ({
   page,
 }) => {
   await page.goto("/editor");
@@ -99,15 +99,11 @@ test("recovery stays reachable after reload and restore forks a working copy", a
     .toContain('"revision": 1');
 
   await page.reload();
-  // No startup notice covers the canvas; recovery is reachable on demand.
-  await expect(page.getByTestId("recovery-banner")).toHaveCount(0);
-  await clickCommand(page, "File", "Recover recent work…");
-
-  const dialog = page.getByRole("dialog", { name: "Recover recent work" });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByTestId("recovery-session-card")).toHaveCount(1);
-  await dialog.getByRole("button", { name: "Restore" }).click();
-  await expect(dialog).toBeHidden();
+  const banner = page.getByTestId("startup-recovery-banner");
+  await expect(banner).toBeVisible();
+  await expect(banner).toContainText("New Circuit");
+  await banner.getByRole("button", { name: "Restore" }).click();
+  await expect(banner).toBeHidden();
   await expect(page.getByTestId("revision")).toHaveText("1");
   await expect(page.getByTestId("status")).toContainText(
     "Restored recovery revision 1",
@@ -289,7 +285,7 @@ test("dialog closes with Escape and keeps focus labels", async ({ page }) => {
   await expect(dialog).toBeHidden();
 });
 
-test("storage failure shows a persistent warning with a direct download", async ({
+test("storage failure offers a direct download and clears the dirty warning afterward", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -318,6 +314,8 @@ test("storage failure shows a persistent warning with a direct download", async 
   await warning.getByRole("button", { name: "Download Project" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain(".icproj.json");
-  // The warning stays until dismissed; the editor never crashes.
-  await expect(warning).toBeVisible();
+  // The canonical backup marks the foreground file lifecycle clean, so the
+  // recovery failure no longer needs to interrupt the user.
+  await expect(warning).toBeHidden();
+  await expect(page.getByTestId("project-unsaved-indicator")).toHaveCount(0);
 });

@@ -72,6 +72,12 @@
   gap: 0.6rem;
 }
 
+.replace-guard-warning {
+  padding: var(--icm-space-2) var(--icm-space-3);
+  border-left: 3px solid #b45309;
+  background: #fef3c7;
+}
+
 /* Recovery banners float over the canvas so they never resize it. */
 .recovery-banner {
   position: fixed;

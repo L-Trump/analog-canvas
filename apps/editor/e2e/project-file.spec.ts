@@ -15,6 +15,34 @@ test.beforeEach(async ({ page }) => {
   await emulateDownloadOnlyBrowser(page);
 });
 
+test("marks unsaved work and uses the native browser leave prompt only while dirty", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await expect(page.getByTestId("project-unsaved-indicator")).toHaveCount(0);
+
+  await chooseComponent(page, "resistor");
+  await page
+    .getByTestId("schematic-canvas")
+    .click({ position: { x: 360, y: 230 } });
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("project-unsaved-indicator")).toBeVisible();
+
+  const leaveAttempt = page
+    .getByRole("link", { name: "Back to the gallery" })
+    .click();
+  const dialog = await page.waitForEvent("dialog");
+  expect(dialog.type()).toBe("beforeunload");
+  await dialog.dismiss();
+  await leaveAttempt;
+  await expect(page).toHaveURL(/\/editor/);
+
+  await downloadBytes(page, "File", "Save Project");
+  await expect(page.getByTestId("project-unsaved-indicator")).toHaveCount(0);
+  await page.getByRole("link", { name: "Back to the gallery" }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test("downloads the canonical Project when File System Access is unavailable", async ({
   page,
 }) => {
@@ -366,7 +394,9 @@ test("protects dirty work before opening a replacement", async ({ page }) => {
   await expect(dialog).toBeHidden();
 });
 
-test("offers a download from the replacement guard", async ({ page }) => {
+test("saves through the replacement guard before continuing", async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "indexedDB", {
       configurable: false,
@@ -397,16 +427,15 @@ test("offers a download from the replacement guard", async ({ page }) => {
   await expect(dialog).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
-  await dialog
-    .getByRole("button", { name: "Download current Project" })
-    .click();
+  await dialog.getByRole("button", { name: "Save and continue" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain(".icproj.json");
-  // The dialog stays open so the user can still cancel or replace.
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Cancel (keep editing)" }).click();
+  // A requested browser download is the download-only browser's truthful save
+  // outcome, so the staged replacement can now continue.
   await expect(dialog).toBeHidden();
-  await expect(page.getByTestId("revision")).toHaveText("1");
+  await expect(page.getByTestId("active-document-name")).toHaveText(
+    "Manual Editor Demo",
+  );
 });
 
 test("creates a fresh Project and returns to the previous Project", async ({

@@ -169,6 +169,7 @@ import {
 } from "../examples/library-examples";
 import { useDocumentController } from "../document/document-controller";
 import { useProjectFileLifecycle } from "../document/use-project-file-lifecycle";
+import { useUnsavedWorkGuard } from "../document/use-unsaved-work-guard";
 import {
   draftingDragOrigin,
   translateDraftingObject,
@@ -209,7 +210,6 @@ import {
   razaviMosPresentationEdits,
 } from "../presentation/razavi-presentation";
 import { useRecoveryCoordinator } from "../document/recovery-coordinator";
-import { requestProjectDownload } from "../document/project-file-service";
 import { useSelectionController } from "../features/selection/selection-controller";
 import { deriveSelectionInspectionModel } from "../features/selection/selection-inspection-model";
 import { usePropertiesEditor } from "../features/properties/use-properties-editor";
@@ -559,16 +559,20 @@ export function App({
     formalProjectBaseline,
     previousProject,
     replaceGuard,
+    replaceGuardSaving,
     recoveryDialogOpen,
+    startupRecovery,
     setRecoveryDialogOpen,
     isDirtyWork,
     replaceActiveProject,
     saveProjectFile,
+    downloadCurrentProjectBackup,
     reportExport,
     guardDirtyReplacement,
     cancelReplaceGuard,
     confirmReplaceGuard,
-    downloadCurrentProjectFromGuard,
+    saveAndContinueReplaceGuard,
+    dismissStartupRecovery,
     createNewProject,
     restorePreviousProject,
     revertToFormalProjectBaseline,
@@ -612,6 +616,7 @@ export function App({
       return nextDocument;
     },
   });
+  const allowNextBrowserUnload = useUnsavedWorkGuard(isDirtyWork());
   const agentSession = useAgentSession({
     enabled: publicAgentUiEnabled,
     project,
@@ -2696,6 +2701,7 @@ export function App({
       <EditorAppChrome
         projectName={project.name}
         projectNameDraft={projectNameDraft}
+        hasUnsavedWork={isDirtyWork()}
         documentName={document.name}
         onProjectNameDraftChange={setProjectNameDraft}
         onProjectNameCommit={commitProjectName}
@@ -2710,7 +2716,10 @@ export function App({
           onSaveProject: (pickLocation) =>
             void saveProjectFile({ pickLocation }),
           onOpenShelfSlot: (slot) => void openShelvedCircuit(slot),
-          onRefresh: refreshApp,
+          onRefresh: () => {
+            allowNextBrowserUnload();
+            refreshApp();
+          },
           onOpenProject: (file) => void openProjectFile(file),
           onImportSpice: (files) => void importSpiceFiles(files),
           onExportSvg: exportSvg,
@@ -2875,18 +2884,33 @@ export function App({
           (recoveryState === "quota-exceeded" ||
             recoveryState === "unavailable" ||
             recoveryState === "failed") &&
+          isDirtyWork() &&
           !recoveryFailureDismissed
             ? {
                 state: recoveryState,
-                onDownload: () => {
-                  const outcome = requestProjectDownload(project);
-                  setStatus(
-                    outcome.status === "download-requested"
-                      ? `Download requested: ${outcome.fileName}`
-                      : `Download failed: ${outcome.message}`,
+                onDownload: downloadCurrentProjectBackup,
+                onDismiss: () => setRecoveryFailureDismissed(true),
+              }
+            : null
+        }
+        recoveryAvailable={
+          startupRecovery?.latest
+            ? {
+                projectName: startupRecovery.projectName,
+                updatedAt: startupRecovery.latest.updatedAt,
+                onRestore: () => {
+                  dismissStartupRecovery();
+                  restoreRecoverySession(
+                    startupRecovery.workingCopyId,
+                    "latest",
                   );
                 },
-                onDismiss: () => setRecoveryFailureDismissed(true),
+                onDownload: () =>
+                  downloadRecoveryBackup(
+                    startupRecovery.workingCopyId,
+                    "latest",
+                  ),
+                onDismiss: dismissStartupRecovery,
               }
             : null
         }
@@ -2905,9 +2929,11 @@ export function App({
           replaceGuard !== null
             ? {
                 intent: replaceGuard.intent,
+                saving: replaceGuardSaving,
+                recoveryProtected: replaceGuard.recoveryProtected,
                 onCancel: cancelReplaceGuard,
-                onConfirm: confirmReplaceGuard,
-                onDownload: downloadCurrentProjectFromGuard,
+                onSaveAndContinue: saveAndContinueReplaceGuard,
+                onDiscard: confirmReplaceGuard,
               }
             : null
         }
@@ -3852,7 +3878,7 @@ export function App({
         wireOptionsOpen={wireOptionsOpen}
         wireRoutingMode={wireRoutingMode}
         wireCornerOrder={wireCornerOrder}
-        recoveryLabel={recoveryStateLabel(recoveryState)}
+        recoveryLabel={isDirtyWork() ? recoveryStateLabel(recoveryState) : null}
         gridDotsVisible={gridDotsVisible}
         zoomPercent={zoomPercent}
         onToggleWireOptions={() => setWireOptionsOpen((open) => !open)}

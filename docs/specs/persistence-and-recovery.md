@@ -35,7 +35,8 @@ limits live in `apps/editor/src/document/browser-recovery-contract.ts`:
 - at most 2 retained working-copy sessions, the active one always kept and the
   oldest inactive session pruned first;
 - at most `latest` and `previous` per session; identical Project text does not
-  consume a new generation;
+  consume a new generation. Save-state and formal-file metadata may update the
+  latest envelope in place without rotating its Project text into `previous`;
 - one record's Project text is at most 4 MB (UTF-8, recomputed on read);
 - all owned records total at most 12 MB.
 
@@ -44,7 +45,12 @@ separate from the Project schema and never enters `.icproj.json`. Stored input
 is decoded structurally before its Project text is parsed, and a record whose
 Project text carries an unsupported schema version classifies as
 `unsupported-schema`, keeps its raw bytes downloadable, and is never deleted as
-corrupt. Envelope identity fields must agree with the parsed Project.
+corrupt. Envelope identity fields must agree with the parsed Project. The
+optional `unsavedAtSnapshot` envelope field records whether the snapshot was
+ahead of the formal save baseline. Records written before this additive field
+remain valid but have unknown save state and therefore do not trigger an
+automatic startup offer. This metadata is browser lifecycle state, never part
+of Project JSON.
 
 A rejected write (oversized, quota exceeded, storage unavailable, or failed)
 must leave every previous record readable. Storage or quota failure is visible
@@ -70,14 +76,32 @@ recovery records; bounded retention and explicit user deletion are the only
 removal paths. File handles stay transient runtime capabilities and are never
 serialized into Project JSON or recovery records.
 
+The editor file lifecycle is the single source of unsaved truth. A successful
+persistent edit marks it dirty; a confirmed file write or requested canonical
+download marks it clean; selection, view, and panel changes do neither. While
+dirty, and only while dirty, the editor registers the browser-native
+`beforeunload` guard for Back, Refresh, and tab/window close. The application
+does not synthesize history entries, customize the browser-owned warning, or
+depend on unload-time asynchronous storage as its only protection.
+
 Opening or replacing a Project stages and validates the complete candidate —
 read bytes, JSON/schema validation, approved-symbol validation, Project
 preparation — before the live Project changes. Invalid input leaves the
 Project, selection, history, recovery, and file state untouched. Before
-replacing dirty work the editor first confirms a recovery write; if recovery
-fails it offers download, replace-anyway, and cancel, defaulting to cancel.
+replacing dirty work the editor first attempts and flushes a recovery write,
+then offers **Save and continue**, **Discard and continue**, or **Cancel**,
+defaulting to Cancel. Save cancellation or failure leaves the foreground
+Project and dialog in place. Recovery failure is shown in the same dialog as
+elevated risk but never grants permission to discard.
 A successful replacement retains the outgoing Project in recent recovery and
 seeds the incoming Project's own working-copy identity.
+
+On startup, the current tab's latest valid recovery record is offered
+non-modally only when it explicitly says `unsavedAtSnapshot: true`, the
+foreground Project is still clean, and the load is not the editor's explicit
+refresh-restore path. The offer provides Restore, Download backup, and Ignore.
+Normal pending/stored recovery writes stay silent; only failures are promoted
+while the foreground work is dirty.
 
 Agent File Resource staging stores a bounded candidate separately from the
 browser Project. Inspecting or requesting approval does not mutate the live
