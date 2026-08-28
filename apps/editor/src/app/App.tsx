@@ -2923,6 +2923,7 @@ export function App({
       {renderCrashRequested() ? <RenderCrashProbe /> : null}
       <EditorAppChrome
         projectName={project.name}
+        projectSchemaVersion={project.schemaVersion}
         projectNameDraft={projectNameDraft}
         hasUnsavedWork={isDirtyWork()}
         documentName={document.name}
