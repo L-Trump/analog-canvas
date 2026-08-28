@@ -509,8 +509,8 @@ export function App({
   const [publishGates, setPublishGates] = useState<SubmissionGateReport | null>(
     null,
   );
-  // Check and Save needs to know who is signed in before anyone opens the
-  // publish dialog, and the shelf it writes to is worth listing on arrival.
+  // Account state owns publishing authority and the private Cloud Project
+  // list shown by the File menu.
   useEffect(() => {
     let cancelled = false;
     void fetchSessionUser().then(async (user) => {

@@ -42,6 +42,9 @@ describe("FileCommandMenu", () => {
     );
 
     expect(markup).toContain("Save as Cloud Copy…");
+    expect(markup).toContain(
+      'disabled="" title="Save this Project to Cloud before creating a copy"',
+    );
     expect(markup).toContain("Cloud Projects (1/3)");
     expect(markup).toContain("Saved Circuit");
     expect(markup).toContain("cloud-project-cloud-1");

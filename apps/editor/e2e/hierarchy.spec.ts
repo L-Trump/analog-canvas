@@ -4,12 +4,7 @@ import {
   clickCommand,
   clickDrawTool,
   downloadBytes,
-  emulateDownloadOnlyBrowser,
 } from "./editor-fixtures.js";
-
-test.beforeEach(async ({ page }) => {
-  await emulateDownloadOnlyBrowser(page);
-});
 
 async function runCellCommand(
   page: import("@playwright/test").Page,

@@ -8,7 +8,6 @@ import {
   awaitRecoveryStoreReady,
   chooseComponent,
   clickCommand,
-  emulateDownloadOnlyBrowser,
   readRecoveryRecords,
   recoveryProjectTexts,
 } from "./editor-fixtures.js";
@@ -79,10 +78,6 @@ async function seedRecoveryRecords(
     });
   }, records);
 }
-
-test.beforeEach(async ({ page }) => {
-  await emulateDownloadOnlyBrowser(page);
-});
 
 test("startup recovery is visible after reload and restore forks a working copy", async ({
   page,

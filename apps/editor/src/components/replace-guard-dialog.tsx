@@ -13,8 +13,8 @@ export interface ReplaceGuardDialogProps {
 /**
  * Outgoing dirty-work protection. Recovery is a safety copy, not permission to
  * discard the foreground Project, so every dirty replacement pauses here.
- * Defaults to Cancel; Escape cancels. Save must succeed (or request a browser
- * download) before the replacement is allowed to continue.
+ * Defaults to Cancel; Escape cancels. Cloud Save must succeed before the
+ * replacement is allowed to continue.
  */
 export function ReplaceGuardDialog({
   intent,
@@ -88,8 +88,8 @@ export function ReplaceGuardDialog({
             </button>
           </div>
           <p>
-            The formal <code>.icproj.json</code> file remains the authoritative
-            copy of your work.
+            Cloud Project is the formal saved copy. Browser recovery and local
+            exports remain safety and interchange copies.
           </p>
         </div>
       </section>

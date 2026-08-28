@@ -95,7 +95,14 @@ export async function saveCloudProject(
   }
   if (response.status === 401) return { status: "signed-out" };
   if (response.status === 413) return { status: "too-large" };
-  if (response.status === 404) return { status: "not-found" };
+  if (response.status === 404) {
+    return binding
+      ? { status: "not-found" }
+      : {
+          status: "unreachable",
+          message: "Cloud Project service is unavailable (404)",
+        };
+  }
   if (response.status === 409 && payload?.error === "revision-conflict") {
     return returnedProject
       ? { status: "conflict", project: returnedProject }

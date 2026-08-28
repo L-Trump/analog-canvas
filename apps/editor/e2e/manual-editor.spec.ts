@@ -12,7 +12,6 @@ import {
   clickCommand,
   clickDrawTool,
   downloadBytes,
-  emulateDownloadOnlyBrowser,
   openMenu,
   readRecoveryRecords,
   recoveryProjectTexts,
@@ -30,10 +29,6 @@ function markRoutingDemoNetsImported(
     });
   }
 }
-
-test.beforeEach(async ({ page }) => {
-  await emulateDownloadOnlyBrowser(page);
-});
 
 test("opens netlist preflight and navigates its canonical finding", async ({
   page,

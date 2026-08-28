@@ -5,7 +5,6 @@ import {
   chooseComponent,
   clickCommand,
   downloadBytes,
-  emulateDownloadOnlyBrowser,
   recoveryProjectTexts,
 } from "./editor-fixtures.js";
 
@@ -440,7 +439,6 @@ test("groups drafting tools and editable polarity labels under Annotations", asy
 test("places a vertical Power Rail from I and renames it on the canvas", async ({
   page,
 }) => {
-  await emulateDownloadOnlyBrowser(page);
   await page.goto("/editor");
   await awaitEditorReady(page);
   await page.keyboard.press("i");
@@ -519,7 +517,6 @@ test("places a vertical Power Rail from I and renames it on the canvas", async (
 test("places the VDD power-port device as the default VDD entry", async ({
   page,
 }) => {
-  await emulateDownloadOnlyBrowser(page);
   await page.goto("/editor");
   await awaitEditorReady(page);
   await page.keyboard.press("i");

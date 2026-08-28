@@ -4,7 +4,6 @@ import type { Page } from "@playwright/test";
 import {
   chooseComponent,
   clickCommand,
-  emulateDownloadOnlyBrowser,
   readRecoveryRecords,
   recoveryProjectTexts,
 } from "./editor-fixtures.js";
@@ -40,10 +39,6 @@ async function restoreThroughDialog(
   await expect(dialog).toBeHidden();
 }
 
-test.beforeEach(async ({ page }) => {
-  await emulateDownloadOnlyBrowser(page);
-});
-
 test("a hard renderer crash restores the latest committed Project", async ({
   page,
 }) => {
@@ -66,7 +61,6 @@ test("a hard renderer crash restores the latest committed Project", async ({
   // IndexedDB (polled above), so recovery must work from a fresh tab.
   await page.close({ runBeforeUnload: false });
   const revived = await page.context().newPage();
-  await emulateDownloadOnlyBrowser(revived);
   await revived.goto("/editor");
 
   await restoreThroughDialog(revived, "revision 2");
@@ -78,8 +72,6 @@ test("a hard renderer crash restores the latest committed Project", async ({
 test("simultaneous tabs keep separate working copies", async ({ context }) => {
   const pageA = await context.newPage();
   const pageB = await context.newPage();
-  await emulateDownloadOnlyBrowser(pageA);
-  await emulateDownloadOnlyBrowser(pageB);
 
   await pageA.goto("/editor");
   await placeResistor(pageA, 360, 230);

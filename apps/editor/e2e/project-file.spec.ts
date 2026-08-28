@@ -6,7 +6,6 @@ import { CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
 import {
   chooseComponent,
   downloadBytes,
-  emulateDownloadOnlyBrowser,
   openMenu,
   recoveryProjectTexts,
 } from "./editor-fixtures.js";
@@ -73,10 +72,6 @@ async function mockCloudProjects(page: Page) {
   return { stored: () => stored };
 }
 
-test.beforeEach(async ({ page }) => {
-  await emulateDownloadOnlyBrowser(page);
-});
-
 test("Cloud Save updates one binding while local export stays interchange", async ({
   page,
 }) => {
@@ -94,6 +89,9 @@ test("Cloud Save updates one binding while local export stays interchange", asyn
   await expect(page.getByTestId("status")).toContainText("Export requested");
 
   const fileMenu = await openMenu(page, "File");
+  await expect(
+    fileMenu.getByRole("button", { name: "Save as Cloud Copy…" }),
+  ).toBeDisabled();
   await fileMenu.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByTestId("status")).toContainText(
     "Saved New Circuit to Cloud",
@@ -108,6 +106,9 @@ test("Cloud Save updates one binding while local export stays interchange", asyn
   await expect.poll(() => cloud.stored()?.revision).toBe(2);
   const reopenedMenu = await openMenu(page, "File");
   await expect(reopenedMenu.getByText("Cloud Projects (1/3)")).toBeVisible();
+  await expect(
+    reopenedMenu.getByRole("button", { name: "Save as Cloud Copy…" }),
+  ).toBeEnabled();
   await page.getByRole("link", { name: "Back to the gallery" }).click();
   await expect(page).toHaveURL(/\/$/u);
 });

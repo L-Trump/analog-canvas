@@ -103,6 +103,22 @@ describe("Cloud Project client", () => {
     });
   });
 
+  it("distinguishes a missing bound Project from an unavailable create endpoint", async () => {
+    expect(
+      await saveCloudProject(
+        project,
+        { id: summary.id, revision: 1 },
+        respondWith(404, {}).fetchLike,
+      ),
+    ).toEqual({ status: "not-found" });
+    expect(
+      await saveCloudProject(project, null, respondWith(404, {}).fetchLike),
+    ).toEqual({
+      status: "unreachable",
+      message: "Cloud Project service is unavailable (404)",
+    });
+  });
+
   it("lists summaries and opens one private Project", async () => {
     expect(
       await listCloudProjects(

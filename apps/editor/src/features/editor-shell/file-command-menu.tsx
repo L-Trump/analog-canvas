@@ -64,7 +64,16 @@ export function FileCommandMenu({
         <button type="button" data-testid="save-cloud-project" onClick={onSave}>
           Save
         </button>
-        <button type="button" onClick={onSaveAsCopy}>
+        <button
+          type="button"
+          onClick={onSaveAsCopy}
+          disabled={activeCloudProjectId === null}
+          title={
+            activeCloudProjectId === null
+              ? "Save this Project to Cloud before creating a copy"
+              : "Create a separate Cloud Project"
+          }
+        >
           Save as Cloud Copy…
         </button>
         <span className="command-group-label">
