@@ -121,6 +121,7 @@ export function symbolSubcategory(symbolId: string): string | undefined {
 const LIBRARY_DISPLAY_NAMES: Readonly<Record<string, string>> = {
   port: "Cell Pin",
   "port-filled": "Cell Pin (filled)",
+  "pulse-voltage-source": "Pulse Src",
 };
 
 /** One line saying what an entry does, where the name alone leaves a doubt. */

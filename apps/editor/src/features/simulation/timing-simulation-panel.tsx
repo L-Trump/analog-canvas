@@ -11,6 +11,7 @@ import { parseSimulationTimePs, timingWaveformSvg } from "./timing-waveform";
 
 export interface TimingSimulationPanelProps {
   document: SchematicDocument;
+  defaultOpen?: boolean;
   onPlaceOnCanvas: (result: DigitalSimulationResult) => void;
   onStatus: (message: string) => void;
 }
@@ -54,10 +55,11 @@ function exportPng(svg: string, fileName: string): void {
 
 export function TimingSimulationPanel({
   document,
+  defaultOpen = false,
   onPlaceOnCanvas,
   onStatus,
 }: TimingSimulationPanelProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   const [stopTime, setStopTime] = useState("40ns");
   const [savedNetIds, setSavedNetIds] = useState<Set<string>>(() => new Set());
   const [result, setResult] = useState<DigitalSimulationResult | null>(null);

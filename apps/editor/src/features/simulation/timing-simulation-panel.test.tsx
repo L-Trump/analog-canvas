@@ -11,6 +11,7 @@ describe("TimingSimulationPanel", () => {
     const markup = renderToStaticMarkup(
       <TimingSimulationPanel
         document={document}
+        defaultOpen
         onPlaceOnCanvas={() => undefined}
         onStatus={() => undefined}
       />,
