@@ -7,7 +7,8 @@
   max-height: min(34dvh, 310px);
   border-top: 1px solid var(--icm-border-strong);
   background: var(--icm-surface);
-  overflow: hidden;
+  /* The saved-node picker opens above the header into the canvas area. */
+  overflow: visible;
 }
 
 .timing-panel.collapsed {

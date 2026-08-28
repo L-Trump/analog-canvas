@@ -35,6 +35,27 @@ test.beforeEach(async ({ page }) => {
   await emulateDownloadOnlyBrowser(page);
 });
 
+test("opens the saved-node picker above the timing panel", async ({ page }) => {
+  await page.goto("/editor");
+  await page.getByRole("button", { name: "Timing" }).click();
+
+  const picker = page.locator("details.timing-node-picker");
+  await picker.locator("summary").click();
+  const menu = picker.locator(".timing-node-picker-menu");
+  await expect(menu).toBeVisible();
+  await expect(menu).toContainText("No Nets in this Cell.");
+
+  const menuReceivesPointerEvents = await menu.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(
+      bounds.left + bounds.width / 2,
+      bounds.top + bounds.height / 2,
+    );
+    return hit !== null && element.contains(hit);
+  });
+  expect(menuReceivesPointerEvents).toBe(true);
+});
+
 test("opens netlist preflight and navigates its canonical finding", async ({
   page,
 }) => {
