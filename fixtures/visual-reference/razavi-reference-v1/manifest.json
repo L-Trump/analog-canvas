@@ -27,6 +27,44 @@
   ],
   "vectorEvidence": [
     {
+      "id": "razavi-data-converters-clock-pulse",
+      "kind": "pdf-vector-extract",
+      "source": {
+        "title": "Analysis and Design of Data Converters",
+        "sha256": "8a5c1bb42a5e32a84cd6af53e2f43db79ea8f511552c913ec65d2caa1d90a028",
+        "pdfPage": 352,
+        "printedPage": 334,
+        "figure": "16.8"
+      },
+      "extractPath": "data-converters-clock-pulse-vector-source.json",
+      "extractSha256": "b8ab067517050a6ad0af50fab0e607c36e489bf96aad5bfae7a6912e65d19a79",
+      "rasterPath": "data-converters-clock-pulse-reference.png",
+      "rasterSha256": "1bcbe9cb1df40034ec31deffa5017fae667462cb7f42cad6cf24af5040206819",
+      "scope": [
+        "clock pulse square-step presentation",
+        "pulse timing trace and CK label treatment"
+      ]
+    },
+    {
+      "id": "razavi-data-converters-timing-waveform",
+      "kind": "pdf-vector-extract",
+      "source": {
+        "title": "Analysis and Design of Data Converters",
+        "sha256": "8a5c1bb42a5e32a84cd6af53e2f43db79ea8f511552c913ec65d2caa1d90a028",
+        "pdfPage": 491,
+        "printedPage": 473,
+        "figure": "20.54"
+      },
+      "extractPath": "data-converters-timing-waveform-vector-source.json",
+      "extractSha256": "7c73a9b0b3d543bd27c4dce10b795d3e6390babd01aee3aa61b5afd3cf54896c",
+      "rasterPath": "data-converters-timing-waveform-reference.png",
+      "rasterSha256": "da1a88eec1a1740f17b6bce9f49b031d484abc3ff3430a8002452c6e457469a7",
+      "scope": [
+        "stacked digital waveform trace layout and labels",
+        "dashed timing guides and horizontal time-axis treatment"
+      ]
+    },
+    {
       "id": "razavi-textbook-delay-cell",
       "kind": "pdf-vector-extract",
       "source": {
@@ -360,12 +398,16 @@
     "PDF-derived common BJT, diode, gain-block, and switch families",
     "PDF-derived logic-gate bodies, bubbles, and lead junctions",
     "PDF-derived Buffer and generic D flip-flop geometry",
-    "PDF-derived page-331 Delay Cell geometry and Delta-T mark"
+    "PDF-derived page-331 Delay Cell geometry and Delta-T mark",
+    "PDF-derived clock-pulse presentation from Figure 16.8",
+    "PDF-derived stacked digital waveform presentation from Figure 20.54"
   ],
   "notes": [
     "This manifest is the sole visual authority for Razavi style v1.",
     "Supplemental rasters are user-supplied evidence within this same sole authority.",
     "PDF vector evidence is scoped, hash-pinned source evidence and carries a raster witness for the existing comparison workflow.",
+    "The pulse source combines the existing independent voltage-source body with the Figure 16.8 square-step presentation; the PDF figure does not define the source's electrical contract.",
+    "Figure 20.54 is visual evidence for waveform presentation only; simulation semantics remain product-owned.",
     "Visio/VSS may establish legacy pin semantics but must not determine visual geometry."
   ]
 }

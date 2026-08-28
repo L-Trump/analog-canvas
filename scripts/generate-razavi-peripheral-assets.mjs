@@ -100,6 +100,30 @@ function voltageSource(measurement) {
   };
 }
 
+function pulseVoltageSource(measurement) {
+  const radius = rounded(
+    measurement.circleRadiusPx / geometry.pixelsPerLogical,
+  );
+  return {
+    schemaVersion: 1,
+    id: "pulse-voltage-source",
+    name: "Pulse Voltage Source",
+    viewBox: { x: -24, y: -24, width: 39, height: 48 },
+    pins: sourcePins(),
+    primitives: [
+      { kind: "circle", center: { x: 0, y: 0 }, radius, style: normal },
+      line({ x: -7, y: 4 }, { x: -4, y: 4 }),
+      line({ x: -4, y: 4 }, { x: -4, y: -4 }),
+      line({ x: -4, y: -4 }, { x: 4, y: -4 }),
+      line({ x: 4, y: -4 }, { x: 4, y: 4 }),
+      line({ x: 4, y: 4 }, { x: 7, y: 4 }),
+      line({ x: 0, y: -radius }, { x: 0, y: -20 }),
+      line({ x: 0, y: radius }, { x: 0, y: 20 }),
+    ],
+    variants: [],
+  };
+}
+
 function currentSource(measurement) {
   const radius = rounded(
     measurement.circleRadiusPx / geometry.pixelsPerLogical,
@@ -197,6 +221,7 @@ if (
 
 const symbols = [
   voltageSource(geometry.symbols["voltage-source"]),
+  pulseVoltageSource(geometry.symbols["voltage-source"]),
   currentSource(geometry.symbols["current-source"]),
   ground(geometry.symbols.ground),
 ];
@@ -261,15 +286,26 @@ for (const symbol of symbols) {
   );
   if (!entry) fail(`missing catalog entry ${symbol.id}`);
   entry.assetHash = hash(sources.get(symbol.id));
-  entry.generation = {
-    kind: "razavi-raster-reference",
-    referenceManifestPath:
-      "fixtures/visual-reference/razavi-reference-v1/manifest.json",
-    referencePath:
-      "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
-    converterPath: "scripts/generate-razavi-peripheral-assets.mjs",
-    converterVersion: 1,
-  };
+  entry.generation =
+    symbol.id === "pulse-voltage-source"
+      ? {
+          kind: "razavi-pdf-vector-reference",
+          referenceManifestPath:
+            "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+          referencePath:
+            "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-vector-source.json",
+          converterPath: "scripts/generate-razavi-peripheral-assets.mjs",
+          converterVersion: 2,
+        }
+      : {
+          kind: "razavi-raster-reference",
+          referenceManifestPath:
+            "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+          referencePath:
+            "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+          converterPath: "scripts/generate-razavi-peripheral-assets.mjs",
+          converterVersion: 1,
+        };
 }
 const catalogSource = normalize(
   await format(JSON.stringify(catalog, null, 2), { parser: "json" }),
@@ -282,5 +318,5 @@ if (check) {
 }
 
 console.log(
-  `${check ? "Validated" : "Generated"} 3 screenshot-mapped Razavi peripheral assets`,
+  `${check ? "Validated" : "Generated"} ${symbols.length} Razavi peripheral assets`,
 );

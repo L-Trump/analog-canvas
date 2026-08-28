@@ -176,6 +176,7 @@ describe("Razavi symbol catalog", () => {
       ["variable-resistor", "reviewed", "razavi-reference-v1"],
       ["vdd-port", "reviewed", "razavi-reference-v1"],
       ["voltage-amplifier", "reviewed", "razavi-reference-v1"],
+      ["pulse-voltage-source", "reviewed", "razavi-reference-v1"],
       ["voltage-source", "reviewed", "razavi-reference-v1"],
       ["xnor-gate", "reviewed", "razavi-reference-v1"],
       ["xor-gate", "reviewed", "razavi-reference-v1"],
@@ -491,7 +492,7 @@ describe("Razavi symbol catalog", () => {
   });
 
   it("uses reviewed catalog objects as the sole built-in product library", () => {
-    expect(razaviCatalogSymbols).toHaveLength(40);
+    expect(razaviCatalogSymbols).toHaveLength(41);
     for (const catalogSymbol of razaviProductSymbols) {
       expect(
         builtInSymbols.find((symbol) => symbol.id === catalogSymbol.id),
@@ -536,6 +537,7 @@ describe("Razavi symbol catalog", () => {
       "variable-resistor",
       "vdd-port",
       "voltage-amplifier",
+      "pulse-voltage-source",
       "voltage-source",
       "xnor-gate",
       "xor-gate",
@@ -1121,6 +1123,24 @@ describe("Razavi symbol catalog", () => {
           kind: "line",
           from: { x: -20.058139, y: 13.372093 },
           to: { x: -11.918605, y: 13.372093 },
+        }),
+      ]),
+    );
+
+    const pulse = requireRazaviCatalogSymbol("pulse-voltage-source");
+    expect(pulse.pins.map((pin) => pin.name)).toEqual(["+", "-"]);
+    expect(pulse.primitives).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "circle", radius: 10.755814 }),
+        expect.objectContaining({
+          kind: "line",
+          from: { x: -4, y: 4 },
+          to: { x: -4, y: -4 },
+        }),
+        expect.objectContaining({
+          kind: "line",
+          from: { x: -4, y: -4 },
+          to: { x: 4, y: -4 },
         }),
       ]),
     );

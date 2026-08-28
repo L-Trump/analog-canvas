@@ -44,7 +44,9 @@ The tool boundaries are mandatory:
 
 This decision is applied one reviewed component at a time. It does not
 authorize bulk conversion or replacement of existing raster evidence. The
-current PDF-derived set includes the inductor from Figure 15.21, the
+current PDF-derived set includes the clock-pulse and waveform witnesses from
+Figures 16.8 and 20.54 of _Analysis and Design of Data Converters_, the
+inductor from Figure 15.21, the
 three-terminal op-amp from Figure 8.26, and the common-device family recorded
 by `extract-razavi-common-assets.py`: NPN and PNP BJT, diode, voltage amplifier,
 and ideal switch. Every semantic pin extension must say so in its evidence; it
@@ -89,6 +91,20 @@ likewise remains manual because its reference
 nodes are implicit. BJT hybrid-pi models are composed from resistor,
 capacitor, and the reviewed VCCS rather than represented by a pseudo-device.
 
+## Pulse Source and timing-waveform mapping
+
+The two-terminal `pulse-voltage-source` is a deliberate composition. Its
+circle, leads, and `+`/`-` electrical contract reuse the calibrated independent
+voltage-source family. Figure 16.8 supplies only the square-step pulse
+presentation and clock-trace visual language. It does not define electrical
+pins, parameter defaults, or simulator behavior; those remain product-owned
+and are covered by device, netlist, and digital-event tests.
+
+Figure 20.54 is pinned separately as the presentation authority for stacked
+digital traces, signal labels, dashed timing guides, and the horizontal time
+axis. It is not an executable waveform fixture and cannot determine logic
+values or event times.
+
 ## Consequences
 
 - The inductor keeps source-level curve precision and traceable textbook
@@ -104,7 +120,8 @@ capacitor, and the reviewed VCCS rather than represented by a pseudo-device.
 - Extractor rejects a mismatched textbook SHA-256 or path fingerprint.
 - Authority loader accepts legacy manifests and rejects modified vector
   extracts or witnesses.
-- The inductor and common-family generators have write and stale-check modes.
+- The peripheral, inductor, and common-family generators have write and
+  stale-check modes.
 - Symbol/catalog tests enforce continuous geometry, on-grid pins, provenance,
   palette exposure, and SPICE import mapping.
 - The existing fidelity runner produces the inductor reference/render/diff

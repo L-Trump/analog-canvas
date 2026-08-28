@@ -30,10 +30,13 @@ function connect(
 
 function pulseParameters(): Record<string, string> {
   return {
-    initial: "0",
+    low: "0",
+    high: "1",
     delay: "1ns",
+    rise: "1ps",
+    fall: "1ps",
+    width: "5ns",
     period: "10ns",
-    dutyCycle: "50",
   };
 }
 

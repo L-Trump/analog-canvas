@@ -94,7 +94,11 @@ export function symbolCategory(symbolId: string): string {
   ) {
     return "Logic Gates";
   }
-  if (["voltage-source", "current-source"].includes(symbolId)) {
+  if (
+    ["voltage-source", "pulse-voltage-source", "current-source"].includes(
+      symbolId,
+    )
+  ) {
     return "Sources";
   }
   if (["ideal-switch", "closed-switch"].includes(symbolId)) {

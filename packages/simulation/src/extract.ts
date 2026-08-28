@@ -203,19 +203,27 @@ function extractPulse(
   const parameters = instance.netlist?.parameters ?? {};
   const periodPs = parseTimePs(parameters.period, 10_000);
   const delayPs = parseTimePs(parameters.delay, 1_000, true);
+  const widthPs = parseTimePs(parameters.width, -1);
   const dutyCycle = Number(parameters.dutyCycle ?? "50");
   const initialValue = parameters.initial === "1" ? "1" : "0";
+  const highTimePs =
+    widthPs === null
+      ? null
+      : widthPs > 0
+        ? widthPs
+        : Math.max(1, Math.round(((periodPs ?? 0) * dutyCycle) / 100));
   if (
     periodPs === null ||
     delayPs === null ||
-    !Number.isFinite(dutyCycle) ||
-    dutyCycle <= 0 ||
-    dutyCycle >= 100
+    highTimePs === null ||
+    highTimePs >= periodPs ||
+    ((widthPs ?? -1) <= 0 &&
+      (!Number.isFinite(dutyCycle) || dutyCycle <= 0 || dutyCycle >= 100))
   ) {
     diagnostics.push({
       code: "SIM_INVALID_PARAMETER",
       severity: "error",
-      message: `Pulse source ${instance.id} requires a positive period, nonnegative delay, and dutyCycle between 0 and 100`,
+      message: `Pulse source ${instance.id} requires a positive period, nonnegative delay, and width shorter than period`,
       objectIds: [instance.id],
     });
     return null;
@@ -227,7 +235,7 @@ function extractPulse(
     initialValue,
     delayPs,
     periodPs,
-    highTimePs: Math.max(1, Math.round((periodPs * dutyCycle) / 100)),
+    highTimePs,
   };
 }
 
