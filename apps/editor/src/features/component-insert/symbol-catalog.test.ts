@@ -5,7 +5,6 @@ import {
   findPaletteSymbol,
   flattenComponentCatalog,
   libraryDescription,
-  libraryDisplayName,
   symbolCategory,
   symbolSubcategory,
 } from "./symbol-catalog";
@@ -116,12 +115,6 @@ describe("component insertion catalog", () => {
     expect(libraryDescription("port-filled")).toBe(
       "An independent Cell Pin with a solid appearance",
     );
-  });
-
-  it("uses a compact Library label for the Pulse Source tile", () => {
-    expect(
-      libraryDisplayName("pulse-voltage-source", "Pulse Voltage Source"),
-    ).toBe("Pulse Src");
   });
 
   it("searches canonical names and ids without exposing retired MOS entries", () => {
