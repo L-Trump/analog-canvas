@@ -2096,6 +2096,7 @@ export function App({
     selectOnly,
     setSelectedEndpoint,
     setHighlightedNetOrigin,
+    highlightedNetOrigin,
     selectedHighlightNetId,
     selectedHighlightEndpoint,
     selectedHighlightIsActive,
@@ -2539,6 +2540,7 @@ export function App({
         selectedDrafting?.kind === "construction-line" ||
         selectedDrafting?.kind === "rectangle" ||
         selectedDrafting?.kind === "circle",
+      hasActiveNetHighlight: highlightedNetOrigin !== null,
     }),
     operations: {
       closeHelp,
@@ -2563,6 +2565,10 @@ export function App({
       clearDraftingSelection: () => {
         replaceSelectionKind("drafting", []);
         setStatus("Cleared drawing selection");
+      },
+      clearNetHighlight: () => {
+        setHighlightedNetOrigin(null);
+        setStatus("Cleared Net highlight");
       },
       cancelPassive: () => {
         setBoxPreview(null);
@@ -2740,6 +2746,7 @@ export function App({
         hasInspectableSelection,
         hasRouteSelection: Boolean(selectedRoute),
         hasHighlightableNet: selectedHighlightNetId !== null,
+        hasActiveNetHighlight: highlightedNetOrigin !== null,
         wireReadyToFinish: Boolean(wireSource && wirePreviewPoint),
         draftingReadyToFinish:
           (tool === "arrow" ||
