@@ -1,0 +1,26 @@
+import { createEmptyDocument } from "@icm/model";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+
+import { TimingSimulationPanel } from "./timing-simulation-panel";
+
+describe("TimingSimulationPanel", () => {
+  it("exposes saved-node selection, run, export, and optional canvas placement", () => {
+    const document = createEmptyDocument("main", "Clock divider");
+    document.nets.push({ id: "clock", terminals: [] });
+    const markup = renderToStaticMarkup(
+      <TimingSimulationPanel
+        document={document}
+        onPlaceOnCanvas={() => undefined}
+        onStatus={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="timing-simulation-panel"');
+    expect(markup).toContain("Saved nodes (0)");
+    expect(markup).toContain("Export SVG");
+    expect(markup).toContain("Export PNG");
+    expect(markup).toContain("Place on Canvas");
+    expect(markup).toContain("Temporary results");
+  });
+});
