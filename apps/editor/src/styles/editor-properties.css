@@ -426,6 +426,109 @@
   background: var(--icm-surface);
 }
 
+.component-appearance-card > small {
+  line-height: var(--icm-line);
+}
+
+.component-color-control {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.55rem;
+  border: 1px solid var(--icm-border);
+  border-radius: var(--icm-radius-sm);
+}
+
+.component-color-control legend {
+  padding: 0 0.25rem;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  font-weight: 650;
+}
+
+.component-color-primary-row {
+  display: grid;
+  grid-template-columns: var(--icm-control-h-lg) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.property-section .component-color-primary-row input[type="color"] {
+  width: var(--icm-control-h-lg);
+  height: var(--icm-control-h-lg);
+  min-height: var(--icm-control-h-lg);
+  padding: 0.15rem;
+}
+
+.component-color-primary-row output {
+  overflow: hidden;
+  color: var(--icm-text);
+  font-family: var(--icm-font-mono, ui-monospace, monospace);
+  font-size: var(--icm-font-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.component-color-primary-row button {
+  min-height: var(--icm-control-h-lg);
+  margin: 0;
+}
+
+.component-color-presets {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.component-color-swatch {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 1.65rem;
+  margin: 0;
+  padding: 0.15rem;
+  border-radius: var(--icm-radius-sm);
+  background: var(--icm-surface);
+}
+
+.component-color-swatch span {
+  width: 100%;
+  height: 100%;
+  min-height: 1rem;
+  border: 1px solid rgb(15 23 42 / 25%);
+  border-radius: 3px;
+  background: var(--component-swatch-color);
+}
+
+.component-color-swatch[aria-pressed="true"] {
+  border-color: var(--icm-accent);
+  outline: 2px solid rgb(var(--icm-accent-rgb) / 25%);
+  outline-offset: 1px;
+}
+
+.component-color-swatch:focus-visible,
+.component-color-control input:focus-visible,
+.component-color-control button:focus-visible {
+  outline: 2px solid var(--icm-accent);
+  outline-offset: 2px;
+}
+
+.component-rgb-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.component-rgb-inputs label {
+  min-width: 0;
+  font-size: var(--icm-font-xs);
+}
+
+.component-rgb-inputs input {
+  width: 100%;
+}
+
 .import-review {
   margin-top: 1rem;
   padding-top: 0.8rem;

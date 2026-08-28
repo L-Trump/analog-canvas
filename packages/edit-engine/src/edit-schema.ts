@@ -7,6 +7,7 @@ import {
   InstanceNetlistDataSchema,
   InstanceNetlistBindingSchema,
   InstanceSchema,
+  InstanceStyleOverrideSchema,
   JunctionRoleSchema,
   LayoutConstraintSchema,
   LayoutGroupSchema,
@@ -112,6 +113,18 @@ export const SetInstanceSchematicNameEditSchema = z.strictObject({
   kind: z.literal("set_instance_schematic_name"),
   instanceId: StableIdSchema,
   content: RichTextDocumentSchema,
+});
+/**
+ * Set, update, or clear per-instance color overrides.
+ *
+ * - `styleOverride.foreground` / `styleOverride.background`: hex color strings (`#RRGGBB`).
+ * - A non-null object replaces the current override as a whole.
+ * - `styleOverride` set to `null` clears all instance style overrides.
+ */
+export const SetInstanceStyleOverrideEditSchema = z.strictObject({
+  kind: z.literal("set_instance_style_override"),
+  instanceId: StableIdSchema,
+  styleOverride: InstanceStyleOverrideSchema.nullable(),
 });
 export const SetInstanceBindingEditSchema = z.strictObject({
   kind: z.literal("set_instance_binding"),
@@ -370,6 +383,7 @@ export const SchematicEditSchema = z.discriminatedUnion("kind", [
   SetInstanceReferenceEditSchema,
   SetInstanceSchematicReferenceEditSchema,
   SetInstanceSchematicNameEditSchema,
+  SetInstanceStyleOverrideEditSchema,
   SetInstanceBindingEditSchema,
   SetInstanceNetlistEditSchema,
   BulkPatchInstanceNetlistEditSchema,

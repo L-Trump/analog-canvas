@@ -30,6 +30,7 @@ import { applyCellResetEdit } from "./transaction-cell-reset.js";
 import { applyCellInterfaceEdit } from "./transaction-cell-interface.js";
 import { applyInstanceLifecycleEdit } from "./transaction-instance-lifecycle.js";
 import { applyInstanceNetlistEdit } from "./transaction-instance-netlist.js";
+import { applyInstanceStyleOverrideEdit } from "./transaction-instance-style.js";
 import { applyInstanceTransformEdit } from "./transaction-instance-transform.js";
 import { applyMosBulkEdit } from "./transaction-mos-bulk.js";
 import { applyNetPowerEdit } from "./transaction-net-power.js";
@@ -255,6 +256,15 @@ export function executeTransaction(
         const outcome = applyInstanceTransformEdit(edit, {
           draft,
           resolver,
+          changedObjectIds,
+          reject: rejectAt,
+        });
+        if (!outcome.ok) return outcome.rejection;
+        break;
+      }
+      case "set_instance_style_override": {
+        const outcome = applyInstanceStyleOverrideEdit(edit, {
+          draft,
           changedObjectIds,
           reject: rejectAt,
         });

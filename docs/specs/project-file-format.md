@@ -8,11 +8,11 @@ Primary owners: `packages/model` (current shape) and
 `packages/project-protocol` (file boundary)
 
 An `.icproj.json` file is canonical JSON for one complete `CircuitProject`.
-`@icm/project-protocol` exposes `parseProject`. It accepts schemas 27 and 28,
-accepts schema 28 unchanged (schema 29 only relaxes annotation and drafting
-anchors to 1-unit precision), supplies only schema 29 in memory, and writes
-only schema 29. Older project files are
-rejected.
+`@icm/project-protocol` exposes `parseProject`. It accepts schemas 28 and 29.
+Schema 29 relaxes annotation and drafting anchors to 1-unit precision and adds
+optional per-instance appearance overrides; both changes are backward-compatible,
+so schema 28 upgrades by a version stamp. The protocol supplies only schema 29
+in memory and writes only schema 29. Older project files are rejected.
 
 ## Current authorities
 
@@ -75,7 +75,7 @@ after explicit human approval in the editor.
 A migrated imported file is marked dirty. The editor never overwrites a source
 selected through the browser file input; the user may Save it as a Cloud
 Project or explicitly export upgraded bytes. Browser recovery records may be
-canonicalized to v28 only after a successful validated write.
+canonicalized to v29 only after a successful validated write.
 
 Project entry does not repair duplicate canonical supply Nets (`0` or `VDD`).
 Duplicate folded Net names are invalid input and remain a blocking diagnostic

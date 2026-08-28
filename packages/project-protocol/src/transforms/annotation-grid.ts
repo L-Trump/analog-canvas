@@ -2,8 +2,9 @@ import { CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
 
 export interface Schema28To29MigrationReport {
   /**
-   * Schema 29 relaxes annotation and drafting anchors from Document-grid
-   * alignment to 1-unit integer precision; existing data is unchanged.
+   * Schema 29 relaxes annotation and drafting anchors to 1-unit precision and
+   * adds optional per-instance appearance overrides. Existing data is
+   * unchanged because both changes are backward-compatible.
    */
   readonly changed: false;
 }
@@ -14,7 +15,8 @@ export interface Schema28To29MigrationResult {
 }
 
 /**
- * Upgrade schema 28 to 29. The change is a validation relaxation only, so
+ * Upgrade schema 28 to 29. Fine-grid annotation/drafting coordinates are a
+ * validation relaxation, and instance appearance overrides are optional, so
  * every valid schema-28 project is already valid schema-29 data.
  */
 export function upgradeSchema28To29WithReport(

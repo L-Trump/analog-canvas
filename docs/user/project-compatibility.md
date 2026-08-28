@@ -16,15 +16,18 @@ and are grouped only by the read-only formal interface projection. Drafting
 text may also carry one of three polarity-label forms while its editable RichText
 content remains independent from the fixed vector marks. Annotations and
 drafting objects position at 1-unit integer precision, while Instance
-placements, route bends, and Junctions stay aligned to the Document grid. A
-canonical v29 file can be opened, saved, reopened, and saved again without
+placements, route bends, and Junctions stay aligned to the Document grid. An
+Instance may carry an optional `styleOverride` with independent foreground and
+background colors; when absent, document style defaults remain authoritative.
+A canonical v29 file can be opened, saved, reopened, and saved again without
 byte drift.
 
-Schema v28 is accepted through a bounded upgrade to v29. The change is a
-validation relaxation only, so the upgrade preserves all existing circuit and
-drafting content and stamps the current version. The next save writes v29. The
-original file is never overwritten silently. Schema v27 and older, and versions
-newer than v29, are rejected by the interactive project-file boundary.
+Schema v28 is accepted through a bounded upgrade to v29. Fine-grid annotation
+and drafting coordinates are a validation relaxation, and instance style is
+optional, so the upgrade preserves all existing circuit and drawing content
+and stamps the current version. The next save writes v29. The original file is
+never overwritten silently. Schema v27 and older, and versions newer than v29,
+are rejected by the interactive project-file boundary.
 
 The canonical-current corpus at
 [`fixtures/projects/compatibility-corpus.json`](../../fixtures/projects/compatibility-corpus.json)

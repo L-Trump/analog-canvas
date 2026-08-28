@@ -346,7 +346,7 @@ describe("Project persistence", () => {
 
   it("rejects schemas outside the current-and-previous window", () => {
     const project = createEmptyProject("project-test", "Test Project");
-    for (const schemaVersion of [23, 24, 25, 30, 99]) {
+    for (const schemaVersion of [23, 24, 25, 26, 27, 30, 99]) {
       expect(() =>
         parseProject(JSON.stringify({ ...project, schemaVersion })),
       ).toThrow(/must be 28 or 29/);

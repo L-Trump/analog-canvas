@@ -10,6 +10,7 @@ import {
 import { ComponentIdentityProperties } from "../features/properties/component-identity-properties";
 import { ComponentElectricalProperties } from "../features/properties/component-electrical-properties";
 import { ComponentPlacementProperties } from "../features/properties/component-placement-properties";
+import { ComponentStyleProperties } from "../features/properties/component-style-properties";
 import { DraftingPropertiesPanel } from "../features/drafting/drafting-properties-panel";
 import {
   AnnotationActionsSection,
@@ -31,6 +32,7 @@ interface ComponentPropertiesModel {
   cellSymbolLayout: ComponentProps<typeof CellSymbolLayoutProperties> | null;
   identity: ComponentProps<typeof ComponentIdentityProperties>;
   electrical: ComponentProps<typeof ComponentElectricalProperties>;
+  style: ComponentProps<typeof ComponentStyleProperties>;
   placement: ComponentProps<typeof ComponentPlacementProperties>;
 }
 
@@ -139,6 +141,7 @@ export function EditorPropertiesDock({
               ) : null}
               <ComponentIdentityProperties {...component.identity} />
               <ComponentElectricalProperties {...component.electrical} />
+              <ComponentStyleProperties {...component.style} />
               <ComponentPlacementProperties {...component.placement} />
             </section>
           ) : null}

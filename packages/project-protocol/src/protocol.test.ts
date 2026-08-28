@@ -40,7 +40,7 @@ describe("Project protocol boundary", () => {
     ) as Record<string, unknown>;
     expect(
       tryParseProjectWithMetadata(
-        JSON.stringify({ ...current, schemaVersion: 24 }),
+        JSON.stringify({ ...current, schemaVersion: 25 }),
       ),
     ).toMatchObject({
       ok: false,
