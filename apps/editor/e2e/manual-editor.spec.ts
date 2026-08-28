@@ -30,6 +30,17 @@ function markRoutingDemoNetsImported(
   }
 }
 
+test("keeps digital timing controls out of the editor GUI", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+
+  await expect(page.getByRole("button", { name: "Timing" })).toHaveCount(0);
+  await expect(
+    page.getByLabel("Place Pulse Voltage Source", { exact: true }),
+  ).toHaveCount(0);
+});
+
 test("opens netlist preflight and navigates its canonical finding", async ({
   page,
 }) => {

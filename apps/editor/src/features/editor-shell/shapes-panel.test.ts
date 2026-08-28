@@ -67,6 +67,7 @@ describe("shapes quick-place", () => {
     expect(markup.match(/class="shapes-category" open=""/g)).toHaveLength(9);
     expect(markup.match(/class="shapes-category-header"/g)).toHaveLength(9);
     expect(markup).toContain('aria-label="Place Independent Voltage Source"');
+    expect(markup).not.toContain('aria-label="Place Pulse Voltage Source"');
     expect(markup).toContain('title="Place Capacitor"');
     expect(markup).toContain('aria-label="Place Variable Resistor"');
     expect(markup).toContain('aria-label="Place Inverter"');

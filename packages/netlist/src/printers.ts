@@ -32,6 +32,20 @@ function assignments(
     .map((item) => `${item.name}=${item.rawValue}`);
 }
 
+const PULSE_PARAMETER_NAMES = [
+  "low",
+  "high",
+  "delay",
+  "rise",
+  "fall",
+  "width",
+  "period",
+] as const;
+
+function isPulseSource(instance: DesignNetlistInstance): boolean {
+  return parameter(instance.parameters, "period") !== undefined;
+}
+
 function wrapSpice(tokens: readonly string[], width = 100): string[] {
   const lines: string[] = [];
   let line = "";
@@ -63,6 +77,23 @@ function spiceInstance(instance: DesignNetlistInstance): string[] {
       ];
       break;
     case "voltage-source":
+      tokens = isPulseSource(instance)
+        ? [
+            instance.reference,
+            ...nodes,
+            `PULSE(${PULSE_PARAMETER_NAMES.map((name) =>
+              parameter(instance.parameters, name)!,
+            ).join(" ")})`,
+            ...assignments(instance.parameters, PULSE_PARAMETER_NAMES),
+          ]
+        : [
+            instance.reference,
+            ...nodes,
+            "DC",
+            parameter(instance.parameters, "dc")!,
+            ...assignments(instance.parameters, ["dc"]),
+          ];
+      break;
     case "current-source":
       tokens = [
         instance.reference,
@@ -155,10 +186,20 @@ function spectreInstance(instance: DesignNetlistInstance): string {
       break;
     case "voltage-source":
       master = "vsource";
-      values = [
-        `dc=${parameter(instance.parameters, "dc")!}`,
-        ...assignments(instance.parameters, ["dc"]),
-      ];
+      values = isPulseSource(instance)
+        ? [
+            "type=pulse",
+            `val0=${parameter(instance.parameters, "low")!}`,
+            `val1=${parameter(instance.parameters, "high")!}`,
+            ...PULSE_PARAMETER_NAMES.slice(2).map(
+              (name) => `${name}=${parameter(instance.parameters, name)!}`,
+            ),
+            ...assignments(instance.parameters, PULSE_PARAMETER_NAMES),
+          ]
+        : [
+            `dc=${parameter(instance.parameters, "dc")!}`,
+            ...assignments(instance.parameters, ["dc"]),
+          ];
       break;
     case "current-source":
       master = "isource";

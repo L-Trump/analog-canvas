@@ -94,7 +94,11 @@ export function symbolCategory(symbolId: string): string {
   ) {
     return "Logic Gates";
   }
-  if (["voltage-source", "current-source"].includes(symbolId)) {
+  if (
+    ["voltage-source", "pulse-voltage-source", "current-source"].includes(
+      symbolId,
+    )
+  ) {
     return "Sources";
   }
   if (["ideal-switch", "closed-switch"].includes(symbolId)) {
@@ -125,6 +129,8 @@ const LIBRARY_DESCRIPTIONS: Readonly<Record<string, string>> = {
   "port-filled": "An independent Cell Pin with a solid appearance",
 };
 
+const HIDDEN_PALETTE_SYMBOL_IDS = new Set(["pulse-voltage-source"]);
+
 export function libraryDisplayName(symbolId: string, fallback: string): string {
   return LIBRARY_DISPLAY_NAMES[symbolId] ?? fallback;
 }
@@ -139,7 +145,7 @@ export function paletteSymbols(_styleProfileId: string): SymbolDefinition[] {
     ...razaviProductSymbols,
     ...annotationPreviewSymbols,
     ...expandedDeviceSymbols,
-  ];
+  ].filter((symbol) => !HIDDEN_PALETTE_SYMBOL_IDS.has(symbol.id));
 }
 
 /**

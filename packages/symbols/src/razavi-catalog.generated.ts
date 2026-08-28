@@ -1120,6 +1120,41 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
     },
   },
   {
+    symbolId: "pulse-voltage-source",
+    name: "Pulse Voltage Source",
+    category: "source",
+    reviewStatus: "reviewed",
+    pinOrder: ["+", "-"],
+    palette: true,
+    automaticMappings: [],
+    manualOnlyReason:
+      "Pulse semantics require authored timing parameters and must not replace imported DC voltage sources automatically.",
+    assetPath: "pulse-voltage-source.symbol.json",
+    assetHash:
+      "6fd7e349e50a2661f602077753387f6d865b84b4d03360027c16f7116976df29",
+    visualAuthority: {
+      kind: "razavi-reference-v1",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePaths: [
+        "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+        "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-vector-source.json",
+        "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-reference.png",
+      ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/peripheral-geometry.json",
+    },
+    generation: {
+      kind: "razavi-pdf-vector-reference",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePath:
+        "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-vector-source.json",
+      converterPath: "scripts/generate-razavi-peripheral-assets.mjs",
+      converterVersion: 2,
+    },
+  },
+  {
     symbolId: "voltage-source",
     name: "Independent Voltage Source",
     category: "source",
@@ -6376,6 +6411,173 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         to: {
           x: 40,
           y: 0,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+    ],
+    variants: [],
+  },
+  {
+    schemaVersion: 1,
+    id: "pulse-voltage-source",
+    name: "Pulse Voltage Source",
+    viewBox: {
+      x: -24,
+      y: -24,
+      width: 39,
+      height: 48,
+    },
+    pins: [
+      {
+        name: "+",
+        role: "positive",
+        at: {
+          x: 0,
+          y: -20,
+        },
+        direction: "north",
+        presentation: {
+          visibility: "visible",
+          leadLength: 10,
+        },
+      },
+      {
+        name: "-",
+        role: "negative",
+        at: {
+          x: 0,
+          y: 20,
+        },
+        direction: "south",
+        presentation: {
+          visibility: "visible",
+          leadLength: 10,
+        },
+      },
+    ],
+    primitives: [
+      {
+        kind: "circle",
+        center: {
+          x: 0,
+          y: 0,
+        },
+        radius: 10.755814,
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: -7,
+          y: 4,
+        },
+        to: {
+          x: -4,
+          y: 4,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: -4,
+          y: 4,
+        },
+        to: {
+          x: -4,
+          y: -4,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: -4,
+          y: -4,
+        },
+        to: {
+          x: 4,
+          y: -4,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 4,
+          y: -4,
+        },
+        to: {
+          x: 4,
+          y: 4,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 4,
+          y: 4,
+        },
+        to: {
+          x: 7,
+          y: 4,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 0,
+          y: -10.755814,
+        },
+        to: {
+          x: 0,
+          y: -20,
+        },
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+      {
+        kind: "line",
+        from: {
+          x: 0,
+          y: 10.755814,
+        },
+        to: {
+          x: 0,
+          y: 20,
         },
         style: {
           strokeRole: "normal",

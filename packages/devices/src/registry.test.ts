@@ -122,6 +122,24 @@ describe("built-in device registry", () => {
     });
   });
 
+  it("defines a complete two-terminal Pulse Source protocol", () => {
+    expect(deviceDescriptor("pulse-voltage-source")).toMatchObject({
+      deviceClass: "voltage-source",
+      referencePrefix: "V",
+      pinOrder: ["+", "-"],
+      targetPolicy: "builtin",
+      parameters: [
+        { name: "low", defaultValue: "0" },
+        { name: "high", defaultValue: "1" },
+        { name: "delay", defaultValue: "1ns" },
+        { name: "rise", defaultValue: "1ps" },
+        { name: "fall", defaultValue: "1ps" },
+        { name: "width", defaultValue: "5ns" },
+        { name: "period", defaultValue: "10ns" },
+      ],
+    });
+  });
+
   it("rejects descriptor capability claims that would change device meaning", () => {
     const nmos = deviceDescriptor("nmos");
     expect(nmos).toBeDefined();

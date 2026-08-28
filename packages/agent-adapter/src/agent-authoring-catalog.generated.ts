@@ -834,6 +834,28 @@ export const agentRazaviAuthoringCatalog = {
       variants: [],
     },
     {
+      symbolId: "pulse-voltage-source",
+      name: "Pulse Voltage Source",
+      category: "source",
+      defaultVariantId: null,
+      labelVisibility: "shown",
+      pins: [
+        {
+          name: "+",
+          role: "positive",
+          direction: "north",
+          visibility: "visible",
+        },
+        {
+          name: "-",
+          role: "negative",
+          direction: "south",
+          visibility: "visible",
+        },
+      ],
+      variants: [],
+    },
+    {
       symbolId: "voltage-source",
       name: "Independent Voltage Source",
       category: "source",
