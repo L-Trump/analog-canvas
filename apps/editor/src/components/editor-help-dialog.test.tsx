@@ -59,5 +59,7 @@ describe("EditorHelpDialog", () => {
     expect(markup).toContain("Select a hierarchical block");
     expect(markup).not.toContain("Select a rectangle");
     expect(markup).not.toContain("convert it into a hierarchical block");
+    expect(markup).toContain("Cell and <strong>Place Cell</strong>");
+    expect(markup).toContain("Up</strong> or <kbd>Shift+E</kbd>");
   });
 });
