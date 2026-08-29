@@ -355,9 +355,29 @@ export function renderVisiblePinNames(
         definition.hierarchicalBlock && outward.y !== 0
           ? hierarchyVerticalPinNameInset
           : 0;
+      // SVG text y is a baseline, not an ink edge. Keep the established
+      // baseline correction, then move non-hierarchical north/south labels
+      // inward by a font-relative cap-height margin. This keeps both rows of
+      // a quarter-turned DFF clear of the body without pretending symmetric
+      // baselines have symmetric glyph bounds.
+      const pinFontSize =
+        schematicTextFontSize("pin-name", profile) *
+        (pin.presentation.textSizeScale ?? 1);
+      const verticalInkInset =
+        !definition.hierarchicalBlock && outward.y !== 0
+          ? pinFontSize * 0.3
+          : 0;
+      // An overbar extends above the glyph box reported for the label. When a
+      // complemented output is on a north-facing edge, that decoration faces
+      // the body border, so reserve its own cap-height clearance instead of
+      // treating Q and Q-bar as having identical ink bounds.
+      const outwardOverbarInset =
+        pin.role === "output-complement" && outward.y < 0
+          ? pinFontSize * 0.16
+          : 0;
       const y =
         anchor.y -
-        outward.y * distance +
+        outward.y * (distance + verticalInkInset + outwardOverbarInset) +
         4 -
         outward.y * hierarchyVerticalInset;
       const alignment =
@@ -368,23 +388,33 @@ export function renderVisiblePinNames(
         pin.presentation.textSizeScale,
       );
       const displayName = pin.presentation.displayName ?? pin.name;
-      const content = definition.hierarchicalBlock
+      const mathSymbolRuns: RichTextRun[] = [
+        {
+          kind: "span",
+          style: "italic",
+          children: [
+            {
+              kind: "span",
+              style: "bold",
+              children: [{ kind: "text", value: displayName }],
+            },
+          ],
+        },
+      ];
+      const content: RichTextDocument = definition.hierarchicalBlock
         ? semanticTextDocument(displayName, "formal-port")
         : pin.presentation.textStyle === "math-symbol"
           ? {
-              runs: [
-                {
-                  kind: "span" as const,
-                  style: "italic" as const,
-                  children: [
-                    {
-                      kind: "span" as const,
-                      style: "bold" as const,
-                      children: [{ kind: "text" as const, value: displayName }],
-                    },
-                  ],
-                },
-              ],
+              runs:
+                pin.role === "output-complement"
+                  ? [
+                      {
+                        kind: "span",
+                        style: "overbar",
+                        children: mathSymbolRuns,
+                      },
+                    ]
+                  : mathSymbolRuns,
             }
           : { runs: [{ kind: "text" as const, value: displayName }] };
       const colorStyle = foregroundOverride
