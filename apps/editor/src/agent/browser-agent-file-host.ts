@@ -9,10 +9,6 @@ import {
   type AgentFileResourceResponse,
 } from "@icm/agent-adapter";
 import { createFormalExportSource } from "@icm/exporters";
-import {
-  exportFormalArtifactsInBrowser,
-  rasterizeFormalSvgInBrowser,
-} from "@icm/exporters/browser";
 import { parseProject, serializeProject } from "@icm/project-protocol";
 import type { CircuitProject, SchematicDocument } from "@icm/model";
 import { importSpiceSources } from "@icm/spice";
@@ -153,12 +149,18 @@ export class BrowserAgentFileHost {
           "DOCUMENT_NOT_FOUND",
           "Document is not present in this Project",
         );
-      await prepareDocumentFormulaArtifacts(document);
-      const source = createFormalExportSource(
-        document,
-        this.options.getResolver(),
-        { title: this.options.getProject().name },
-      );
+      const prepared = await prepareDocumentFormulaArtifacts(document);
+      const source = (() => {
+        try {
+          return createFormalExportSource(
+            document,
+            this.options.getResolver(),
+            { title: this.options.getProject().name },
+          );
+        } finally {
+          prepared.release();
+        }
+      })();
       if (request.artifact === "svg") {
         return this.artifactResponse(
           request,
@@ -168,6 +170,8 @@ export class BrowserAgentFileHost {
         );
       }
       if (request.artifact === "png") {
+        const { rasterizeFormalSvgInBrowser } =
+          await import("@icm/exporters/browser-raster");
         const png = await rasterizeFormalSvgInBrowser(source);
         return this.artifactResponse(
           request,
@@ -176,7 +180,9 @@ export class BrowserAgentFileHost {
           png.bytes,
         );
       }
-      const { pdf } = await exportFormalArtifactsInBrowser(source);
+      const { vectorizeFormalSvgInBrowser } =
+        await import("@icm/exporters/browser-pdf");
+      const pdf = await vectorizeFormalSvgInBrowser(source);
       return this.artifactResponse(
         request,
         "schematic.pdf",

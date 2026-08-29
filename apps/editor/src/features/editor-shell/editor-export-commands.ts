@@ -12,6 +12,21 @@ export interface EditorExportArtifact {
   report: string;
 }
 
+async function preparedFormalExportSource(
+  document: SchematicDocument,
+  resolver: SymbolResolver,
+  projectName: string,
+) {
+  const prepared = await prepareDocumentFormulaArtifacts(document);
+  try {
+    return createFormalExportSource(document, resolver, {
+      title: projectName,
+    });
+  } finally {
+    prepared.release();
+  }
+}
+
 export type DesignNetlistExportPlan =
   | { status: "blocked"; message: string }
   | { status: "ready"; artifact: EditorExportArtifact };
@@ -21,10 +36,11 @@ export async function createSvgExportArtifact(
   resolver: SymbolResolver,
   projectName: string,
 ): Promise<EditorExportArtifact> {
-  await prepareDocumentFormulaArtifacts(document);
-  const source = createFormalExportSource(document, resolver, {
-    title: projectName,
-  });
+  const source = await preparedFormalExportSource(
+    document,
+    resolver,
+    projectName,
+  );
   return {
     bytes: source.svg,
     mediaType: "image/svg+xml",
@@ -76,13 +92,14 @@ export async function createVisualExportArtifact(
   resolver: SymbolResolver,
   projectName: string,
 ): Promise<EditorExportArtifact> {
-  const { exportFormalArtifactsInBrowser, rasterizeFormalSvgInBrowser } =
-    await import("@icm/exporters/browser");
-  await prepareDocumentFormulaArtifacts(document);
-  const source = createFormalExportSource(document, resolver, {
-    title: projectName,
-  });
+  const source = await preparedFormalExportSource(
+    document,
+    resolver,
+    projectName,
+  );
   if (format === "png") {
+    const { rasterizeFormalSvgInBrowser } =
+      await import("@icm/exporters/browser-raster");
     const png = await rasterizeFormalSvgInBrowser(source);
     return {
       bytes: png.bytes as BlobPart,
@@ -91,7 +108,9 @@ export async function createVisualExportArtifact(
       report: `Exported PNG revision ${document.revision}`,
     };
   }
-  const { pdf } = await exportFormalArtifactsInBrowser(source);
+  const { vectorizeFormalSvgInBrowser } =
+    await import("@icm/exporters/browser-pdf");
+  const pdf = await vectorizeFormalSvgInBrowser(source);
   return {
     bytes: pdf as BlobPart,
     mediaType: "application/pdf",

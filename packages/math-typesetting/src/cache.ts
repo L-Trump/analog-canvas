@@ -1,3 +1,4 @@
+import { BoundedLruCache } from "./bounded-lru.js";
 import {
   ANALOG_CANVAS_MATH_PROFILE_ID,
   validateFormulaSource,
@@ -64,8 +65,62 @@ export function validateFormulaRequest(
   return validateFormulaSource(request.latex);
 }
 
-const artifacts = new Map<string, FormulaTypesetResult>();
+const FORMULA_ARTIFACT_CACHE_MAX_ENTRIES = 128;
+const FORMULA_ARTIFACT_CACHE_MAX_BYTES = 16 * 1024 * 1024;
+
+function formulaResultBytes(key: string, result: FormulaTypesetResult): number {
+  const fixedObjectEstimate = 128;
+  if (result.ok) {
+    return (
+      fixedObjectEstimate +
+      2 *
+        (key.length +
+          result.artifact.sourceHash.length +
+          result.artifact.svg.length)
+    );
+  }
+  return (
+    fixedObjectEstimate +
+    2 *
+      (key.length +
+        result.diagnostic.message.length +
+        (result.diagnostic.command?.length ?? 0))
+  );
+}
+
+const artifacts = new BoundedLruCache<string, FormulaTypesetResult>({
+  maxEntries: FORMULA_ARTIFACT_CACHE_MAX_ENTRIES,
+  maxBytes: FORMULA_ARTIFACT_CACHE_MAX_BYTES,
+  sizeOf: formulaResultBytes,
+});
 const pending = new Map<string, Promise<FormulaTypesetResult>>();
+const retentionOwners = new Map<number, Set<string>>();
+let retentionOwnerCounter = 0;
+
+function synchronizeRetainedFormulaKeys(): void {
+  artifacts.replaceProtectedKeys(
+    [...retentionOwners.values()].flatMap((keys) => [...keys]),
+  );
+}
+
+/** Protects one active render/export working set from background LRU eviction. */
+export function retainFormulaArtifacts(
+  requests: readonly FormulaRequest[],
+): () => void {
+  const owner = ++retentionOwnerCounter;
+  retentionOwners.set(
+    owner,
+    new Set(requests.map((request) => formulaSourceHash(request))),
+  );
+  synchronizeRetainedFormulaKeys();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    retentionOwners.delete(owner);
+    synchronizeRetainedFormulaKeys();
+  };
+}
 
 export function cachedFormulaResult(
   request: FormulaRequest,
@@ -86,14 +141,15 @@ export async function prepareFormula(
     .then(({ typesetFormulaSync }) => typesetFormulaSync(request))
     .then((result) => {
       artifacts.set(key, result);
-      pending.delete(key);
       return result;
-    });
+    })
+    .finally(() => pending.delete(key));
   pending.set(key, task);
   return task;
 }
 
 export function clearFormulaArtifactCacheForTests(): void {
+  retentionOwners.clear();
   artifacts.clear();
   pending.clear();
 }
