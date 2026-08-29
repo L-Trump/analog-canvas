@@ -31,6 +31,7 @@ import { applyCellResetEdit } from "./transaction-cell-reset.js";
 import { applyCellInterfaceEdit } from "./transaction-cell-interface.js";
 import { applyInstanceLifecycleEdit } from "./transaction-instance-lifecycle.js";
 import { applyInstanceNetlistEdit } from "./transaction-instance-netlist.js";
+import { applyInstanceSignalFlowEdit } from "./transaction-instance-signal-flow.js";
 import { applyInstanceStyleOverrideEdit } from "./transaction-instance-style.js";
 import { applyInstanceTransformEdit } from "./transaction-instance-transform.js";
 import { applyMosBulkEdit } from "./transaction-mos-bulk.js";
@@ -274,6 +275,17 @@ export function executeTransaction(
           reject: rejectAt,
         });
         if (!outcome.ok) return outcome.rejection;
+        break;
+      }
+      case "set_instance_signal_flow_parameters": {
+        const outcome = applyInstanceSignalFlowEdit(edit, {
+          draft,
+          changedObjectIds,
+          resolver,
+          reject: rejectAt,
+        });
+        if (!outcome.ok) return outcome.rejection;
+        geometryChanged ||= outcome.geometryChanged ?? false;
         break;
       }
       case "patch_instance_netlist_parameters":

@@ -21,6 +21,7 @@ const PRODUCT_IDS = [
   "multiplier",
   "integrator",
   "unit-delay",
+  "discrete-time-integrator",
   "quantizer",
   "diode",
   "ground",

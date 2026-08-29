@@ -23,6 +23,53 @@
       "path": "vdd-reference.png",
       "sha256": "fae2ed83a534e62bfdb9f0f7cef97892ef46fa8630be481ad1d8a83611361f84",
       "scope": ["VDD supply marker geometry"]
+    },
+    {
+      "path": "delta-sigma-figure-21-38-reference.png",
+      "sha256": "88adc1f13614d2928e6a6b08116e9c57c0006b685671c8538ca79c683c38e72f",
+      "scope": [
+        "user-supplied raster witness for Figure 21.38 Delta-Sigma loop geometry"
+      ],
+      "source": {
+        "kind": "user-supplied-raster-witness",
+        "title": "Analysis and Design of Data Converters",
+        "figure": "21.38",
+        "provenance": "user-supplied screenshot; the available 100-page PDF copy excludes Chapter 21",
+        "sourceFileName": "figure-2-razavi.png",
+        "sourceSha256": "d328e1aafa7ae0b57bbfe9d0fba9c3d7e0b662079f3b77b4c35518c82bf0b9bd",
+        "sourcePixels": {
+          "width": 936,
+          "height": 624
+        },
+        "sourceCropPx": [306, 102, 382, 150]
+      }
+    },
+    {
+      "path": "delta-sigma-figure-21-33-reference.png",
+      "sha256": "dc3fd08dc3eb2aac6842f32016ecc0f0d7d77db137af2530e192e19f5c43d1a5",
+      "scope": [
+        "user-supplied raster witness for Figure 21.33 discrete-time integrator geometry"
+      ],
+      "source": {
+        "kind": "user-supplied-raster-witness",
+        "title": "Analysis and Design of Data Converters",
+        "figure": "21.33",
+        "provenance": "user-supplied screenshot; the available 100-page PDF copy excludes Chapter 21",
+        "sourceFileName": "figure-3-formula.png",
+        "sourceSha256": "cf02dea357a9f65be37931b181c265b721424d8cca3d1202943c6b4248e7e780",
+        "sourcePixels": {
+          "width": 654,
+          "height": 206
+        },
+        "sourceCropPx": [279, 34, 298, 121],
+        "sourceOverlayExclusionPx": {
+          "left": 137,
+          "top": 0,
+          "right": 152,
+          "bottom": 32,
+          "reason": "removes the non-source red annotation arrow while retaining the printed figure"
+        }
+      }
     }
   ],
   "vectorEvidence": [
@@ -400,7 +447,7 @@
   "delayCellGeometryPath": "delay-cell-geometry.json",
   "delayCellGeometrySha256": "b64afe75141020b265bc7826a1c21fa5f13cb9f898e9e6bc013f1e0ef3f84985",
   "fidelityTargetsPath": "fidelity-targets.json",
-  "fidelityTargetsSha256": "6e01aec78e60da326a0b16342ea5e3669a84955aa6c740e0b028ef5bb269d63d",
+  "fidelityTargetsSha256": "d4664d4ae969238cdd0b9c878499a364c63de10f8ebc76290f53ec36b317b2a1",
   "pixels": {
     "width": 1204,
     "height": 794
@@ -432,5 +479,7 @@
     "The pulse source combines the existing independent voltage-source body with the Figure 16.8 square-step presentation; the PDF figure does not define the source's electrical contract.",
     "Figure 20.54 is visual evidence for waveform presentation only; simulation semantics remain product-owned.",
     "Visio/VSS may establish legacy pin semantics but must not determine visual geometry."
-  ]
+  ],
+  "deltaSigmaGeometryPath": "delta-sigma-geometry.json",
+  "deltaSigmaGeometrySha256": "3950498b6a74dbdcaca44a9bd62748924ec7fe1ecf6c72116c94123966aa4aa9"
 }

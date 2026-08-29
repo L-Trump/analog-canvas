@@ -1,5 +1,8 @@
 import { razaviTextbookProfile } from "@icm/derived";
-import { renderSymbolDefinitionBody } from "@icm/render-svg";
+import {
+  renderSignalFlowFormula,
+  renderSymbolDefinitionBody,
+} from "@icm/render-svg";
 import type { SymbolDefinition } from "@icm/symbols";
 
 import { defaultRazaviSymbolVariantId } from "../../presentation/razavi-presentation";
@@ -39,6 +42,11 @@ export function ComponentPlacementPreview({
     rotation,
     mirror,
   );
+  const formula = renderSignalFlowFormula(
+    definition.formulaPresentation,
+    undefined,
+    { foreground: "currentColor", profile: razaviTextbookProfile },
+  );
 
   return (
     <>
@@ -52,11 +60,12 @@ export function ComponentPlacementPreview({
         strokeLinecap="square"
         strokeLinejoin="miter"
         dangerouslySetInnerHTML={{
-          __html: renderSymbolDefinitionBody(
-            definition,
-            variant?.hiddenPrimitiveParts,
-            variant?.additionalPrimitives,
-          ),
+          __html:
+            renderSymbolDefinitionBody(
+              definition,
+              variant?.hiddenPrimitiveParts,
+              variant?.additionalPrimitives,
+            ) + formula,
         }}
       />
       {pinNames ? (

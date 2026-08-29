@@ -26,6 +26,16 @@ function pinNameY(markup: string, pinName: string): number {
 
 describe("SymbolArtwork pin-name previews", () => {
   const dff = requireRazaviCatalogSymbol("d-flip-flop");
+  const formulaSymbol = [
+    "adder",
+    "multiplier",
+    "integrator",
+    "unit-delay",
+    "discrete-time-integrator",
+    "quantizer",
+  ]
+    .map((id) => requireRazaviCatalogSymbol(id))
+    .find((symbol) => symbol.formulaPresentation);
 
   it("renders DFF pin names in the Library and Insert artwork", () => {
     const markup = renderToStaticMarkup(
@@ -33,6 +43,32 @@ describe("SymbolArtwork pin-name previews", () => {
     );
 
     expectDffPinNames(markup);
+  });
+
+  it("renders a definition-owned default formula in Library and placement previews", () => {
+    expect(formulaSymbol).toBeDefined();
+    const symbol = formulaSymbol!;
+    const artwork = renderToStaticMarkup(
+      <SymbolArtwork symbol={symbol} className="test-artwork" />,
+    );
+    const placement = renderToStaticMarkup(
+      <svg>
+        <ComponentPlacementPreview
+          styleProfileId="razavi-textbook-v1"
+          symbolId={symbol.id}
+          symbol={symbol}
+          position={{ x: 100, y: 80 }}
+          rotation={90}
+          mirror="x"
+        />
+      </svg>,
+    );
+
+    expect(artwork).toContain('data-role="signal-flow-formula"');
+    expect(placement).toContain('data-role="signal-flow-formula"');
+    expect(placement).toContain(
+      'transform="translate(100 80) rotate(90) scale(-1 1)"',
+    );
   });
 
   it.each([0, 90, 180, 270] as const)(

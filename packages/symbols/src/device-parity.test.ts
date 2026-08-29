@@ -64,6 +64,12 @@ describe("built-in device/Symbol parity", () => {
       "closed-switch",
       "port",
       "port-filled",
+      "adder",
+      "multiplier",
+      "integrator",
+      "unit-delay",
+      "discrete-time-integrator",
+      "quantizer",
     ]) {
       expect(deviceDescriptor(symbolId)).toBeUndefined();
     }

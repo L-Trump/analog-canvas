@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createEmptyProject, CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
+import { createEmptyProject } from "@icm/model";
 
-import { parseProjectWithMetadata } from "./load.js";
 import { serializeProject } from "./save.js";
 import {
   upgradeSchema29To30,
@@ -18,23 +17,21 @@ describe("schema 29 to 30 migration (formula RichText)", () => {
 
     expect(upgradeSchema29To30(previous)).toEqual({
       ...previous,
-      schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION,
+      schemaVersion: 30,
     });
     expect(upgradeSchema29To30WithReport(previous).report).toEqual({
       changed: false,
     });
   });
 
-  it("loads a schema-29 project into the schema-30 runtime", () => {
-    const current = JSON.parse(
-      serializeProject(createEmptyProject("formula", "Formula")),
-    ) as Record<string, unknown>;
-    const result = parseProjectWithMetadata(
-      JSON.stringify({ ...current, schemaVersion: 29 }),
-    );
-
-    expect(result.sourceSchemaVersion).toBe(29);
-    expect(result.migrated).toBe(true);
-    expect(result.project.schemaVersion).toBe(30);
+  it("remains a bounded historical adapter after the runtime advances", () => {
+    const result = upgradeSchema29To30({
+      schemaVersion: 29,
+      sentinel: { preserved: true },
+    });
+    expect(result).toEqual({
+      schemaVersion: 30,
+      sentinel: { preserved: true },
+    });
   });
 });

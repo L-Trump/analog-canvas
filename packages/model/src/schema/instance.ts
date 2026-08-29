@@ -34,6 +34,18 @@ export const InstanceStyleOverrideSchema = z.strictObject({
   foreground: HexColorSchema.optional(),
   background: HexColorSchema.optional(),
 });
+/**
+ * Optional schematic-only Signal Flow formula metadata. These parameters are
+ * independent from netlist/SPICE parameters and do not affect electrical
+ * connectivity or emitted device bindings.
+ */
+export const SignalFlowParametersSchema = z.strictObject({
+  formula: z.string().min(1).max(256).optional(),
+  coefficient: z.string().min(1).max(64).optional(),
+  /** User-authored minimum frame size; automatic content fit may exceed it. */
+  bodyWidth: z.number().int().min(20).max(1000).multipleOf(10).optional(),
+  bodyHeight: z.number().int().min(20).max(500).multipleOf(10).optional(),
+});
 export const TerminalRefSchema = z.strictObject({
   instanceId: StableIdSchema,
   pinName: z.string().min(1),
@@ -153,6 +165,12 @@ export const InstanceSchema = z
      * symbol artwork without hiding strokes.
      */
     styleOverride: InstanceStyleOverrideSchema.optional(),
+    /**
+     * Optional schematic-only Signal Flow metadata. It is presentation/dataflow
+     * intent only and is intentionally independent from emitted netlist
+     * parameters.
+     */
+    signalFlowParameters: SignalFlowParametersSchema.optional(),
   })
   .superRefine((instance, context) => {
     const terminals = instance.importProvenance?.terminalMapping;

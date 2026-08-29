@@ -283,6 +283,67 @@ export function isCanonicalInstanceLabel(
   );
 }
 
+/**
+ * Keep untouched machine-managed labels outside an adaptive presentation
+ * frame when formula text or an authored minimum size changes. User-moved
+ * labels retain their authored object-relative offsets.
+ */
+export function reflowCanonicalInstanceLabelsAfterPresentationChange(
+  draft: SchematicDocument,
+  before: SchematicDocument["instances"][number],
+  instanceId: string,
+  changedObjectIds: Set<string>,
+  resolver?: SymbolResolver,
+): void {
+  const instance = draft.instances.find(
+    (candidate) => candidate.id === instanceId,
+  );
+  if (!instance?.placement || !before.placement || !resolver) return;
+  const resolved = resolver.resolve(
+    instance.symbolId,
+    instance.symbolVariantId,
+  );
+  if (!resolved) return;
+  const profile = resolveDocumentStyleProfile(draft.presentation);
+  for (const annotation of draft.annotations) {
+    const slot = instanceAnnotationSlot(annotation);
+    if (
+      !slot ||
+      annotation.anchor.kind !== "object" ||
+      annotation.anchor.objectId !== instanceId ||
+      !isCanonicalInstanceLabel(
+        annotation,
+        before,
+        resolved,
+        draft,
+        before.placement.position,
+        before.placement,
+      )
+    ) {
+      continue;
+    }
+    const next = defaultInstanceLabelPlacement(
+      instance,
+      resolved,
+      profile,
+      draft.presentation.grid,
+      slot,
+    );
+    if (!next) continue;
+    annotation.anchor = {
+      ...annotation.anchor,
+      localOffset: {
+        x: next.position.x - instance.placement.position.x,
+        y: next.position.y - instance.placement.position.y,
+      },
+      fallbackPosition: next.position,
+    };
+    annotation.alignment = next.alignment;
+    annotation.rotation = 0;
+    changedObjectIds.add(annotation.id);
+  }
+}
+
 export function followAttachedAnnotations(
   draft: SchematicDocument,
   instanceId: string,
@@ -466,7 +527,7 @@ export function followAttachedAnnotations(
       );
       const localSide = inferInstanceLabelSide(
         slotLocal,
-        visibleSymbolInkBounds(resolved),
+        visibleSymbolInkBounds(resolved, instance.signalFlowParameters),
       );
       if (localSide) {
         try {

@@ -1,5 +1,6 @@
 import { razaviTextbookProfile } from "@icm/derived";
 import {
+  renderSignalFlowFormula,
   renderSymbolDefinitionBody,
   renderVisiblePinNames,
 } from "@icm/render-svg";
@@ -51,6 +52,14 @@ export function SymbolArtwork({
     variant?.hiddenPinNames ?? [],
     previewRotation,
   );
+  const formula = renderSignalFlowFormula(
+    symbol.formulaPresentation,
+    undefined,
+    {
+      foreground: "currentColor",
+      profile: razaviTextbookProfile,
+    },
+  );
   const { x, y, width, height } = symbol.viewBox;
   const padding = Math.max(width, height) * paddingRatio;
   const viewBox =
@@ -85,11 +94,12 @@ export function SymbolArtwork({
         strokeLinecap="square"
         strokeLinejoin="miter"
         dangerouslySetInnerHTML={{
-          __html: renderSymbolDefinitionBody(
-            symbol,
-            variant?.hiddenPrimitiveParts,
-            variant?.additionalPrimitives,
-          ),
+          __html:
+            renderSymbolDefinitionBody(
+              symbol,
+              variant?.hiddenPrimitiveParts,
+              variant?.additionalPrimitives,
+            ) + formula,
         }}
       />
       {pinNames ? (

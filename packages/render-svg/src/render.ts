@@ -41,7 +41,12 @@ import type {
   RouteEndpoint,
   SchematicDocument,
 } from "@icm/model";
+import {
+  resolveAdaptiveSignalFlowBlockLayout,
+  resolveSignalFlowPinAt,
+} from "@icm/symbols";
 import type {
+  SignalFlowLayoutParameters,
   SymbolDefinition,
   SymbolPrimitive,
   SymbolResolver,
@@ -54,6 +59,10 @@ import {
 import { renderPositionedOverbarScriptDocument } from "./positioned-rich-text.js";
 import { renderRichTextDocument } from "./rich-text.js";
 import { renderFormulaDocument } from "./formula.js";
+import {
+  renderSignalFlowFormula,
+  signalFlowFormulaLocalBounds,
+} from "./signal-flow-formula.js";
 
 export interface SvgRenderOptions {
   /** Explicit render crop is a caller-owned grid rectangle. */
@@ -263,7 +272,25 @@ export function renderSymbolDefinitionBody(
   additionalPrimitives: readonly SymbolPrimitive[] = [],
   profile: SchematicStyleProfile = razaviTextbookProfile,
   foregroundOverride?: string,
+  signalFlowParameters?: SignalFlowLayoutParameters,
 ): string {
+  const adaptive = resolveAdaptiveSignalFlowBlockLayout(
+    definition,
+    signalFlowParameters,
+  );
+  if (adaptive) {
+    const { body, pinSpan } = adaptive;
+    const center = definition.formulaPresentation!.center;
+    const left = center.x - pinSpan;
+    const right = center.x + pinSpan;
+    const bodyLeft = body.x;
+    const bodyRight = body.x + body.width;
+    return [
+      `<line data-part="input-a-lead" x1="${left}" y1="${center.y}" x2="${bodyLeft}" y2="${center.y}"/>`,
+      `<rect data-role="signal-flow-frame" data-part="body" x="${body.x}" y="${body.y}" width="${body.width}" height="${body.height}" fill="none" stroke-width="${profile.strokes.emphasis}" stroke-linecap="butt" stroke-linejoin="miter"/>`,
+      `<line data-part="output-y-lead" x1="${bodyRight}" y1="${center.y}" x2="${right}" y2="${center.y}"/>`,
+    ].join("");
+  }
   const hidden = new Set(hiddenPrimitiveParts);
   return [...definition.primitives, ...additionalPrimitives]
     .filter((primitive) => !primitive.part || !hidden.has(primitive.part))
@@ -344,7 +371,11 @@ export function renderVisiblePinNames(
         !hidden.has(pin.name),
     )
     .map((pin) => {
-      const anchor = transformPoint(pin.at, placement.position, placement);
+      const anchor = transformPoint(
+        resolveSignalFlowPinAt(definition, pin, instance.signalFlowParameters),
+        placement.position,
+        placement,
+      );
       const outward = transformedDirection(pin.direction, placement);
       const distance = (pin.presentation.leadLength ?? 0) + 4;
       const x = anchor.x - outward.x * distance;
@@ -436,11 +467,30 @@ function symbolBounds(
     );
   }
   const viewBox = definition.viewBox;
+  const adaptiveBounds = resolveAdaptiveSignalFlowBlockLayout(
+    definition,
+    instance.signalFlowParameters,
+  )?.bounds;
+  const formulaBounds = signalFlowFormulaLocalBounds(
+    definition.formulaPresentation,
+    instance.signalFlowParameters,
+  );
+  const localBounds = adaptiveBounds ?? formulaBounds ?? viewBox;
+  const left = Math.min(viewBox.x, localBounds.x);
+  const top = Math.min(viewBox.y, localBounds.y);
+  const right = Math.max(
+    viewBox.x + viewBox.width,
+    localBounds.x + localBounds.width,
+  );
+  const bottom = Math.max(
+    viewBox.y + viewBox.height,
+    localBounds.y + localBounds.height,
+  );
   const corners = [
-    { x: viewBox.x, y: viewBox.y },
-    { x: viewBox.x + viewBox.width, y: viewBox.y },
-    { x: viewBox.x, y: viewBox.y + viewBox.height },
-    { x: viewBox.x + viewBox.width, y: viewBox.y + viewBox.height },
+    { x: left, y: top },
+    { x: right, y: top },
+    { x: left, y: bottom },
+    { x: right, y: bottom },
   ].map((point) => transformPoint(point, placement.position, placement));
   const xs = corners.map((point) => point.x);
   const ys = corners.map((point) => point.y);
@@ -717,6 +767,7 @@ export function buildSvgScene(
         resolved.variant?.additionalPrimitives,
         profile,
         foregroundOverride,
+        instance.signalFlowParameters,
       );
       const pinNames = renderVisiblePinNames(
         resolved.definition,
@@ -725,6 +776,11 @@ export function buildSvgScene(
         profile,
         foregroundOverride,
       );
+      const formula = renderSignalFlowFormula(
+        resolved.definition.formulaPresentation,
+        instance.signalFlowParameters,
+        { foreground: foregroundOverride ?? profile.foreground, profile },
+      );
       const strokeColor = foregroundOverride ?? profile.foreground;
       // Background fill: drawn inside the instance transform using the
       // symbol's local viewBox so it moves with the instance and stays
@@ -732,13 +788,18 @@ export function buildSvgScene(
       // override is set, no rect is emitted (identical markup to pre-override
       // rendering).
       const viewBox = resolved.definition.viewBox;
+      const adaptiveBounds = resolveAdaptiveSignalFlowBlockLayout(
+        resolved.definition,
+        instance.signalFlowParameters,
+      )?.body;
+      const background = adaptiveBounds ?? viewBox;
       const backgroundRect =
         styleOverride?.background !== undefined
-          ? `<rect data-role="instance-background" x="${viewBox.x}" y="${viewBox.y}" width="${viewBox.width}" height="${viewBox.height}" fill="${styleOverride.background}"/>`
+          ? `<rect data-role="instance-background" x="${background.x}" y="${background.y}" width="${background.width}" height="${background.height}" fill="${styleOverride.background}"/>`
           : "";
       const symbolRole =
         styleOverride === undefined ? "" : ' data-role="instance-symbol"';
-      return `<g data-object-id="${escapeXml(instance.id)}" data-symbol-id="${escapeXml(resolved.definition.id)}"><g transform="${instanceTransform(instance)}">${backgroundRect}<g${symbolRole} fill="none" stroke="${strokeColor}" stroke-width="${profile.strokes.symbol}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${profileMiterAttribute(profile)}>${primitives}</g></g>${pinNames}</g>`;
+      return `<g data-object-id="${escapeXml(instance.id)}" data-symbol-id="${escapeXml(resolved.definition.id)}"><g transform="${instanceTransform(instance)}">${backgroundRect}<g${symbolRole} fill="none" stroke="${strokeColor}" stroke-width="${profile.strokes.symbol}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${profileMiterAttribute(profile)}>${primitives}${formula}</g></g>${pinNames}</g>`;
     })
     .join("");
   const annotations = [...document.annotations]

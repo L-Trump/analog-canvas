@@ -1478,6 +1478,14 @@ export function App({
       result.ok ? `Swapped to ${target.name}` : "Could not swap the device",
     );
   };
+  // Formula capability is owned by the resolved SymbolDefinition, never by a
+  // symbol-id allowlist or any electrical/netlist descriptor.
+  const selectedSignalFlowPresentation = selectedInstance
+    ? resolver.resolve(
+        selectedInstance.symbolId,
+        selectedInstance.symbolVariantId,
+      )?.definition.formulaPresentation
+    : undefined;
   const selectedInstanceLabel = selectedInstance
     ? instanceLabelAnnotationFor(document, selectedInstance.id)
     : undefined;
@@ -4159,6 +4167,30 @@ export function App({
                     onReferenceChange: updateSelectedReference,
                     onModelTargetChange: updateSelectedModelTarget,
                   },
+                  signalFlow: selectedSignalFlowPresentation
+                    ? {
+                        instance: selectedInstance,
+                        presentation: selectedSignalFlowPresentation,
+                        revision: document.revision,
+                        onChange: (parameters) => {
+                          const result = transact([
+                            {
+                              kind: "set_instance_signal_flow_parameters",
+                              instanceId: selectedInstance.id,
+                              parameters,
+                            },
+                          ]);
+                          if (result.ok) {
+                            setStatus(
+                              parameters
+                                ? `Updated Signal Flow presentation for ${selectedInstance.id}`
+                                : `Reset Signal Flow presentation for ${selectedInstance.id}`,
+                            );
+                          }
+                          return result.ok;
+                        },
+                      }
+                    : null,
                   electrical: {
                     instance: selectedInstance,
                     parameters: propertyParametersForInstance(selectedInstance),

@@ -208,6 +208,39 @@ describe("DocumentHistory", () => {
     });
   });
 
+  it("undoes and redoes signal flow parameters", () => {
+    const history = historyFixture();
+    const patched = history.transact(
+      transaction(0, [
+        {
+          kind: "set_instance_signal_flow_parameters",
+          instanceId: "R1",
+          parameters: { formula: "z^-1", coefficient: "a0" },
+        },
+      ]),
+    );
+    expect(patched).toMatchObject({ ok: true, revision: 1 });
+    expect(history.document.instances[0]!.signalFlowParameters).toEqual({
+      formula: "z^-1",
+      coefficient: "a0",
+    });
+
+    expect(history.transact(transaction(1, [{ kind: "undo" }]))).toMatchObject({
+      ok: true,
+      revision: 2,
+    });
+    expect(history.document.instances[0]!.signalFlowParameters).toBeUndefined();
+
+    expect(history.transact(transaction(2, [{ kind: "redo" }]))).toMatchObject({
+      ok: true,
+      revision: 3,
+    });
+    expect(history.document.instances[0]!.signalFlowParameters).toEqual({
+      formula: "z^-1",
+      coefficient: "a0",
+    });
+  });
+
   it("rejects undo when no prior state exists", () => {
     const history = historyFixture();
     const result = history.transact(transaction(0, [{ kind: "undo" }]));

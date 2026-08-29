@@ -69,6 +69,7 @@ for readability; these groups do not create separate mutation endpoints:
   `mirror_instance`,
   `set_instance_reference`, `set_instance_schematic_reference`,
   `set_instance_schematic_name`, `set_instance_style_override`,
+  `set_instance_signal_flow_parameters`,
   `set_instance_binding`,
   `patch_instance_netlist_parameters`, `bulk_patch_instance_netlist`,
   `set_instance_netlist`;
@@ -119,6 +120,15 @@ atomic multi-instance netlist form. `set_instance_netlist` remains
 the whole-record operation for object initialization, import, and bounded
 migrations; product editing must not rebuild unrelated netlist facts through
 it.
+`set_instance_signal_flow_parameters` is a separate schematic-only whole-object
+writer for Transfer Function metadata (`formula`, `coefficient`, `bodyWidth`,
+`bodyHeight`). Width and height are optional 10-unit-grid minimum frame sizes;
+the shared renderer may expand beyond them to preserve the fixed formula font
+size and padding. The edit never merges into or rebuilds
+`Instance.netlist.parameters`; `null` or `{}` clears the field, and a non-null
+object replaces the current Signal Flow metadata atomically. Geometry-dependent
+pin endpoints, hit bounds, routes, and untouched canonical instance labels are
+re-derived from the same layout contract; user-moved labels stay authored.
 Parameter patches construct one final record before commit: an unset followed
 by a set permits a case-only rename, while a final case-folded duplicate is
 rejected atomically. This is the shared contract for descriptor fields and the

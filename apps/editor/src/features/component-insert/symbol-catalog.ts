@@ -95,9 +95,14 @@ export function symbolCategory(symbolId: string): string {
     return "Logic Gates";
   }
   if (
-    ["adder", "multiplier", "integrator", "unit-delay", "quantizer"].includes(
-      symbolId,
-    )
+    [
+      "adder",
+      "multiplier",
+      "integrator",
+      "unit-delay",
+      "discrete-time-integrator",
+      "quantizer",
+    ].includes(symbolId)
   ) {
     return "Signal Flow";
   }
@@ -202,6 +207,7 @@ const SYMBOL_ORDER: readonly string[] = [
   "multiplier",
   "integrator",
   "unit-delay",
+  "discrete-time-integrator",
   "quantizer",
   // Annotations: drawing tools first (toolbar order), then the polarity
   // label, and the standalone sign texts last.

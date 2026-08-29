@@ -6,6 +6,7 @@ import {
   HexColorSchema,
   InstanceSchema,
   InstanceStyleOverrideSchema,
+  SignalFlowParametersSchema,
 } from "./index.js";
 import { createEmptyProject } from "../factories.js";
 
@@ -31,122 +32,136 @@ describe("HexColorSchema", () => {
 
 describe("InstanceStyleOverrideSchema", () => {
   it("accepts both foreground and background", () => {
-    const result = InstanceStyleOverrideSchema.safeParse({
-      foreground: "#FF0000",
-      background: "#00FF00",
-    });
-    expect(result.success).toBe(true);
+    expect(
+      InstanceStyleOverrideSchema.safeParse({
+        foreground: "#FF0000",
+        background: "#00FF00",
+      }).success,
+    ).toBe(true);
   });
-
-  it("accepts only foreground", () => {
-    const result = InstanceStyleOverrideSchema.safeParse({
-      foreground: "#FF0000",
-    });
-    expect(result.success).toBe(true);
+  it("accepts individual and empty overrides", () => {
+    expect(
+      InstanceStyleOverrideSchema.safeParse({ foreground: "#FF0000" }).success,
+    ).toBe(true);
+    expect(
+      InstanceStyleOverrideSchema.safeParse({ background: "#00FF00" }).success,
+    ).toBe(true);
+    expect(InstanceStyleOverrideSchema.safeParse({}).success).toBe(true);
   });
-
-  it("accepts only background", () => {
-    const result = InstanceStyleOverrideSchema.safeParse({
-      background: "#00FF00",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts empty object", () => {
-    const result = InstanceStyleOverrideSchema.safeParse({});
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects invalid hex colors", () => {
+  it("rejects invalid colors and unknown keys", () => {
     expect(
       InstanceStyleOverrideSchema.safeParse({ foreground: "red" }).success,
     ).toBe(false);
     expect(
       InstanceStyleOverrideSchema.safeParse({ background: "#FFF" }).success,
     ).toBe(false);
-  });
-
-  it("rejects unknown keys", () => {
     expect(
-      InstanceStyleOverrideSchema.safeParse({
-        foreground: "#FF0000",
-        borderColor: "#000000",
-      }).success,
+      InstanceStyleOverrideSchema.safeParse({ borderColor: "#000000" }).success,
     ).toBe(false);
   });
 });
 
-describe("InstanceSchema with styleOverride", () => {
-  const baseInstance = {
-    id: "inst-1",
-    symbolId: "resistor",
-    placement: {
-      position: { x: 0, y: 0 },
-      rotation: 0 as const,
-      mirror: "none" as const,
-    },
-    netlist: {
-      reference: "R1",
-      parameters: {},
-    },
-  };
+const baseInstance = {
+  id: "inst-1",
+  symbolId: "resistor",
+  placement: {
+    position: { x: 0, y: 0 },
+    rotation: 0 as const,
+    mirror: "none" as const,
+  },
+  netlist: { reference: "R1", parameters: {} },
+};
 
-  it("accepts an instance with styleOverride", () => {
-    const result = InstanceSchema.safeParse({
-      ...baseInstance,
-      styleOverride: { foreground: "#FF0000", background: "#00FF00" },
-    });
-    expect(result.success).toBe(true);
+describe("InstanceSchema presentation metadata", () => {
+  it("accepts styleOverride and remains backward compatible", () => {
+    expect(
+      InstanceSchema.safeParse({
+        ...baseInstance,
+        styleOverride: { foreground: "#FF0000", background: "#00FF00" },
+      }).success,
+    ).toBe(true);
+    const plain = InstanceSchema.safeParse(baseInstance);
+    expect(plain.success).toBe(true);
+    if (plain.success) expect(plain.data.styleOverride).toBeUndefined();
   });
 
-  it("accepts an instance without styleOverride (backward compatible)", () => {
-    const result = InstanceSchema.safeParse(baseInstance);
-    expect(result.success).toBe(true);
-    expect(result.data!.styleOverride).toBeUndefined();
+  it("accepts signalFlowParameters independently of styleOverride", () => {
+    expect(
+      InstanceSchema.safeParse({
+        ...baseInstance,
+        signalFlowParameters: {
+          formula: "z^-1",
+          coefficient: "a1",
+          bodyWidth: 120,
+          bodyHeight: 80,
+        },
+      }).success,
+    ).toBe(true);
   });
 
-  it("accepts styleOverride with only foreground", () => {
-    const result = InstanceSchema.safeParse({
-      ...baseInstance,
-      styleOverride: { foreground: "#123ABC" },
-    });
-    expect(result.success).toBe(true);
+  it("rejects invalid Signal Flow text and dimensions", () => {
+    for (const signalFlowParameters of [
+      { formula: "", coefficient: "a1" },
+      { formula: "ok", coefficient: "x".repeat(65) },
+      { bodyWidth: 121 },
+      { bodyWidth: 1010 },
+      { bodyHeight: 19 },
+      { bodyHeight: 510 },
+    ]) {
+      expect(
+        InstanceSchema.safeParse({ ...baseInstance, signalFlowParameters })
+          .success,
+      ).toBe(false);
+    }
+  });
+});
+
+describe("SignalFlowParametersSchema", () => {
+  it("accepts text-only, size-only, combined, and empty objects", () => {
+    expect(
+      SignalFlowParametersSchema.safeParse({ formula: "s/(s+1)" }).success,
+    ).toBe(true);
+    expect(
+      SignalFlowParametersSchema.safeParse({ coefficient: "k1" }).success,
+    ).toBe(true);
+    expect(
+      SignalFlowParametersSchema.safeParse({ bodyWidth: 160, bodyHeight: 90 })
+        .success,
+    ).toBe(true);
+    expect(SignalFlowParametersSchema.safeParse({}).success).toBe(true);
   });
 
-  it("rejects styleOverride with invalid color", () => {
-    const result = InstanceSchema.safeParse({
-      ...baseInstance,
-      styleOverride: { foreground: "not-a-color" },
-    });
-    expect(result.success).toBe(false);
+  it("rejects unknown keys and invalid lengths", () => {
+    expect(
+      SignalFlowParametersSchema.safeParse({ extra: "nope" }).success,
+    ).toBe(false);
+    expect(
+      SignalFlowParametersSchema.safeParse({ formula: "x".repeat(257) })
+        .success,
+    ).toBe(false);
   });
 });
 
 describe("CircuitProject schema version", () => {
-  it("current schema version is 30", () => {
-    expect(CURRENT_PROJECT_SCHEMA_VERSION).toBe(30);
+  it("current schema version is 31", () => {
+    expect(CURRENT_PROJECT_SCHEMA_VERSION).toBe(31);
   });
 
-  it("createEmptyProject produces schema version 30", () => {
-    const project = createEmptyProject("test", "Test");
-    expect(project.schemaVersion).toBe(30);
+  it("createEmptyProject produces schema version 31", () => {
+    expect(createEmptyProject("test", "Test").schemaVersion).toBe(31);
   });
-
-  it("validates a project with styleOverride on an instance", () => {
+  it("validates style and Signal Flow metadata together", () => {
     const project = createEmptyProject("test", "Test");
-    const document = project.documents[0]!;
-    document.instances.push({
-      id: "inst-1",
-      symbolId: "resistor",
-      placement: {
-        position: { x: 0, y: 0 },
-        rotation: 0,
-        mirror: "none",
-      },
-      netlist: { reference: "R1", parameters: {} },
+    project.documents[0]!.instances.push({
+      ...baseInstance,
       styleOverride: { foreground: "#FF0000", background: "#0000FF" },
+      signalFlowParameters: {
+        formula: "z^-1",
+        coefficient: "b0",
+        bodyWidth: 100,
+        bodyHeight: 50,
+      },
     });
-    const result = CircuitProjectSchema.safeParse(project);
-    expect(result.success).toBe(true);
+    expect(CircuitProjectSchema.safeParse(project).success).toBe(true);
   });
 });

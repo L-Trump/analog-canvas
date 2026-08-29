@@ -1,0 +1,450 @@
+{
+  "schemaVersion": 1,
+  "id": "razavi-delta-sigma-signal-flow-v1",
+  "notes": [
+    "These measurements are calibrated from hash-pinned user-supplied raster witnesses, not PDF vector extraction.",
+    "The supplied PDF is limited to its first 100 pages and does not contain Chapter 21; it is not an authority for these figures.",
+    "Figure 21.38 directly witnesses the three summing circles, two 1/s bodies, and DAC body. Figure 21.33 directly witnesses a summing circle and the z^-1/(1-z^-1) body.",
+    "Multiplier, unit-delay, and quantizer do not have direct screenshot evidence here. Their marks and body choices are family-derived provisional calibrations."
+  ],
+  "witnesses": [
+    {
+      "id": "delta-sigma-figure-21-38",
+      "kind": "user-supplied-raster-witness",
+      "sourceSha256": "d328e1aafa7ae0b57bbfe9d0fba9c3d7e0b662079f3b77b4c35518c82bf0b9bd",
+      "sourcePixels": {
+        "width": 936,
+        "height": 624
+      },
+      "witnessPath": "delta-sigma-figure-21-38-reference.png",
+      "witnessSha256": "88adc1f13614d2928e6a6b08116e9c57c0006b685671c8538ca79c683c38e72f",
+      "evidence": [
+        "three summing junction circles",
+        "two 1/s formula bodies",
+        "DAC formula body"
+      ],
+      "source": {
+        "title": "Analysis and Design of Data Converters",
+        "figure": "21.38",
+        "provenance": "user-supplied screenshot; the available 100-page PDF copy excludes Chapter 21",
+        "sourceFileName": "figure-2-razavi.png"
+      },
+      "sourceCropPx": [306, 102, 382, 150],
+      "reproduction": "The repository stores this immutable cropped witness directly; regeneration from the private source screenshot is intentionally not required."
+    },
+    {
+      "id": "delta-sigma-figure-21-33",
+      "kind": "user-supplied-raster-witness",
+      "sourceSha256": "cf02dea357a9f65be37931b181c265b721424d8cca3d1202943c6b4248e7e780",
+      "sourcePixels": {
+        "width": 654,
+        "height": 206
+      },
+      "witnessPath": "delta-sigma-figure-21-33-reference.png",
+      "witnessSha256": "dc3fd08dc3eb2aac6842f32016ecc0f0d7d77db137af2530e192e19f5c43d1a5",
+      "evidence": ["summing junction circle", "z^-1/(1-z^-1) formula body"],
+      "source": {
+        "title": "Analysis and Design of Data Converters",
+        "figure": "21.33",
+        "provenance": "user-supplied screenshot; the available 100-page PDF copy excludes Chapter 21",
+        "sourceFileName": "figure-3-formula.png"
+      },
+      "sourceCropPx": [279, 34, 298, 121],
+      "sourceOverlayExclusionPx": {
+        "left": 137,
+        "top": 0,
+        "right": 152,
+        "bottom": 32,
+        "reason": "removes the non-source red annotation arrow while retaining the printed figure"
+      },
+      "reproduction": "The repository stores this immutable cropped witness directly; regeneration from the private source screenshot is intentionally not required."
+    }
+  ],
+  "symbols": {
+    "adder": {
+      "evidenceStatus": "direct-raster",
+      "witnessId": "delta-sigma-figure-21-38",
+      "pinOrder": ["A", "B", "Y"],
+      "viewBox": {
+        "x": -34,
+        "y": -22,
+        "width": 68,
+        "height": 56
+      },
+      "pins": [
+        {
+          "name": "A",
+          "role": "input",
+          "at": {
+            "x": -30,
+            "y": 0
+          },
+          "direction": "west"
+        },
+        {
+          "name": "B",
+          "role": "input",
+          "at": {
+            "x": 0,
+            "y": 30
+          },
+          "direction": "south"
+        },
+        {
+          "name": "Y",
+          "role": "output",
+          "at": {
+            "x": 30,
+            "y": 0
+          },
+          "direction": "east"
+        }
+      ],
+      "circle": {
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radius": 12
+      },
+      "measurement": {
+        "window": {
+          "width": 39,
+          "height": 35,
+          "minX": -17,
+          "minY": -15
+        },
+        "targetRadius": 12,
+        "bodyKind": "circle",
+        "assetPath": "delta-sigma-figure-21-38-reference.png",
+        "pixelsPerLogical": 1.3,
+        "originPx": {
+          "x": 69.5,
+          "y": 70.5
+        },
+        "threshold": 230
+      }
+    },
+    "multiplier": {
+      "evidenceStatus": "family-derived-provisional",
+      "derivedFrom": "adder",
+      "pinOrder": ["A", "B", "Y"],
+      "viewBox": {
+        "x": -34,
+        "y": -22,
+        "width": 68,
+        "height": 56
+      },
+      "pins": [
+        {
+          "name": "A",
+          "role": "input",
+          "at": {
+            "x": -30,
+            "y": 0
+          },
+          "direction": "west"
+        },
+        {
+          "name": "B",
+          "role": "input",
+          "at": {
+            "x": 0,
+            "y": 30
+          },
+          "direction": "south"
+        },
+        {
+          "name": "Y",
+          "role": "output",
+          "at": {
+            "x": 30,
+            "y": 0
+          },
+          "direction": "east"
+        }
+      ],
+      "circle": {
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radius": 12
+      },
+      "measurement": {
+        "window": {
+          "width": 68,
+          "height": 56,
+          "minX": -34,
+          "minY": -22
+        },
+        "targetRadius": 12,
+        "bodyKind": "circle"
+      }
+    },
+    "integrator": {
+      "evidenceStatus": "direct-raster",
+      "witnessId": "delta-sigma-figure-21-38",
+      "pinOrder": ["A", "Y"],
+      "viewBox": {
+        "x": -44,
+        "y": -24,
+        "width": 88,
+        "height": 48
+      },
+      "pins": [
+        {
+          "name": "A",
+          "role": "input",
+          "at": {
+            "x": -40,
+            "y": 0
+          },
+          "direction": "west"
+        },
+        {
+          "name": "Y",
+          "role": "output",
+          "at": {
+            "x": 40,
+            "y": 0
+          },
+          "direction": "east"
+        }
+      ],
+      "body": {
+        "left": -20,
+        "top": -20,
+        "right": 20,
+        "bottom": 20
+      },
+      "formulaPresentation": {
+        "defaultFormula": "1/s",
+        "supportsCoefficient": true,
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "fontSize": 12,
+        "adaptiveFrame": {
+          "minBodyWidth": 40,
+          "minBodyHeight": 30,
+          "horizontalPadding": 8,
+          "verticalPadding": 4,
+          "leadLength": 20
+        }
+      },
+      "measurement": {
+        "window": {
+          "width": 41,
+          "height": 43,
+          "minX": -19,
+          "minY": -23
+        },
+        "targetBody": {
+          "width": 40,
+          "height": 26
+        },
+        "bodyKind": "sharp-rectangle",
+        "assetPath": "delta-sigma-figure-21-38-reference.png",
+        "pixelsPerLogical": 1.3,
+        "originPx": {
+          "x": 128,
+          "y": 68.5
+        },
+        "threshold": 200
+      }
+    },
+    "unit-delay": {
+      "evidenceStatus": "family-derived-provisional",
+      "derivedFrom": "integrator",
+      "pinOrder": ["A", "Y"],
+      "viewBox": {
+        "x": -44,
+        "y": -24,
+        "width": 88,
+        "height": 48
+      },
+      "pins": [
+        {
+          "name": "A",
+          "role": "input",
+          "at": {
+            "x": -40,
+            "y": 0
+          },
+          "direction": "west"
+        },
+        {
+          "name": "Y",
+          "role": "output",
+          "at": {
+            "x": 40,
+            "y": 0
+          },
+          "direction": "east"
+        }
+      ],
+      "body": {
+        "left": -20,
+        "top": -15,
+        "right": 20,
+        "bottom": 15
+      },
+      "formulaPresentation": {
+        "defaultFormula": "z^-1",
+        "supportsCoefficient": true,
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "fontSize": 12,
+        "adaptiveFrame": {
+          "minBodyWidth": 40,
+          "minBodyHeight": 30,
+          "horizontalPadding": 8,
+          "verticalPadding": 4,
+          "leadLength": 20
+        }
+      },
+      "measurement": {
+        "window": {
+          "width": 88,
+          "height": 48,
+          "minX": -44,
+          "minY": -24
+        },
+        "targetBody": {
+          "width": 40,
+          "height": 26
+        },
+        "bodyKind": "sharp-rectangle"
+      }
+    },
+    "quantizer": {
+      "evidenceStatus": "family-derived-provisional",
+      "derivedFrom": "integrator",
+      "pinOrder": ["A", "Y"],
+      "viewBox": {
+        "x": -44,
+        "y": -24,
+        "width": 88,
+        "height": 48
+      },
+      "pins": [
+        {
+          "name": "A",
+          "role": "input",
+          "at": {
+            "x": -40,
+            "y": 0
+          },
+          "direction": "west"
+        },
+        {
+          "name": "Y",
+          "role": "output",
+          "at": {
+            "x": 40,
+            "y": 0
+          },
+          "direction": "east"
+        }
+      ],
+      "body": {
+        "left": -20,
+        "top": -13,
+        "right": 20,
+        "bottom": 13
+      },
+      "measurement": {
+        "window": {
+          "width": 88,
+          "height": 48,
+          "minX": -44,
+          "minY": -24
+        },
+        "targetBody": {
+          "width": 40,
+          "height": 26
+        },
+        "bodyKind": "sharp-rectangle"
+      }
+    },
+    "discrete-time-integrator": {
+      "evidenceStatus": "direct-raster",
+      "witnessId": "delta-sigma-figure-21-33",
+      "pinOrder": ["A", "Y"],
+      "viewBox": {
+        "x": -54,
+        "y": -24,
+        "width": 108,
+        "height": 48
+      },
+      "pins": [
+        {
+          "name": "A",
+          "role": "input",
+          "at": {
+            "x": -50,
+            "y": 0
+          },
+          "direction": "west"
+        },
+        {
+          "name": "Y",
+          "role": "output",
+          "at": {
+            "x": 50,
+            "y": 0
+          },
+          "direction": "east"
+        }
+      ],
+      "body": {
+        "left": -30,
+        "top": -20,
+        "right": 30,
+        "bottom": 20
+      },
+      "formulaPresentation": {
+        "defaultFormula": "z^-1/(1-z^-1)",
+        "supportsCoefficient": true,
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "fontSize": 12,
+        "adaptiveFrame": {
+          "minBodyWidth": 40,
+          "minBodyHeight": 30,
+          "horizontalPadding": 8,
+          "verticalPadding": 4,
+          "leadLength": 20
+        }
+      },
+      "measurement": {
+        "window": {
+          "width": 61,
+          "height": 55,
+          "minX": -19,
+          "minY": -16
+        },
+        "targetBody": {
+          "width": 56,
+          "height": 30,
+          "referenceRatio": 1.866667
+        },
+        "bodyKind": "sharp-rectangle",
+        "assetPath": "delta-sigma-figure-21-33-reference.png",
+        "pixelsPerLogical": 1.2,
+        "originPx": {
+          "x": 137.5,
+          "y": 82
+        },
+        "threshold": 100
+      },
+      "pinSpan": 50
+    }
+  }
+}

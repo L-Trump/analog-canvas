@@ -44,9 +44,10 @@
         "y": 0
       },
       "to": {
-        "x": -24,
+        "x": -20,
         "y": 0
       },
+      "part": "input-a-lead",
       "style": {
         "strokeRole": "normal",
         "lineCap": "butt",
@@ -55,7 +56,8 @@
     },
     {
       "kind": "path",
-      "data": "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
+      "part": "body",
+      "data": "M -20 -20 L 20 -20 L 20 20 L -20 20 Z",
       "style": {
         "strokeRole": "emphasis",
         "lineCap": "butt",
@@ -66,77 +68,37 @@
     {
       "kind": "line",
       "from": {
-        "x": 24,
+        "x": 20,
         "y": 0
       },
       "to": {
         "x": 40,
         "y": 0
       },
+      "part": "output-y-lead",
       "style": {
         "strokeRole": "normal",
         "lineCap": "butt",
         "lineJoin": "miter"
       }
-    },
-    {
-      "kind": "line",
-      "from": {
-        "x": 0,
-        "y": -9
-      },
-      "to": {
-        "x": 0,
-        "y": -3
-      },
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
-    },
-    {
-      "kind": "line",
-      "from": {
-        "x": -1.8,
-        "y": -7.3
-      },
-      "to": {
-        "x": 0,
-        "y": -9
-      },
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
-    },
-    {
-      "kind": "line",
-      "from": {
-        "x": -6,
-        "y": 0
-      },
-      "to": {
-        "x": 6,
-        "y": 0
-      },
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
-    },
-    {
-      "kind": "path",
-      "data": "M 2.6 3.6 A 1.9 1.9 0 1 0 0.4 5.6 A 1.9 1.9 0 1 1 -1.8 7.6",
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
     }
   ],
+  "formulaPresentation": {
+    "defaultFormula": "1/s",
+    "supportsCoefficient": true,
+    "center": {
+      "x": 0,
+      "y": 0
+    },
+    "fontSize": 12,
+    "adaptiveFrame": {
+      "minBodyWidth": 40,
+      "minBodyHeight": 30,
+      "horizontalPadding": 8,
+      "verticalPadding": 4,
+      "leadLength": 20
+    }
+  },
   "variants": [],
   "labelVisibility": "hidden"
 }

@@ -135,7 +135,7 @@ export function gridAlignmentDiagnostics(
   grid: number,
 ): EditDiagnostic[] {
   // Annotations and drafting objects position at 1-unit precision (schema
-  // 29); the Document grid remains the hard contract for electrical edits so
+  // 30); the Document grid remains the hard contract for electrical edits so
   // pins, wires, and junctions always coincide.
   const pitch =
     edit.kind === "upsert_schematic_annotation" ||

@@ -50,3 +50,11 @@ export type {
   Schema28To29MigrationReport,
   Schema28To29MigrationResult,
 } from "./transforms/annotation-grid.js";
+export {
+  upgradeSchema30To31,
+  upgradeSchema30To31WithReport,
+} from "./transforms/signal-flow-parameters.js";
+export type {
+  Schema30To31MigrationReport,
+  Schema30To31MigrationResult,
+} from "./transforms/signal-flow-parameters.js";

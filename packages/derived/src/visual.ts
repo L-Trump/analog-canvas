@@ -1,12 +1,18 @@
 import { flattenRichText, routeEnd, transformPoint } from "@icm/model";
 import type { Point, Rect, RouteEndpoint, SchematicDocument } from "@icm/model";
+import { resolveAdaptiveSignalFlowBlockLayout } from "@icm/symbols";
 import type {
   ResolvedSymbol,
+  SignalFlowLayoutParameters,
   SymbolPrimitive,
   SymbolResolver,
 } from "@icm/symbols";
 
-import { endpointKey, resolveEndpointOutwardDirection } from "./endpoint.js";
+import {
+  endpointKey,
+  resolveEndpointOutwardDirection,
+  resolveEndpointPoint,
+} from "./endpoint.js";
 import {
   resolveDocumentRoutingGeometry,
   type ResolvedDocumentRoutingGeometry,
@@ -141,23 +147,18 @@ function isExactPowerPinContact(
   ) {
     return false;
   }
-  const powerSymbol = resolver.resolve(
-    powerInstance.symbolId,
-    powerInstance.symbolVariantId,
-  );
   const otherSymbol = resolver.resolve(
     otherInstance.symbolId,
     otherInstance.symbolVariantId,
   );
-  const powerDefinition = powerSymbol?.definition.pins.find(
-    (pin) => pin.name === powerPin,
-  );
-  if (!powerDefinition || !otherSymbol) return false;
-  const powerPoint = transformPoint(
-    powerDefinition.at,
-    powerPlacement.position,
-    powerPlacement,
-  );
+  if (!otherSymbol) return false;
+  const powerEndpoint = {
+    kind: "terminal" as const,
+    instanceId: powerInstance.id,
+    pinName: powerPin,
+  };
+  const powerPoint = resolveEndpointPoint(document, resolver, powerEndpoint);
+  if (!powerPoint) return false;
   const hiddenPins = new Set(otherSymbol.variant?.hiddenPinNames ?? []);
   return otherSymbol.definition.pins.some((pin) => {
     if (
@@ -166,18 +167,16 @@ function isExactPowerPinContact(
     ) {
       return false;
     }
-    const point = transformPoint(
-      pin.at,
-      otherPlacement.position,
-      otherPlacement,
-    );
+    const otherEndpoint = {
+      kind: "terminal" as const,
+      instanceId: otherInstance.id,
+      pinName: pin.name,
+    };
+    const point = resolveEndpointPoint(document, resolver, otherEndpoint);
     return (
+      point !== null &&
       samePoint(powerPoint, point) &&
-      terminalSharesNet(
-        document,
-        { instanceId: powerInstance.id, pinName: powerPin },
-        { instanceId: otherInstance.id, pinName: pin.name },
-      )
+      terminalSharesNet(document, powerEndpoint, otherEndpoint)
     );
   });
 }
@@ -212,7 +211,15 @@ function primitivePoints(primitive: SymbolPrimitive): Point[] | null {
  * relationships such as label clearance; callers that need a forgiving hit or
  * diagnostic envelope must use `visibleSymbolLocalBounds` below.
  */
-export function visibleSymbolInkBounds(resolved: ResolvedSymbol): Rect {
+export function visibleSymbolInkBounds(
+  resolved: ResolvedSymbol,
+  signalFlowParameters?: SignalFlowLayoutParameters,
+): Rect {
+  const adaptive = resolveAdaptiveSignalFlowBlockLayout(
+    resolved.definition,
+    signalFlowParameters,
+  );
+  if (adaptive) return adaptive.bounds;
   const hiddenParts = new Set(resolved.variant?.hiddenPrimitiveParts ?? []);
   const hiddenPins = new Set(resolved.variant?.hiddenPinNames ?? []);
   const primitives = [
@@ -242,8 +249,11 @@ export function visibleSymbolInkBounds(resolved: ResolvedSymbol): Rect {
  * It must not be used to position visible text: doing so turns its padding
  * into an unintended extra label gap when the result is snapped to the grid.
  */
-export function visibleSymbolLocalBounds(resolved: ResolvedSymbol): Rect {
-  const ink = visibleSymbolInkBounds(resolved);
+export function visibleSymbolLocalBounds(
+  resolved: ResolvedSymbol,
+  signalFlowParameters?: SignalFlowLayoutParameters,
+): Rect {
+  const ink = visibleSymbolInkBounds(resolved, signalFlowParameters);
   const padding = 1;
   return {
     x: ink.x - padding,
@@ -264,7 +274,10 @@ function instanceBounds(
       instance.symbolVariantId,
     );
     if (!resolved) return [];
-    const box = visibleSymbolLocalBounds(resolved);
+    const box = visibleSymbolLocalBounds(
+      resolved,
+      instance.signalFlowParameters,
+    );
     const corners = [
       { x: box.x, y: box.y },
       { x: box.x + box.width, y: box.y },

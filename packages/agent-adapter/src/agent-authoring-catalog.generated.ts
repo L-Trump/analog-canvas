@@ -336,6 +336,28 @@ export const agentRazaviAuthoringCatalog = {
       variants: [],
     },
     {
+      symbolId: "discrete-time-integrator",
+      name: "Discrete-Time Integrator (z⁻¹/(1−z⁻¹))",
+      category: "signal-flow",
+      defaultVariantId: null,
+      labelVisibility: "hidden",
+      pins: [
+        {
+          name: "A",
+          role: "input",
+          direction: "west",
+          visibility: "visible",
+        },
+        {
+          name: "Y",
+          role: "output",
+          direction: "east",
+          visibility: "visible",
+        },
+      ],
+      variants: [],
+    },
+    {
       symbolId: "quantizer",
       name: "Quantizer",
       category: "signal-flow",

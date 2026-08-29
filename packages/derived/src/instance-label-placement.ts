@@ -95,7 +95,10 @@ export function defaultVddPowerLabelPlacement(
   grid: number,
 ): InstanceLabelPlacement | null {
   if (instance.symbolId !== "vdd-port" || !instance.placement) return null;
-  const bounds = transformedBounds(visibleSymbolInkBounds(resolved), instance);
+  const bounds = transformedBounds(
+    visibleSymbolInkBounds(resolved, instance.signalFlowParameters),
+    instance,
+  );
   if (!bounds) return null;
   // Project coordinates are grid-aligned. Reviewed Symbol artwork may use
   // fractional geometry, so quantize the derived optical centre only at this
@@ -184,7 +187,10 @@ function horizontalSideAwayFromPin(
 ): InstanceLabelSide {
   const pin = resolved.definition.pins[0];
   if (!pin || !instance.placement) return "left";
-  const localBounds = visibleSymbolInkBounds(resolved);
+  const localBounds = visibleSymbolInkBounds(
+    resolved,
+    instance.signalFlowParameters,
+  );
   const localCenter = {
     x: localBounds.x + localBounds.width / 2,
     y: localBounds.y + localBounds.height / 2,
@@ -247,7 +253,10 @@ export function placeUprightInstanceLabel(
   horizontalSidesOnly = false,
 ): InstanceLabelPlacement | null {
   if (!instance.placement) return null;
-  const localBounds = visibleSymbolInkBounds(resolved);
+  const localBounds = visibleSymbolInkBounds(
+    resolved,
+    instance.signalFlowParameters,
+  );
   const worldBounds = transformedBounds(localBounds, instance);
   const rotatedSide = transformedSide(localSide, instance);
   const worldSide =
@@ -318,7 +327,10 @@ export function defaultInstanceLabelPlacement(
   slot: InstanceLabelSlot = "reference",
 ): InstanceLabelPlacement | null {
   if (!instance.placement) return null;
-  const localBounds = visibleSymbolInkBounds(resolved);
+  const localBounds = visibleSymbolInkBounds(
+    resolved,
+    instance.signalFlowParameters,
+  );
   const middleY = localBounds.y + localBounds.height / 2;
   const middleX = localBounds.x + localBounds.width / 2;
   // A label gap is a grid-space visual rule, measured from drawn ink rather

@@ -514,6 +514,33 @@ test("a signal-flow block lands with no designator on it", async ({ page }) => {
   await expect(page.getByTestId("status")).not.toContainText("X1");
 });
 
+test("finds and places the discrete-time integrator from Signal Flow", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await awaitEditorReady(page);
+  await page.keyboard.press("i");
+  const dialog = page.getByRole("dialog", { name: "Insert Component" });
+
+  await dialog.getByLabel("Component search").fill("discrete-time-integrator");
+  const tile = dialog.getByTestId("insert-component-discrete-time-integrator");
+  await expect(tile).toContainText("Discrete-Time Integrator");
+  await tile.click();
+  await page
+    .getByTestId("schematic-canvas")
+    .click({ position: { x: 360, y: 230 } });
+  await page.keyboard.press("Escape");
+
+  await expect(
+    page
+      .getByTestId("schematic-canvas")
+      .locator('[data-symbol-id="discrete-time-integrator"]'),
+  ).toBeVisible();
+  await expect
+    .poll(() => recoveryProjectTexts(page))
+    .toContain('"symbolId": "discrete-time-integrator"');
+});
+
 test("groups drafting tools and editable polarity labels under Annotations", async ({
   page,
 }) => {
