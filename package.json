@@ -54,8 +54,8 @@
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,json,css,html}\" \"packages/**/*.{ts,tsx,json}\" \"references/**/*.json\" \"scripts/**/*.mjs\" \"*.{json,yaml}\"",
     "references:check": "node scripts/check-references.mjs",
     "docs:check": "node scripts/check-markdown-links.mjs",
-    "symbols:razavi": "node scripts/generate-razavi-symbol-catalog.mjs",
-    "symbols:razavi:check": "node scripts/generate-razavi-symbol-catalog.mjs --check",
+    "symbols:razavi": "node scripts/generate-razavi-signal-flow-assets.mjs && node scripts/generate-razavi-symbol-catalog.mjs && node scripts/generate-agent-authoring-catalog.mjs && pnpm --filter @icm/agent-adapter... build && node scripts/generate-mcp-resources.mjs",
+    "symbols:razavi:check": "node scripts/generate-razavi-signal-flow-assets.mjs --check && node scripts/generate-razavi-symbol-catalog.mjs --check && node scripts/generate-agent-authoring-catalog.mjs --check && pnpm --filter @icm/agent-adapter... build && node scripts/generate-mcp-resources.mjs --check",
     "symbols:razavi-mos": "node scripts/generate-razavi-mos-assets.mjs",
     "symbols:razavi-mos:check": "node scripts/generate-razavi-mos-assets.mjs --check",
     "symbols:razavi-peripherals": "node scripts/generate-razavi-peripheral-assets.mjs",
@@ -85,7 +85,9 @@
     "test:e2e:local": "playwright test --workers=2",
     "test:production-smoke": "pnpm --filter @icm/editor build && node scripts/editor-production-smoke.mjs",
     "test:production-smoke:check": "pnpm --filter @icm/editor build && node scripts/editor-production-smoke.mjs --check",
-    "typecheck": "tsc -p tsconfig.check.json --noEmit"
+    "typecheck": "tsc -p tsconfig.check.json --noEmit",
+    "symbols:razavi-signal-flow": "node scripts/generate-razavi-signal-flow-assets.mjs",
+    "symbols:razavi-signal-flow:check": "node scripts/generate-razavi-signal-flow-assets.mjs --check"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

@@ -267,13 +267,14 @@
       "automaticMappings": [],
       "manualOnlyReason": "Behavioral summing node; structural netlists need an explicit implementation mapping.",
       "assetPath": "adder.symbol.json",
-      "assetHash": "1845d267b1cfd2d791e92dae5e57f099727365c2d4c5d151d25239480736c3eb",
+      "assetHash": "e21a88de008caef10f5740d9370dd3ed68bbaedc934fc73549f0d5657784ae48",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
         "referencePaths": [
-          "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png"
-        ]
+          "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
       }
     },
     {
@@ -286,13 +287,14 @@
       "automaticMappings": [],
       "manualOnlyReason": "Behavioral mixing node; structural netlists need an explicit implementation mapping.",
       "assetPath": "multiplier.symbol.json",
-      "assetHash": "cda435fcc278d4bb9a794e1a9e419b39a9659474398be1b8cd3cef3b1fec2289",
+      "assetHash": "34f12c4ea41feb7e9b62804199435b493bfcb2f6e9c60fe47cc8e47ed33b1c9f",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
         "referencePaths": [
-          "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png"
-        ]
+          "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
       }
     },
     {
@@ -305,13 +307,14 @@
       "automaticMappings": [],
       "manualOnlyReason": "Behavioral s-domain block; structural netlists need an explicit implementation mapping.",
       "assetPath": "integrator.symbol.json",
-      "assetHash": "b2c7cea5fe953dd5066c66eba8ebe92a2bd6790bc8e083fdf129480924e6fab4",
+      "assetHash": "55a62393c2a69e557c0d7fe7234c7a7a9e41828ec12a5392b36079035c936c07",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
         "referencePaths": [
-          "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png"
-        ]
+          "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
       }
     },
     {
@@ -324,13 +327,34 @@
       "automaticMappings": [],
       "manualOnlyReason": "Behavioral z-domain block; structural netlists need an explicit implementation mapping.",
       "assetPath": "unit-delay.symbol.json",
-      "assetHash": "cd38d7dc54dfc7ee259e892963b66fac8aa5fcde38d625016acd5f830ae08cbf",
+      "assetHash": "ecdb570fed6e24ea7bd77902dfba626174cf4845062b49f82576d00a064b27a6",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
         "referencePaths": [
-          "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png"
-        ]
+          "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+      }
+    },
+    {
+      "symbolId": "discrete-time-integrator",
+      "name": "Discrete-Time Integrator (z⁻¹/(1−z⁻¹))",
+      "category": "signal-flow",
+      "reviewStatus": "reviewed",
+      "pinOrder": ["A", "Y"],
+      "palette": true,
+      "automaticMappings": [],
+      "manualOnlyReason": "Behavioral z-domain block; structural netlists need an explicit implementation mapping.",
+      "assetPath": "discrete-time-integrator.symbol.json",
+      "assetHash": "30bd218131b4245c74a778188224d65ebd8422f2ff0462487378b4b0d838400d",
+      "visualAuthority": {
+        "kind": "razavi-reference-v1",
+        "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+        "referencePaths": [
+          "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
       }
     },
     {
@@ -343,13 +367,14 @@
       "automaticMappings": [],
       "manualOnlyReason": "Behavioral quantization block; structural netlists need an explicit implementation mapping.",
       "assetPath": "quantizer.symbol.json",
-      "assetHash": "5a45c801fb7f880e47f17cc257f3cd7df7a841a7eb26a3689e9b347cc9f09fa1",
+      "assetHash": "8eb283cbf258a09b50dad8ce3aabe96025d860e1235084e23788a7110b76ca82",
       "visualAuthority": {
         "kind": "razavi-reference-v1",
         "referenceManifestPath": "fixtures/visual-reference/razavi-reference-v1/manifest.json",
         "referencePaths": [
-          "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png"
-        ]
+          "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
+        ],
+        "calibrationPath": "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json"
       }
     },
     {

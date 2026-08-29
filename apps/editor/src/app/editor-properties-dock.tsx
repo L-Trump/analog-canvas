@@ -9,6 +9,7 @@ import {
 } from "../features/properties/component-structure-properties";
 import { ComponentIdentityProperties } from "../features/properties/component-identity-properties";
 import { ComponentElectricalProperties } from "../features/properties/component-electrical-properties";
+import { ComponentSignalFlowProperties } from "../features/properties/component-signal-flow-properties";
 import { ComponentPlacementProperties } from "../features/properties/component-placement-properties";
 import { ComponentStyleProperties } from "../features/properties/component-style-properties";
 import { DraftingPropertiesPanel } from "../features/drafting/drafting-properties-panel";
@@ -31,6 +32,7 @@ interface ComponentPropertiesModel {
   formalPort: ComponentProps<typeof FormalPortProperties> | null;
   cellSymbolLayout: ComponentProps<typeof CellSymbolLayoutProperties> | null;
   identity: ComponentProps<typeof ComponentIdentityProperties>;
+  signalFlow: ComponentProps<typeof ComponentSignalFlowProperties> | null;
   electrical: ComponentProps<typeof ComponentElectricalProperties>;
   style: ComponentProps<typeof ComponentStyleProperties>;
   placement: ComponentProps<typeof ComponentPlacementProperties>;
@@ -140,6 +142,9 @@ export function EditorPropertiesDock({
                 <CellSymbolLayoutProperties {...component.cellSymbolLayout} />
               ) : null}
               <ComponentIdentityProperties {...component.identity} />
+              {component.signalFlow ? (
+                <ComponentSignalFlowProperties {...component.signalFlow} />
+              ) : null}
               <ComponentElectricalProperties {...component.electrical} />
               <ComponentStyleProperties {...component.style} />
               <ComponentPlacementProperties {...component.placement} />

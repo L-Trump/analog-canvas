@@ -422,7 +422,10 @@ function movedInstanceBodies(
       instance.symbolVariantId,
     );
     if (!resolved) return [];
-    const box = visibleSymbolLocalBounds(resolved);
+    const box = visibleSymbolLocalBounds(
+      resolved,
+      instance.signalFlowParameters,
+    );
     const corners = [
       { x: box.x, y: box.y },
       { x: box.x + box.width, y: box.y },

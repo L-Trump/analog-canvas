@@ -7,7 +7,7 @@ import type {
   SchematicDocument,
   SymbolLocalPoint,
 } from "@icm/model";
-import type { SymbolResolver } from "@icm/symbols";
+import { resolveSignalFlowPinAt, type SymbolResolver } from "@icm/symbols";
 import { mosBulkShouldBeVisible } from "./mos-bulk.js";
 
 export interface EndpointRoutingGeometry {
@@ -64,7 +64,13 @@ function resolvedTerminalPin(
   return {
     instance: { ...instance, placement: instance.placement },
     pin: {
-      at: selected.at,
+      at: auxiliary
+        ? selected.at
+        : resolveSignalFlowPinAt(
+            symbol!.definition,
+            basePin,
+            instance.signalFlowParameters,
+          ),
       direction: selected.direction,
       ...(selected.routing ? { routing: selected.routing } : {}),
     },

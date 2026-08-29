@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createEmptyProject } from "@icm/model";
+import { createEmptyProject, CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
 
 import {
   parseProject,
@@ -16,21 +16,24 @@ describe("Project protocol boundary", () => {
     });
   });
 
-  it("upgrades the previous schema to schema 30", () => {
+  it("upgrades the previous schema to the current schema", () => {
     const current = JSON.parse(
       serializeProject(createEmptyProject("protocol-project", "Protocol")),
     ) as Record<string, unknown>;
     const result = tryParseProjectWithMetadata(
       JSON.stringify({
         ...current,
-        schemaVersion: 29,
+        schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION - 1,
       }),
     );
     expect(result).toMatchObject({
       ok: true,
-      sourceSchemaVersion: 29,
+      sourceSchemaVersion: CURRENT_PROJECT_SCHEMA_VERSION - 1,
       migrated: true,
-      project: { schemaVersion: 30, structureRevision: 0 },
+      project: {
+        schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION,
+        structureRevision: 0,
+      },
     });
   });
 

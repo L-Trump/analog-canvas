@@ -542,3 +542,41 @@
   color: var(--icm-text-muted);
   font-size: var(--icm-font-xs);
 }
+
+.component-signal-flow-card {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.component-signal-flow-card label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-sm);
+  font-weight: 650;
+}
+
+.component-signal-flow-card input {
+  width: 100%;
+}
+
+.signal-flow-size-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.component-signal-flow-card small {
+  color: var(--icm-text-muted);
+  font-size: var(--icm-font-xs);
+  line-height: var(--icm-line);
+}
+
+.signal-flow-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.signal-flow-actions button {
+  margin: 0;
+}

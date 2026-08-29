@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
+import { CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
+
 import {
   awaitEditorReady,
   chooseComponent,
@@ -1465,7 +1467,7 @@ test("annotation grid pitch frees drawings from the device grid", async ({
       };
     }>;
   };
-  expect(saved.schemaVersion).toBe(30);
+  expect(saved.schemaVersion).toBe(CURRENT_PROJECT_SCHEMA_VERSION);
   const document = saved.documents[0]!;
   const rectangle = document.drafting?.objects.find(
     (object) => object.kind === "rectangle",

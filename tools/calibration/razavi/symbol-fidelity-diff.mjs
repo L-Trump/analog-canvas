@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,8 +9,8 @@ import { getRazaviCatalogSymbol } from "../../../packages/symbols/dist/index.js"
 import {
   compareDevice,
   encodeReportRasters,
-  loadReferenceRaster,
 } from "../../../scripts/lib/razavi-fidelity.mjs";
+import { decodePng } from "../../../scripts/lib/png-io.mjs";
 import { loadRazaviReferenceAuthority } from "../../../scripts/lib/razavi-reference-authority.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -56,12 +57,19 @@ async function geometry(path) {
   return geometryCache.get(path);
 }
 
-async function raster(path) {
-  const absolute = resolve(referenceRoot, path);
-  if (!rasterCache.has(absolute)) {
-    rasterCache.set(absolute, await loadReferenceRaster(absolute));
+async function raster(path, expectedSha256) {
+  const bytes = files.get(path);
+  if (!bytes) {
+    throw new Error(`Reference raster is not authority-pinned: ${path}`);
   }
-  return rasterCache.get(absolute);
+  const actualSha256 = createHash("sha256").update(bytes).digest("hex");
+  if (expectedSha256 !== undefined && actualSha256 !== expectedSha256) {
+    throw new Error(`Reference raster hash mismatch: ${path}`);
+  }
+  if (!rasterCache.has(path)) {
+    rasterCache.set(path, decodePng(bytes));
+  }
+  return rasterCache.get(path);
 }
 
 await mkdir(outDir, { recursive: true });
@@ -77,18 +85,37 @@ for (const target of selected) {
   }
   const definition = getRazaviCatalogSymbol(target.symbolId);
   if (!definition) throw new Error(`Missing symbol ${target.symbolId}`);
-  const referencePath = measurement.assetPath ?? manifest.assetPath;
+  const measurementAssetPath =
+    measurement.assetPath ?? measurement.measurement?.assetPath;
+  if (
+    target.referenceRasterPath !== undefined &&
+    (target.assetPath !== target.referenceRasterPath ||
+      measurementAssetPath !== target.assetPath)
+  ) {
+    throw new Error(
+      `Fidelity target ${target.id} must use one matching target, measurement, and pinned raster assetPath`,
+    );
+  }
+  const referencePath =
+    target.assetPath ??
+    target.referenceRasterPath ??
+    measurementAssetPath ??
+    manifest.assetPath;
   const report = await compareDevice(
     {
       symbolId: target.id,
-      pixelsPerLogical: measurement.pixelsPerLogical,
-      originPx: measurement.originPx,
-      threshold: measurement.threshold ?? manifest.pixelThreshold ?? 160,
+      pixelsPerLogical: target.pixelsPerLogical ?? measurement.pixelsPerLogical,
+      originPx: target.originPx ?? measurement.originPx,
+      threshold:
+        target.threshold ??
+        measurement.threshold ??
+        manifest.pixelThreshold ??
+        160,
       useVariant: target.useVariant ?? false,
       rotation: target.rotation ?? measurement.rotation ?? 0,
       window: target.window ?? measurement.window,
     },
-    await raster(referencePath),
+    await raster(referencePath, target.referenceRasterSha256),
     definition,
   );
   const encoded = await encodeReportRasters(report);

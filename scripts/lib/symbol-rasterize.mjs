@@ -13,9 +13,10 @@
 
 import { razaviTextbookProfile } from "../../packages/derived/dist/style-profile.js";
 import {
+  renderSignalFlowFormula,
   renderSymbolDefinitionBody,
   renderVisiblePinNames,
-} from "../../packages/render-svg/dist/render.js";
+} from "../../packages/render-svg/dist/index.js";
 import { rasterizeSvgBytes } from "../../packages/exporters/dist/node.js";
 import { decodePng } from "./png-io.mjs";
 
@@ -78,6 +79,11 @@ export function buildSymbolSvg(
     additionalPrimitives,
     profile,
   );
+  const formula = renderSignalFlowFormula(
+    definition.formulaPresentation,
+    undefined,
+    { foreground: profile.foreground, profile },
+  );
   const pinNames = renderVisiblePinNames(
     definition,
     useVariant ? (variant?.hiddenPinNames ?? []) : [],
@@ -96,9 +102,12 @@ export function buildSymbolSvg(
   // Wrap exactly like render.ts:470: <g fill none stroke fg stroke-width=symbol
   // linecap linejoin miterlimit>...primitives...</g>
   const miterAttr = ` stroke-miterlimit="${profile.miterLimit}"`;
-  const transformedBody =
-    rotation === 0 ? body : `<g transform="rotate(${rotation})">${body}</g>`;
-  const group = `<g fill="none" stroke="${profile.foreground}" stroke-width="${profile.strokes.symbol}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${miterAttr}>${transformedBody}</g>`;
+  const artwork = `${body}${formula}`;
+  const transformedArtwork =
+    rotation === 0
+      ? artwork
+      : `<g transform="rotate(${rotation})">${artwork}</g>`;
+  const group = `<g fill="none" stroke="${profile.foreground}" stroke-width="${profile.strokes.symbol}" stroke-linecap="${profile.lineCap}" stroke-linejoin="${profile.lineJoin}"${miterAttr}>${transformedArtwork}</g>`;
 
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBoxX} ${viewBoxY} ${logicalWidth} ${logicalHeight}" ` +

@@ -1492,7 +1492,7 @@ test("post-publication moderation has rejected work but no approval queue", asyn
             gallery_entry_versions: {
               [String(CURRENT_PROJECT_SCHEMA_VERSION - 1)]: 1,
             },
-            workspace_slots: {
+            cloud_projects: {
               [String(CURRENT_PROJECT_SCHEMA_VERSION - 1)]: 1,
             },
           },

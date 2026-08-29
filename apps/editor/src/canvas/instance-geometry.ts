@@ -5,7 +5,11 @@ import type {
   SymbolLocalRect,
   SchematicDocument,
 } from "@icm/model";
-import type { ResolvedSymbol } from "@icm/symbols";
+import {
+  resolveAdaptiveSignalFlowBlockLayout,
+  type ResolvedSymbol,
+  type SignalFlowLayoutParameters,
+} from "@icm/symbols";
 
 function viewBoxCorners(viewBox: SymbolLocalRect): SymbolLocalPoint[] {
   return [
@@ -24,7 +28,13 @@ function viewBoxCorners(viewBox: SymbolLocalRect): SymbolLocalPoint[] {
  */
 export function visibleSymbolLocalBounds(
   resolved: ResolvedSymbol,
+  signalFlowParameters?: SignalFlowLayoutParameters,
 ): SymbolLocalRect {
+  const adaptive = resolveAdaptiveSignalFlowBlockLayout(
+    resolved.definition,
+    signalFlowParameters,
+  );
+  if (adaptive) return adaptive.bounds;
   const hiddenParts = new Set(resolved.variant?.hiddenPrimitiveParts ?? []);
   const hiddenPins = new Set(resolved.variant?.hiddenPinNames ?? []);
   const primitives = [
@@ -79,7 +89,10 @@ export function instanceVisibleHitBox(
   resolved: ResolvedSymbol,
 ): DerivedRect | null {
   if (!instance.placement) return null;
-  const localBounds = visibleSymbolLocalBounds(resolved);
+  const localBounds = visibleSymbolLocalBounds(
+    resolved,
+    instance.signalFlowParameters,
+  );
   const corners = viewBoxCorners(localBounds).map((point) =>
     transformPoint(point, instance.placement!.position, instance.placement!),
   );

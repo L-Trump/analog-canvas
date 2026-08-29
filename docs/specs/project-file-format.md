@@ -2,17 +2,20 @@
 
 Status: `accepted`
 
-Current Project schema: `30`
+Current Project schema: `31`
 
 Primary owners: `packages/model` (current shape) and
 `packages/project-protocol` (file boundary)
 
 An `.icproj.json` file is canonical JSON for one complete `CircuitProject`.
-`@icm/project-protocol` exposes `parseProject`. It accepts schemas 29 and 30.
-Schema 30 adds an optional atomic formula form to canonical RichText. Existing
-schema-29 content is unchanged, so schema 29 upgrades by a version stamp. The
-protocol supplies only schema 30 in memory and writes only schema 30. Older
-project files are rejected.
+`@icm/project-protocol` exposes `parseProject`. The rolling file boundary accepts
+schemas 30 and 31. Schema 30 added an optional atomic formula form to canonical
+RichText. Schema 31 adds optional per-instance Signal Flow metadata (`formula`,
+`coefficient`, `bodyWidth`, `bodyHeight`) independent from netlist authority.
+Both additions are optional, so the retained 29→30 and current 30→31 adapters
+preserve existing content and advance only the version stamp. The public file
+boundary supplies only schema 31 in memory and writes only schema 31; schema 29
+and older, and versions newer than 31, are rejected.
 
 ## Current authorities
 
@@ -31,6 +34,11 @@ project files are rejected.
   binding, and typed parameter values for emitting Instances. Import source
   order and symbol-mapping registry identity live in
   `Instance.importProvenance`; there is no persisted property bag.
+  `Instance.signalFlowParameters` stores optional schematic-only formula data
+  plus 10-unit-grid minimum frame dimensions. The dimensions are presentation
+  lower bounds, not fixed geometry: the renderer expands the frame to preserve
+  the shared 12-unit formula size and content padding. The metadata remains
+  independent from emitted netlist parameters.
 - Hierarchy is an acyclic graph of ordinary Instances whose typed subcircuit
   bindings resolve to child Documents; orphan Cell definitions are allowed.
 - Canvas `port` and `port-filled` objects are Cell Pin marker Instances
@@ -67,8 +75,8 @@ project files are rejected.
 ## Read and write
 
 ```text
-import text -> parse JSON -> require Project schema 29 or 30
--> converge to schema 30 -> strict schema-30 validation -> install unbound
+import text -> parse JSON -> require Project schema 30 or 31
+-> converge to schema 31 -> strict schema-31 validation -> install unbound
 export -> strict validation -> canonical key ordering -> Blob download
 ```
 
@@ -79,7 +87,7 @@ after explicit human approval in the editor.
 A migrated imported file is marked dirty. The editor never overwrites a source
 selected through the browser file input; the user may Save it as a Cloud
 Project or explicitly export upgraded bytes. Browser recovery records may be
-canonicalized to v30 only after a successful validated write.
+canonicalized to v31 only after a successful validated write.
 
 Project entry does not repair duplicate canonical supply Nets (`0` or `VDD`).
 Duplicate folded Net names are invalid input and remain a blocking diagnostic
@@ -88,7 +96,7 @@ until the author explicitly renames or merges the Nets.
 Canonical serialization ends with one newline and is byte-stable across
 serialize/parse/serialize. The current corpus is listed in
 `fixtures/projects/compatibility-corpus.json`; its accepted entries must all be
-already canonical Project schema 30. The rejected corpus names expected
+already canonical Project schema 31. The rejected corpus names expected
 validation failures.
 
 Viewport, selection, undo history, canvas overlays, Agent credentials,

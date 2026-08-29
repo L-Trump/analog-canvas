@@ -65,6 +65,7 @@ const COMPACT_LIBRARY_LABELS: Readonly<Record<string, string>> = {
   multiplier: "Mult",
   integrator: "1/s",
   "unit-delay": "z⁻¹",
+  "discrete-time-integrator": "DT Int",
   quantizer: "Quant",
   "annotation-arrow": "Arrow",
   "annotation-line": "Line",

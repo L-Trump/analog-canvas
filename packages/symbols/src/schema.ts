@@ -116,6 +116,31 @@ export const SymbolPrimitiveSchema = z.discriminatedUnion("kind", [
     style: SymbolPrimitiveStyleSchema.optional(),
   }),
 ]);
+export const SymbolFormulaPresentationSchema = z.strictObject({
+  /** Canonical source text used when the instance has no formula override. */
+  defaultFormula: z.string().min(1).max(256),
+  /** Whether the editor may prepend an independent coefficient to the formula. */
+  supportsCoefficient: z.literal(true),
+  /** Symbol-local visual center for the renderer-owned formula. */
+  center: SymbolGeometryPointSchema,
+  fontSize: z.number().finite().positive(),
+  /** Optional calibrated width for a stacked fraction bar. */
+  fractionBarWidth: z.number().finite().positive().optional(),
+  /**
+   * Shared Transfer Function frame contract. Formula text keeps a fixed font
+   * size; the frame and horizontal pin span expand when content needs room.
+   */
+  adaptiveFrame: z
+    .strictObject({
+      minBodyWidth: z.number().int().positive().multipleOf(10),
+      minBodyHeight: z.number().int().positive().multipleOf(10),
+      horizontalPadding: z.number().finite().nonnegative(),
+      verticalPadding: z.number().finite().nonnegative(),
+      leadLength: z.number().int().nonnegative().multipleOf(10),
+    })
+    .optional(),
+});
+
 export const SymbolVariantSchema = z.strictObject({
   id: StableIdSchema,
   hiddenPinNames: z.array(z.string().min(1)),
@@ -151,6 +176,10 @@ export const SymbolDefinitionSchema = z
     // A derived subcircuit container may legitimately expose an empty formal
     // interface before ports are authored in its child Cell.
     hierarchicalBlock: z.literal(true).optional(),
+    // Formula-capable Signal Flow blocks own only their frame and electrical
+    // pins in primitive geometry. The renderer projects this presentation
+    // contract so instance formula/coefficient edits never change identity.
+    formulaPresentation: SymbolFormulaPresentationSchema.optional(),
   })
   .superRefine((symbol, context) => {
     if (symbol.decorative && symbol.hierarchicalBlock) {
@@ -299,6 +328,9 @@ export const SymbolDefinitionJsonSchema = z.toJSONSchema(
 );
 
 export type SymbolPin = z.infer<typeof SymbolPinSchema>;
+export type SymbolFormulaPresentation = z.infer<
+  typeof SymbolFormulaPresentationSchema
+>;
 export type SymbolStrokeRole = z.infer<typeof SymbolStrokeRoleSchema>;
 export type SymbolPrimitive = z.infer<typeof SymbolPrimitiveSchema>;
 export type SymbolVariant = z.infer<typeof SymbolVariantSchema>;

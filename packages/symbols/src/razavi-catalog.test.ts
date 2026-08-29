@@ -80,6 +80,25 @@ const closedSwitchEvidence = JSON.parse(
     window: { width: number; height: number; minX: number; minY: number };
   };
 };
+const deltaSigmaGeometry = JSON.parse(
+  readFileSync(
+    resolve(
+      process.cwd(),
+      "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
+    ),
+    "utf8",
+  ),
+) as {
+  witnesses: Array<{ id: string; witnessPath: string }>;
+  symbols: Record<
+    string,
+    {
+      evidenceStatus: "direct-raster" | "family-derived-provisional";
+      witnessId?: string;
+      derivedFrom?: string;
+    }
+  >;
+};
 const normalize = (value: string) =>
   `${value.replaceAll("\r\n", "\n").trimEnd()}\n`;
 const pathPoints = (data: string) => {
@@ -151,6 +170,7 @@ describe("Razavi symbol catalog", () => {
       ["multiplier", "reviewed", "razavi-reference-v1"],
       ["integrator", "reviewed", "razavi-reference-v1"],
       ["unit-delay", "reviewed", "razavi-reference-v1"],
+      ["discrete-time-integrator", "reviewed", "razavi-reference-v1"],
       ["quantizer", "reviewed", "razavi-reference-v1"],
       ["diode", "reviewed", "razavi-reference-v1"],
       ["ground", "reviewed", "razavi-reference-v1"],
@@ -499,7 +519,7 @@ describe("Razavi symbol catalog", () => {
   });
 
   it("uses reviewed catalog objects as the sole built-in product library", () => {
-    expect(razaviCatalogSymbols).toHaveLength(48);
+    expect(razaviCatalogSymbols).toHaveLength(49);
     for (const catalogSymbol of razaviProductSymbols) {
       expect(
         builtInSymbols.find((symbol) => symbol.id === catalogSymbol.id),
@@ -524,6 +544,7 @@ describe("Razavi symbol catalog", () => {
       "multiplier",
       "integrator",
       "unit-delay",
+      "discrete-time-integrator",
       "quantizer",
       "diode",
       "ground",
@@ -560,6 +581,85 @@ describe("Razavi symbol catalog", () => {
       expect(isRazaviProductCatalogEntry(entry)).toBe(
         razaviProductSymbols.some((symbol) => symbol.id === entry.symbolId),
       );
+    }
+  });
+
+  it("keeps Delta-Sigma evidence honest and formula blocks renderer-owned", () => {
+    const calibrationPath =
+      "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json";
+    const directWitnesses = [
+      ["adder", "delta-sigma-figure-21-38-reference.png"],
+      ["integrator", "delta-sigma-figure-21-38-reference.png"],
+      ["discrete-time-integrator", "delta-sigma-figure-21-33-reference.png"],
+    ] as const;
+    for (const [symbolId, witnessPath] of directWitnesses) {
+      const measurement = deltaSigmaGeometry.symbols[symbolId];
+      expect(measurement).toMatchObject({ evidenceStatus: "direct-raster" });
+      expect(
+        deltaSigmaGeometry.witnesses.find(
+          (witness) => witness.id === measurement?.witnessId,
+        )?.witnessPath,
+      ).toBe(witnessPath);
+    }
+    for (const symbolId of ["multiplier", "unit-delay", "quantizer"]) {
+      expect(deltaSigmaGeometry.symbols[symbolId]).toMatchObject({
+        evidenceStatus: "family-derived-provisional",
+        derivedFrom: expect.any(String),
+      });
+    }
+    for (const symbolId of [
+      "adder",
+      "multiplier",
+      "integrator",
+      "unit-delay",
+      "discrete-time-integrator",
+      "quantizer",
+    ]) {
+      const entry = getRazaviCatalogEntry(symbolId);
+      expect(entry?.visualAuthority).toMatchObject({
+        referencePaths: [calibrationPath],
+        calibrationPath,
+      });
+      expect(entry?.generation).toBeUndefined();
+      expect(entry?.manualOnlyReason).toContain("structural netlists");
+      expect(entry?.manualOnlyReason).not.toMatch(
+        /family-derived|provisional|evidence|screenshot/iu,
+      );
+    }
+
+    const sharedTransferFunctionPresentation = {
+      supportsCoefficient: true,
+      center: { x: 0, y: 0 },
+      fontSize: 12,
+      adaptiveFrame: {
+        minBodyWidth: 40,
+        minBodyHeight: 30,
+        horizontalPadding: 8,
+        verticalPadding: 4,
+        leadLength: 20,
+      },
+    } as const;
+    const expectedFormulas = {
+      integrator: "1/s",
+      "unit-delay": "z^-1",
+      "discrete-time-integrator": "z^-1/(1-z^-1)",
+    } as const;
+    for (const [symbolId, defaultFormula] of Object.entries(expectedFormulas)) {
+      const symbol = requireRazaviCatalogSymbol(symbolId);
+      expect(symbol.formulaPresentation).toEqual({
+        defaultFormula,
+        ...sharedTransferFunctionPresentation,
+      });
+      expect(symbol.primitives.map((primitive) => primitive.part)).toEqual([
+        "input-a-lead",
+        "body",
+        "output-y-lead",
+      ]);
+      expect(
+        symbol.primitives.some((primitive) =>
+          primitive.part?.startsWith("formula-"),
+        ),
+      ).toBe(false);
     }
   });
 

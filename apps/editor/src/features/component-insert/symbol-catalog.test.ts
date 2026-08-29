@@ -57,6 +57,7 @@ describe("component insertion catalog", () => {
     expect(symbolCategory("zener-diode")).toBe("Extended Devices");
     expect(symbolCategory("ideal-switch")).toBe("Switches");
     expect(symbolCategory("closed-switch")).toBe("Switches");
+    expect(symbolCategory("discrete-time-integrator")).toBe("Signal Flow");
     expect(symbolCategory("ndmos")).toBe("Extended Devices");
     expect(symbolCategory("pdmos")).toBe("Extended Devices");
     expect(symbolCategory("annotation-arrow")).toBe("Annotations");
@@ -99,6 +100,27 @@ describe("component insertion catalog", () => {
     expect(groups.map((group) => group.category)).toEqual(["Extended Devices"]);
     expect(symbols.map((symbol) => symbol.id)).toEqual(["variable-resistor"]);
     expect(symbols[0]?.pins.map((pin) => pin.name)).toEqual(["P1", "P2"]);
+  });
+
+  it("offers the calibrated discrete-time integrator by formula and canonical id", () => {
+    const symbols = flattenComponentCatalog(
+      componentCatalog("razavi-textbook-v1", "discrete-time-integrator"),
+    );
+
+    expect(symbols).toMatchObject([
+      {
+        id: "discrete-time-integrator",
+        name: "Discrete-Time Integrator (z⁻¹/(1−z⁻¹))",
+        pins: [{ name: "A" }, { name: "Y" }],
+      },
+    ]);
+    expect(
+      flattenComponentCatalog(
+        componentCatalog("razavi-textbook-v1", "discrete-time integrator"),
+      ),
+    ).toContainEqual(
+      expect.objectContaining({ id: "discrete-time-integrator" }),
+    );
   });
 
   it("offers Digital Clock locally but can remove it with the production flag", () => {

@@ -31,6 +31,7 @@ import { applyCellResetEdit } from "./transaction-cell-reset.js";
 import { applyCellInterfaceEdit } from "./transaction-cell-interface.js";
 import { applyInstanceLifecycleEdit } from "./transaction-instance-lifecycle.js";
 import { applyInstanceNetlistEdit } from "./transaction-instance-netlist.js";
+import { applyInstanceSignalFlowEdit } from "./transaction-instance-signal-flow.js";
 import { applyInstanceStyleOverrideEdit } from "./transaction-instance-style.js";
 import { applyInstanceTransformEdit } from "./transaction-instance-transform.js";
 import { applyMosBulkEdit } from "./transaction-mos-bulk.js";
@@ -165,7 +166,12 @@ export function executeTransaction(
           // of the follow set let aligned instances shear their routes.
           edit.kind === "align_instances"
           ? edit.instanceIds
-          : [],
+          : // Signal Flow parameters resize the body, which carries the
+            // pins with it: the incident Routes have to re-derive their
+            // leads exactly as they do for a move.
+            edit.kind === "set_instance_signal_flow_parameters"
+            ? [edit.instanceId]
+            : [],
     ),
   );
   let geometryChanged = false;
@@ -274,6 +280,17 @@ export function executeTransaction(
           reject: rejectAt,
         });
         if (!outcome.ok) return outcome.rejection;
+        break;
+      }
+      case "set_instance_signal_flow_parameters": {
+        const outcome = applyInstanceSignalFlowEdit(edit, {
+          draft,
+          changedObjectIds,
+          resolver,
+          reject: rejectAt,
+        });
+        if (!outcome.ok) return outcome.rejection;
+        geometryChanged ||= outcome.geometryChanged ?? false;
         break;
       }
       case "patch_instance_netlist_parameters":
@@ -487,11 +504,12 @@ export function executeTransaction(
         edit.kind === "move_instance" ||
         edit.kind === "rotate_instance" ||
         edit.kind === "mirror_instance" ||
-        // Any edit that rewrites a placement or junction position can pull a
-        // zero-length direct contact apart; alignment and junction moves were
-        // missing here, leaving invisible connectivity behind.
+        // Any edit that moves a pin can pull a zero-length direct contact
+        // apart, leaving invisible connectivity behind: alignment, junction
+        // moves, and a Signal Flow resize that carries the pins outward.
         edit.kind === "align_instances" ||
-        edit.kind === "move_junction",
+        edit.kind === "move_junction" ||
+        edit.kind === "set_instance_signal_flow_parameters",
     )
   ) {
     const directContact = reconcileTransformDirectContacts(

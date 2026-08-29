@@ -1,5 +1,3 @@
-import { CURRENT_PROJECT_SCHEMA_VERSION } from "@icm/model";
-
 export interface Schema29To30MigrationReport {
   /**
    * Schema 30 adds an optional atomic formula run to RichText. Existing
@@ -17,7 +15,7 @@ export function upgradeSchema29To30WithReport(
   raw: Record<string, unknown>,
 ): Schema29To30MigrationResult {
   const project = structuredClone(raw);
-  project.schemaVersion = CURRENT_PROJECT_SCHEMA_VERSION;
+  project.schemaVersion = 30;
   return { project, report: { changed: false } };
 }
 

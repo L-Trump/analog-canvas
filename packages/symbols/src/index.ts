@@ -5,3 +5,4 @@ export * from "./pdk-registry.js";
 export * from "./razavi-catalog.js";
 export * from "./resolver.js";
 export * from "./schema.js";
+export * from "./signal-flow-layout.js";

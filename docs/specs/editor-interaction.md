@@ -78,6 +78,20 @@ remains unresolved. Drawing the visible `bulk-dashed` connection clears that
 default binding and connects B to the selected Net in the same transaction.
 Imported MOS instances do not receive a guessed fourth node.
 
+## Transfer Function blocks
+
+Integrator (`1/s`), Unit Delay (`z^-1`), and Discrete-Time Integrator
+(`z^-1/(1-z^-1)`) are presets of one Transfer Function presentation contract;
+they differ only in the prefilled formula. Every formula glyph uses the same
+12-unit size. Fractions stack numerator and denominator without shrinking the
+text, and longer content automatically expands the frame and the horizontal
+A/Y lead span on the 10-unit grid. Properties edits the formula, optional
+coefficient, and optional minimum width/height. Authored dimensions are lower
+bounds—content can make the frame larger, never smaller or clipped. The shared
+layout also drives route endpoints, hit bounds, backgrounds, previews, and
+untouched canonical instance-label placement. These controls are schematic-only
+and do not modify SPICE parameters, netlist identity, or electrical pin names.
+
 Ground is the `ground` component connected through pin `0`; placement reuses an
 existing global ground supply Net. Power Rail is a virtual Library item presented
 through the same I-dialog, Library, and placement input plane as components.
@@ -380,8 +394,8 @@ system; formulas do not create an Additional Text or Annotation side channel.
 Open, demo load, restore, and human-approved staged import replace the entire
 Project through one replacement boundary; they are not Edit Engine
 transactions. Replacement cancels pending recovery for the outgoing Project
-and terminates its Agent session. A complete schema-29 Project may be upgraded
-at the read boundary and then enters the editor only as schema-30; migrated
+and terminates its Agent session. A complete schema-30 Project may be upgraded
+at the read boundary and then enters the editor only as schema-31; migrated
 files are marked as needing save.
 
 Selection, viewport, active tool, previews, Agent tokens, and approval UI are

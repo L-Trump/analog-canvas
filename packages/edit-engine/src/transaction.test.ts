@@ -2039,6 +2039,43 @@ describe("Edit Transaction envelope", () => {
     });
   });
 
+  it("updates signal flow parameters without touching netlist parameters", () => {
+    const document = documentWithInstance();
+    document.instances[0]!.netlist!.parameters = { value: "8k" };
+    document.sourceStatus = "in-sync";
+
+    const result = executeTransaction(document, {
+      ...transaction(),
+      edits: [
+        {
+          kind: "set_instance_signal_flow_parameters",
+          instanceId: "M1",
+          parameters: { formula: "z^-1", coefficient: "a1" },
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      revision: 1,
+      diff: { changedObjectIds: ["M1"] },
+      document: {
+        instances: [
+          {
+            signalFlowParameters: { formula: "z^-1", coefficient: "a1" },
+            netlist: { parameters: { value: "8k" } },
+          },
+        ],
+      },
+    });
+    if (!result.ok) return;
+    expect(result.document.sourceStatus).not.toBe("connectivity-modified");
+    expect(document.instances[0]!.netlist!.parameters).toEqual({
+      value: "8k",
+    });
+    expect(document.instances[0]!.signalFlowParameters).toBeUndefined();
+  });
+
   it("rejects a parameter patch on an Instance without netlist authority", () => {
     const document = documentWithInstance();
     delete document.instances[0]!.netlist;

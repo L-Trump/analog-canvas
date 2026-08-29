@@ -7,6 +7,7 @@ import {
   InstanceNetlistDataSchema,
   InstanceNetlistBindingSchema,
   InstanceSchema,
+  SignalFlowParametersSchema,
   InstanceStyleOverrideSchema,
   JunctionRoleSchema,
   LayoutConstraintSchema,
@@ -125,6 +126,18 @@ export const SetInstanceStyleOverrideEditSchema = z.strictObject({
   kind: z.literal("set_instance_style_override"),
   instanceId: StableIdSchema,
   styleOverride: InstanceStyleOverrideSchema.nullable(),
+});
+/**
+ * Replace or clear schematic-only Signal Flow parameters.
+ *
+ * - `parameters.formula` / `parameters.coefficient`: bounded strings.
+ * - A non-null object replaces the current parameters as a whole.
+ * - `parameters` set to `null` clears all Signal Flow parameters.
+ */
+export const SetInstanceSignalFlowParametersEditSchema = z.strictObject({
+  kind: z.literal("set_instance_signal_flow_parameters"),
+  instanceId: StableIdSchema,
+  parameters: SignalFlowParametersSchema.nullable(),
 });
 export const SetInstanceBindingEditSchema = z.strictObject({
   kind: z.literal("set_instance_binding"),
@@ -384,6 +397,7 @@ export const SchematicEditSchema = z.discriminatedUnion("kind", [
   SetInstanceSchematicReferenceEditSchema,
   SetInstanceSchematicNameEditSchema,
   SetInstanceStyleOverrideEditSchema,
+  SetInstanceSignalFlowParametersEditSchema,
   SetInstanceBindingEditSchema,
   SetInstanceNetlistEditSchema,
   BulkPatchInstanceNetlistEditSchema,

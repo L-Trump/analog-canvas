@@ -20,7 +20,7 @@ describe("shapes quick-place", () => {
       }),
     );
 
-    expect(symbols).toHaveLength(54);
+    expect(symbols).toHaveLength(55);
     expect(markup).toContain("All devices");
     expect(markup.match(/data-testid="shapes-chip-/g)).toHaveLength(
       symbols.length,
@@ -39,7 +39,7 @@ describe("shapes quick-place", () => {
       ["Switches", 3],
       ["Analog Blocks", 6],
       ["Logic Gates", 10],
-      ["Signal Flow", 5],
+      ["Signal Flow", 6],
       ["Annotations", 7],
       ["Extended Devices", 7],
     ]);
@@ -51,6 +51,7 @@ describe("shapes quick-place", () => {
       "switches",
       "analog-blocks",
       "logic-gates",
+      "signal-flow",
       "annotations",
       "extended-devices",
     ];
@@ -80,6 +81,9 @@ describe("shapes quick-place", () => {
     expect(markup).toContain('aria-label="Place Comparator (unmarked)"');
     expect(markup).toContain('aria-label="Place N-channel DMOS"');
     expect(markup).toContain('aria-label="Place P-channel DMOS"');
+    expect(markup).toContain(
+      'aria-label="Place Discrete-Time Integrator (z⁻¹/(1−z⁻¹))"',
+    );
     expect(markup).not.toContain("High-voltage devices");
     expect(markup).toContain(">V Src</span>");
     expect(markup).toContain(">Clock</span>");
@@ -88,6 +92,7 @@ describe("shapes quick-place", () => {
     expect(markup).toContain(">Inv</span>");
     expect(markup).toContain(">Comp U</span>");
     expect(markup).toContain(">NOR</span>");
+    expect(markup).toContain(">DT Int</span>");
     expect(markup).not.toContain('data-testid="shapes-example-');
   });
 

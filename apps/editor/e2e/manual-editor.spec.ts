@@ -1,4 +1,5 @@
 import { createRoutePath } from "@icm/model";
+import { razaviProductSymbols } from "@icm/symbols";
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
@@ -4020,6 +4021,82 @@ test("exports structural SPICE and Spectre netlists while exposing instance auth
   ).toBeVisible();
   await expect(properties.getByLabel("Component model target")).toBeVisible();
   await expect(properties.getByText(/^Model:/u)).toHaveCount(0);
+});
+
+test("edits a formula-capable Signal Flow block with undo, redo, and Reset defaults", async ({
+  page,
+}) => {
+  // Capability determines this scenario. A catalog addition can become the
+  // exercised block without this E2E test baking in a particular symbol ID.
+  const formulaSymbol = razaviProductSymbols.find(
+    (symbol) => symbol.formulaPresentation?.supportsCoefficient,
+  );
+  expect(formulaSymbol).toBeDefined();
+  const symbol = formulaSymbol!;
+
+  await page.goto("/editor");
+  await placeComponent(page, symbol.id, { x: 360, y: 240 });
+  await openSelectionShelf(page);
+  const properties = page.getByRole("complementary", { name: "Properties" });
+  const formula = properties.getByLabel("Signal flow formula");
+  const coefficient = properties.getByLabel("Signal flow coefficient");
+
+  await expect(properties.getByText("Transfer function")).toBeVisible();
+  const minimumWidth = properties.getByLabel("Signal flow minimum width");
+  const minimumHeight = properties.getByLabel("Signal flow minimum height");
+  await expect(minimumWidth).toHaveAttribute("placeholder", "Auto");
+  await expect(minimumHeight).toHaveAttribute("placeholder", "Auto");
+
+  const formalScene = page.locator('[data-layer="formal"]');
+  const renderedFormula = formalScene.locator(
+    '[data-role="signal-flow-formula"]',
+  );
+  const frame = formalScene.locator('[data-role="signal-flow-frame"]');
+  await expect(renderedFormula).toHaveCount(1);
+  await expect(renderedFormula.locator('text[font-size="12"]')).not.toHaveCount(
+    0,
+  );
+
+  await formula.fill("z⁻¹/(1−z⁻¹)");
+  await formula.press("Tab");
+  await expect(
+    formalScene.locator('[data-role="formula-fraction-bar"]'),
+  ).toHaveCount(1);
+  await expect(
+    formalScene.locator('[data-role="formula-superscript"]'),
+  ).toHaveCount(2);
+  await expect(frame).toHaveAttribute("width", "60");
+  // The 40-unit preset is a minimum. The shared stacked-fraction layout
+  // expands to 50 units so superscript denominators clear the fraction bar.
+  await expect(frame).toHaveAttribute("height", "50");
+
+  await coefficient.fill("K");
+  await coefficient.press("Tab");
+  await expect(
+    formalScene.locator('[data-role="formula-coefficient"]'),
+  ).toHaveText("K·");
+  await expect(frame).toHaveAttribute("width", "80");
+
+  await minimumWidth.fill("160");
+  await minimumWidth.press("Tab");
+  await minimumHeight.fill("80");
+  await minimumHeight.press("Tab");
+  await expect(frame).toHaveAttribute("width", "160");
+  await expect(frame).toHaveAttribute("height", "80");
+
+  await clickCommand(page, "Edit", "Undo");
+  await expect(frame).toHaveAttribute("height", "50");
+  await clickCommand(page, "Edit", "Redo");
+  await expect(frame).toHaveAttribute("height", "80");
+
+  await properties.getByRole("button", { name: "Reset defaults" }).click();
+  await expect(formula).toHaveValue("");
+  await expect(coefficient).toHaveValue("");
+  await expect(minimumWidth).toHaveValue("");
+  await expect(minimumHeight).toHaveValue("");
+  await expect(
+    formalScene.locator('[data-role="formula-coefficient"]'),
+  ).toHaveCount(0);
 });
 
 test("selects a reviewed SKY130 MOS through the existing Model field", async ({

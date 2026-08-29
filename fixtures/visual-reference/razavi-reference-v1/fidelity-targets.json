@@ -9,7 +9,12 @@
       "measurementKey": "nmos",
       "symbolId": "nmos",
       "useVariant": true,
-      "window": { "width": 69, "height": 69, "minX": -20, "minY": -20 }
+      "window": {
+        "width": 69,
+        "height": 69,
+        "minX": -20,
+        "minY": -20
+      }
     },
     {
       "id": "pmos",
@@ -18,7 +23,12 @@
       "measurementKey": "pmos",
       "symbolId": "pmos",
       "useVariant": true,
-      "window": { "width": 69, "height": 69, "minX": -20, "minY": -20 }
+      "window": {
+        "width": 69,
+        "height": 69,
+        "minX": -20,
+        "minY": -20
+      }
     },
     {
       "id": "nmos4",
@@ -27,7 +37,12 @@
       "measurementKey": "nmos",
       "symbolId": "nmos",
       "useVariant": false,
-      "window": { "width": 69, "height": 69, "minX": -20, "minY": -20 }
+      "window": {
+        "width": 69,
+        "height": 69,
+        "minX": -20,
+        "minY": -20
+      }
     },
     {
       "id": "pmos4",
@@ -36,7 +51,12 @@
       "measurementKey": "pmos",
       "symbolId": "pmos",
       "useVariant": false,
-      "window": { "width": 69, "height": 69, "minX": -20, "minY": -20 }
+      "window": {
+        "width": 69,
+        "height": 69,
+        "minX": -20,
+        "minY": -20
+      }
     },
     {
       "id": "voltage-source",
@@ -260,6 +280,75 @@
       "measurementKey": "d-flip-flop",
       "symbolId": "d-flip-flop",
       "useVariant": false
+    },
+    {
+      "id": "signal-flow-adder-figure-21-38",
+      "label": "adder (Figure 21.38 raster witness)",
+      "measurementPath": "delta-sigma-geometry.json",
+      "measurementKey": "adder",
+      "assetPath": "delta-sigma-figure-21-38-reference.png",
+      "symbolId": "adder",
+      "useVariant": false,
+      "window": {
+        "width": 39,
+        "height": 35,
+        "minX": -17,
+        "minY": -15
+      },
+      "referenceRasterPath": "delta-sigma-figure-21-38-reference.png",
+      "referenceRasterSha256": "88adc1f13614d2928e6a6b08116e9c57c0006b685671c8538ca79c683c38e72f",
+      "pixelsPerLogical": 1.3,
+      "originPx": {
+        "x": 69.5,
+        "y": 70.5
+      },
+      "threshold": 230
+    },
+    {
+      "id": "signal-flow-integrator-figure-21-38",
+      "label": "integrator 1/s (Figure 21.38 raster witness)",
+      "measurementPath": "delta-sigma-geometry.json",
+      "measurementKey": "integrator",
+      "assetPath": "delta-sigma-figure-21-38-reference.png",
+      "symbolId": "integrator",
+      "useVariant": false,
+      "window": {
+        "width": 41,
+        "height": 43,
+        "minX": -19,
+        "minY": -23
+      },
+      "referenceRasterPath": "delta-sigma-figure-21-38-reference.png",
+      "referenceRasterSha256": "88adc1f13614d2928e6a6b08116e9c57c0006b685671c8538ca79c683c38e72f",
+      "pixelsPerLogical": 1.3,
+      "originPx": {
+        "x": 128,
+        "y": 68.5
+      },
+      "threshold": 200
+    },
+    {
+      "id": "signal-flow-discrete-time-integrator-figure-21-33",
+      "label": "discrete-time integrator z^-1/(1-z^-1) (Figure 21.33 raster witness)",
+      "measurementPath": "delta-sigma-geometry.json",
+      "measurementKey": "discrete-time-integrator",
+      "assetPath": "delta-sigma-figure-21-33-reference.png",
+      "symbolId": "discrete-time-integrator",
+      "useVariant": false,
+      "window": {
+        "width": 61,
+        "height": 55,
+        "minX": -19,
+        "minY": -16
+      },
+      "referenceRasterPath": "delta-sigma-figure-21-33-reference.png",
+      "referenceRasterSha256": "dc3fd08dc3eb2aac6842f32016ecc0f0d7d77db137af2530e192e19f5c43d1a5",
+      "pixelsPerLogical": 1.2,
+      "originPx": {
+        "x": 137.5,
+        "y": 82
+      },
+      "threshold": 100
     }
   ]
 }

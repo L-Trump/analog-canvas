@@ -2479,6 +2479,20 @@ describe("gallery administration", () => {
             changed: false,
           }),
         }),
+        expect.objectContaining({
+          table: "gallery_entry_versions",
+          id: expect.any(String),
+          report: expect.objectContaining({
+            changed: false,
+          }),
+        }),
+        expect.objectContaining({
+          table: "cloud_projects",
+          id: expect.any(String),
+          report: expect.objectContaining({
+            changed: false,
+          }),
+        }),
       ]),
     });
     expect(

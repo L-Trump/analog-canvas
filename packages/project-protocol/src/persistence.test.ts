@@ -3,7 +3,11 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { createEmptyProject, deriveStableId } from "@icm/model";
+import {
+  createEmptyProject,
+  CURRENT_PROJECT_SCHEMA_VERSION,
+  deriveStableId,
+} from "@icm/model";
 import {
   ProjectFormatError,
   loadProject,
@@ -18,6 +22,7 @@ import {
   upgradeSchema26To27,
   upgradeSchema27To28,
   upgradeSchema28To29,
+  upgradeSchema29To30,
 } from "./index.js";
 
 class MemoryStorage implements ProjectStorage {
@@ -174,17 +179,19 @@ describe("Project persistence", () => {
 
     const migrated = parseProjectWithMetadata(
       JSON.stringify(
-        upgradeSchema28To29(
-          upgradeSchema27To28(
-            upgradeSchema26To27(upgradeSchema25To26(direct.project)),
+        upgradeSchema29To30(
+          upgradeSchema28To29(
+            upgradeSchema27To28(
+              upgradeSchema26To27(upgradeSchema25To26(direct.project)),
+            ),
           ),
         ),
       ),
     );
     expect(migrated).toMatchObject({
-      sourceSchemaVersion: 29,
+      sourceSchemaVersion: 30,
       migrated: true,
-      project: { schemaVersion: 30 },
+      project: { schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION },
     });
     const migratedDocument = migrated.project.documents[0]!;
     expect(migratedDocument.netlist?.terminals).toMatchObject([
@@ -325,15 +332,19 @@ describe("Project persistence", () => {
     // replay the complete history before the current boundary validates it.
     const parsed = parseProjectWithMetadata(
       JSON.stringify(
-        upgradeSchema28To29(
-          upgradeSchema27To28(upgradeSchema26To27(upgradeSchema25To26(source))),
+        upgradeSchema29To30(
+          upgradeSchema28To29(
+            upgradeSchema27To28(
+              upgradeSchema26To27(upgradeSchema25To26(source)),
+            ),
+          ),
         ),
       ),
     );
     expect(parsed).toMatchObject({
-      sourceSchemaVersion: 29,
+      sourceSchemaVersion: 30,
       migrated: true,
-      project: { schemaVersion: 30 },
+      project: { schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION },
     });
     const route = parsed.project.documents[0]!.routes[0]!;
     const annotation = parsed.project.documents[0]!.annotations[0]!;
@@ -351,10 +362,10 @@ describe("Project persistence", () => {
 
   it("rejects schemas outside the current-and-previous window", () => {
     const project = createEmptyProject("project-test", "Test Project");
-    for (const schemaVersion of [23, 24, 25, 26, 27, 28, 31, 99]) {
+    for (const schemaVersion of [23, 24, 25, 26, 27, 28, 29, 32, 99]) {
       expect(() =>
         parseProject(JSON.stringify({ ...project, schemaVersion })),
-      ).toThrow(/must be 29 or 30/);
+      ).toThrow(/must be 30 or 31/);
     }
   });
 });

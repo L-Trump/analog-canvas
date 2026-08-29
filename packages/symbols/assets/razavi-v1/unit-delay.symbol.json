@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "unit-delay",
-  "name": "Unit Delay (z\u207b\u00b9)",
+  "name": "Unit Delay (z⁻¹)",
   "viewBox": {
     "x": -44,
     "y": -24,
@@ -44,9 +44,10 @@
         "y": 0
       },
       "to": {
-        "x": -24,
+        "x": -20,
         "y": 0
       },
+      "part": "input-a-lead",
       "style": {
         "strokeRole": "normal",
         "lineCap": "butt",
@@ -55,7 +56,8 @@
     },
     {
       "kind": "path",
-      "data": "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
+      "part": "body",
+      "data": "M -20 -15 L 20 -15 L 20 15 L -20 15 Z",
       "style": {
         "strokeRole": "emphasis",
         "lineCap": "butt",
@@ -66,94 +68,37 @@
     {
       "kind": "line",
       "from": {
-        "x": 24,
+        "x": 20,
         "y": 0
       },
       "to": {
         "x": 40,
         "y": 0
       },
+      "part": "output-y-lead",
       "style": {
         "strokeRole": "normal",
         "lineCap": "butt",
         "lineJoin": "miter"
       }
-    },
-    {
-      "kind": "polyline",
-      "points": [
-        {
-          "x": -10,
-          "y": -5
-        },
-        {
-          "x": -2,
-          "y": -5
-        },
-        {
-          "x": -10,
-          "y": 5
-        },
-        {
-          "x": -2,
-          "y": 5
-        }
-      ],
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
-    },
-    {
-      "kind": "line",
-      "from": {
-        "x": 2,
-        "y": -6
-      },
-      "to": {
-        "x": 7,
-        "y": -6
-      },
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
-    },
-    {
-      "kind": "line",
-      "from": {
-        "x": 10,
-        "y": -9
-      },
-      "to": {
-        "x": 10,
-        "y": -3
-      },
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
-    },
-    {
-      "kind": "line",
-      "from": {
-        "x": 8.5,
-        "y": -7.5
-      },
-      "to": {
-        "x": 10,
-        "y": -9
-      },
-      "style": {
-        "strokeRole": "normal",
-        "lineCap": "round",
-        "lineJoin": "round"
-      }
     }
   ],
+  "formulaPresentation": {
+    "defaultFormula": "z^-1",
+    "supportsCoefficient": true,
+    "center": {
+      "x": 0,
+      "y": 0
+    },
+    "fontSize": 12,
+    "adaptiveFrame": {
+      "minBodyWidth": 40,
+      "minBodyHeight": 30,
+      "horizontalPadding": 8,
+      "verticalPadding": 4,
+      "leadLength": 20
+    }
+  },
   "variants": [],
   "labelVisibility": "hidden"
 }

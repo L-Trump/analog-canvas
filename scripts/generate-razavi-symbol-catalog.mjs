@@ -72,6 +72,37 @@ for (const target of fidelityRegistry.targets) {
   if (target.rotation !== undefined && !Number.isFinite(target.rotation)) {
     fail(`invalid rotation for fidelity target ${target.id}`);
   }
+  if (
+    target.referenceRasterPath !== undefined &&
+    (typeof target.referenceRasterPath !== "string" ||
+      typeof target.referenceRasterSha256 !== "string" ||
+      target.referenceRasterSha256.length !== 64)
+  ) {
+    fail(`invalid pinned reference raster for fidelity target ${target.id}`);
+  }
+  if (target.assetPath !== undefined && typeof target.assetPath !== "string") {
+    fail(`invalid assetPath for fidelity target ${target.id}`);
+  }
+  if (
+    target.pixelsPerLogical !== undefined &&
+    (!Number.isFinite(target.pixelsPerLogical) || target.pixelsPerLogical <= 0)
+  ) {
+    fail(`invalid pixelsPerLogical for fidelity target ${target.id}`);
+  }
+  if (
+    target.originPx !== undefined &&
+    (!Number.isFinite(target.originPx.x) || !Number.isFinite(target.originPx.y))
+  ) {
+    fail(`invalid originPx for fidelity target ${target.id}`);
+  }
+  if (
+    target.threshold !== undefined &&
+    (!Number.isFinite(target.threshold) ||
+      target.threshold < 0 ||
+      target.threshold > 255)
+  ) {
+    fail(`invalid threshold for fidelity target ${target.id}`);
+  }
   fidelityTargetIds.add(target.id);
   const hasSymbol = typeof target.symbolId === "string";
   const hasFormal = formalKinds.has(target.formalKind);
@@ -90,8 +121,38 @@ for (const target of fidelityRegistry.targets) {
   if (!measurement) {
     fail(`missing fidelity measurement for ${target.id}`);
   }
+  if (target.referenceRasterPath !== undefined) {
+    const rasterBytes = authorityFiles.get(target.referenceRasterPath);
+    if (!rasterBytes) {
+      fail(`fidelity raster is not authority-pinned for ${target.id}`);
+    }
+    if (hash(rasterBytes) !== target.referenceRasterSha256) {
+      fail(`fidelity raster hash mismatch for ${target.id}`);
+    }
+    const measurementRasterPath =
+      measurement.assetPath ?? measurement.measurement?.assetPath;
+    if (
+      target.assetPath !== target.referenceRasterPath ||
+      measurementRasterPath !== target.assetPath
+    ) {
+      fail(
+        `fidelity target ${target.id} must use one matching target, measurement, and pinned raster assetPath`,
+      );
+    }
+  }
   const window =
     target.window ?? measurement.window ?? measurement.cropWindowPx;
+  if (
+    target.referenceRasterPath !== undefined &&
+    (!Number.isFinite(target.pixelsPerLogical) ||
+      !Number.isFinite(target.originPx?.x) ||
+      !Number.isFinite(target.originPx?.y) ||
+      !Number.isFinite(target.threshold))
+  ) {
+    fail(
+      `fidelity target ${target.id} with a raster witness requires pixelsPerLogical, originPx, and threshold`,
+    );
+  }
   if (
     !window ||
     !Number.isInteger(window.width) ||

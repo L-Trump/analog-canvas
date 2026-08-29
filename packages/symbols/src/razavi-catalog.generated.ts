@@ -328,14 +328,16 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral summing node; structural netlists need an explicit implementation mapping.",
     assetPath: "adder.symbol.json",
     assetHash:
-      "1845d267b1cfd2d791e92dae5e57f099727365c2d4c5d151d25239480736c3eb",
+      "e21a88de008caef10f5740d9370dd3ed68bbaedc934fc73549f0d5657784ae48",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
         "fixtures/visual-reference/razavi-reference-v1/manifest.json",
       referencePaths: [
-        "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
       ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
     },
   },
   {
@@ -350,14 +352,16 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral mixing node; structural netlists need an explicit implementation mapping.",
     assetPath: "multiplier.symbol.json",
     assetHash:
-      "cda435fcc278d4bb9a794e1a9e419b39a9659474398be1b8cd3cef3b1fec2289",
+      "34f12c4ea41feb7e9b62804199435b493bfcb2f6e9c60fe47cc8e47ed33b1c9f",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
         "fixtures/visual-reference/razavi-reference-v1/manifest.json",
       referencePaths: [
-        "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
       ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
     },
   },
   {
@@ -372,14 +376,16 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral s-domain block; structural netlists need an explicit implementation mapping.",
     assetPath: "integrator.symbol.json",
     assetHash:
-      "b2c7cea5fe953dd5066c66eba8ebe92a2bd6790bc8e083fdf129480924e6fab4",
+      "55a62393c2a69e557c0d7fe7234c7a7a9e41828ec12a5392b36079035c936c07",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
         "fixtures/visual-reference/razavi-reference-v1/manifest.json",
       referencePaths: [
-        "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
       ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
     },
   },
   {
@@ -394,14 +400,40 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral z-domain block; structural netlists need an explicit implementation mapping.",
     assetPath: "unit-delay.symbol.json",
     assetHash:
-      "cd38d7dc54dfc7ee259e892963b66fac8aa5fcde38d625016acd5f830ae08cbf",
+      "ecdb570fed6e24ea7bd77902dfba626174cf4845062b49f82576d00a064b27a6",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
         "fixtures/visual-reference/razavi-reference-v1/manifest.json",
       referencePaths: [
-        "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
       ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
+    },
+  },
+  {
+    symbolId: "discrete-time-integrator",
+    name: "Discrete-Time Integrator (z⁻¹/(1−z⁻¹))",
+    category: "signal-flow",
+    reviewStatus: "reviewed",
+    pinOrder: ["A", "Y"],
+    palette: true,
+    automaticMappings: [],
+    manualOnlyReason:
+      "Behavioral z-domain block; structural netlists need an explicit implementation mapping.",
+    assetPath: "discrete-time-integrator.symbol.json",
+    assetHash:
+      "30bd218131b4245c74a778188224d65ebd8422f2ff0462487378b4b0d838400d",
+    visualAuthority: {
+      kind: "razavi-reference-v1",
+      referenceManifestPath:
+        "fixtures/visual-reference/razavi-reference-v1/manifest.json",
+      referencePaths: [
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
+      ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
     },
   },
   {
@@ -416,14 +448,16 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Behavioral quantization block; structural netlists need an explicit implementation mapping.",
     assetPath: "quantizer.symbol.json",
     assetHash:
-      "5a45c801fb7f880e47f17cc257f3cd7df7a841a7eb26a3689e9b347cc9f09fa1",
+      "8eb283cbf258a09b50dad8ce3aabe96025d860e1235084e23788a7110b76ca82",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
         "fixtures/visual-reference/razavi-reference-v1/manifest.json",
       referencePaths: [
-        "fixtures/visual-reference/razavi-reference-v1/razavi-six-panel.png",
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
       ],
+      calibrationPath:
+        "fixtures/visual-reference/razavi-reference-v1/delta-sigma-geometry.json",
     },
   },
   {
@@ -2861,6 +2895,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           x: -12,
           y: 0,
         },
+        part: "input-a-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -2869,6 +2904,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "circle",
+        part: "body",
         center: {
           x: 0,
           y: 0,
@@ -2890,6 +2926,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           x: 30,
           y: 0,
         },
+        part: "output-y-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -2906,6 +2943,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           x: 0,
           y: 30,
         },
+        part: "input-b-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -2914,6 +2952,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "line",
+        part: "plus-horizontal",
         from: {
           x: -6,
           y: 0,
@@ -2930,6 +2969,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "line",
+        part: "plus-vertical",
         from: {
           x: 0,
           y: -6,
@@ -3010,6 +3050,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           x: -12,
           y: 0,
         },
+        part: "input-a-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3018,6 +3059,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "circle",
+        part: "body",
         center: {
           x: 0,
           y: 0,
@@ -3039,6 +3081,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           x: 30,
           y: 0,
         },
+        part: "output-y-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3055,6 +3098,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           x: 0,
           y: 30,
         },
+        part: "input-b-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3063,6 +3107,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "line",
+        part: "multiply-descending",
         from: {
           x: -4.243,
           y: -4.243,
@@ -3079,6 +3124,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "line",
+        part: "multiply-ascending",
         from: {
           x: -4.243,
           y: 4.243,
@@ -3143,9 +3189,10 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           y: 0,
         },
         to: {
-          x: -24,
+          x: -20,
           y: 0,
         },
+        part: "input-a-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3154,7 +3201,8 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "path",
-        data: "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
+        part: "body",
+        data: "M -20 -20 L 20 -20 L 20 20 L -20 20 Z",
         style: {
           strokeRole: "emphasis",
           lineCap: "butt",
@@ -3165,77 +3213,37 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 24,
+          x: 20,
           y: 0,
         },
         to: {
           x: 40,
           y: 0,
         },
+        part: "output-y-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
           lineJoin: "miter",
         },
       },
-      {
-        kind: "line",
-        from: {
-          x: 0,
-          y: -9,
-        },
-        to: {
-          x: 0,
-          y: -3,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: -1.8,
-          y: -7.3,
-        },
-        to: {
-          x: 0,
-          y: -9,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: -6,
-          y: 0,
-        },
-        to: {
-          x: 6,
-          y: 0,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
-        },
-      },
-      {
-        kind: "path",
-        data: "M 2.6 3.6 A 1.9 1.9 0 1 0 0.4 5.6 A 1.9 1.9 0 1 1 -1.8 7.6",
-        style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
-        },
-      },
     ],
+    formulaPresentation: {
+      defaultFormula: "1/s",
+      supportsCoefficient: true,
+      center: {
+        x: 0,
+        y: 0,
+      },
+      fontSize: 12,
+      adaptiveFrame: {
+        minBodyWidth: 40,
+        minBodyHeight: 30,
+        horizontalPadding: 8,
+        verticalPadding: 4,
+        leadLength: 20,
+      },
+    },
     variants: [],
     labelVisibility: "hidden",
   },
@@ -3285,9 +3293,10 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           y: 0,
         },
         to: {
-          x: -24,
+          x: -20,
           y: 0,
         },
+        part: "input-a-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3296,7 +3305,8 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "path",
-        data: "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
+        part: "body",
+        data: "M -20 -15 L 20 -15 L 20 15 L -20 15 Z",
         style: {
           strokeRole: "emphasis",
           lineCap: "butt",
@@ -3307,13 +3317,90 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 24,
+          x: 20,
           y: 0,
         },
         to: {
           x: 40,
           y: 0,
         },
+        part: "output-y-lead",
+        style: {
+          strokeRole: "normal",
+          lineCap: "butt",
+          lineJoin: "miter",
+        },
+      },
+    ],
+    formulaPresentation: {
+      defaultFormula: "z^-1",
+      supportsCoefficient: true,
+      center: {
+        x: 0,
+        y: 0,
+      },
+      fontSize: 12,
+      adaptiveFrame: {
+        minBodyWidth: 40,
+        minBodyHeight: 30,
+        horizontalPadding: 8,
+        verticalPadding: 4,
+        leadLength: 20,
+      },
+    },
+    variants: [],
+    labelVisibility: "hidden",
+  },
+  {
+    schemaVersion: 1,
+    id: "discrete-time-integrator",
+    name: "Discrete-Time Integrator (z⁻¹/(1−z⁻¹))",
+    viewBox: {
+      x: -54,
+      y: -24,
+      width: 108,
+      height: 48,
+    },
+    pins: [
+      {
+        name: "A",
+        role: "input",
+        at: {
+          x: -50,
+          y: 0,
+        },
+        direction: "west",
+        presentation: {
+          visibility: "visible",
+          leadLength: 15,
+        },
+      },
+      {
+        name: "Y",
+        role: "output",
+        at: {
+          x: 50,
+          y: 0,
+        },
+        direction: "east",
+        presentation: {
+          visibility: "visible",
+          leadLength: 15,
+        },
+      },
+    ],
+    primitives: [
+      {
+        kind: "line",
+        from: {
+          x: -50,
+          y: 0,
+        },
+        to: {
+          x: -30,
+          y: 0,
+        },
+        part: "input-a-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3321,80 +3408,50 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         },
       },
       {
-        kind: "polyline",
-        points: [
-          {
-            x: -10,
-            y: -5,
-          },
-          {
-            x: -2,
-            y: -5,
-          },
-          {
-            x: -10,
-            y: 5,
-          },
-          {
-            x: -2,
-            y: 5,
-          },
-        ],
+        kind: "path",
+        part: "body",
+        data: "M -30 -20 L 30 -20 L 30 20 L -30 20 Z",
         style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
+          strokeRole: "emphasis",
+          lineCap: "butt",
+          lineJoin: "miter",
+          miterLimit: 4,
         },
       },
       {
         kind: "line",
         from: {
-          x: 2,
-          y: -6,
+          x: 30,
+          y: 0,
         },
         to: {
-          x: 7,
-          y: -6,
+          x: 50,
+          y: 0,
         },
+        part: "output-y-lead",
         style: {
           strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: 10,
-          y: -9,
-        },
-        to: {
-          x: 10,
-          y: -3,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: 8.5,
-          y: -7.5,
-        },
-        to: {
-          x: 10,
-          y: -9,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "round",
-          lineJoin: "round",
+          lineCap: "butt",
+          lineJoin: "miter",
         },
       },
     ],
+    formulaPresentation: {
+      defaultFormula: "z^-1/(1-z^-1)",
+      supportsCoefficient: true,
+      center: {
+        x: 0,
+        y: 0,
+      },
+      fontSize: 12,
+      adaptiveFrame: {
+        minBodyWidth: 40,
+        minBodyHeight: 30,
+        horizontalPadding: 8,
+        verticalPadding: 4,
+        leadLength: 20,
+      },
+    },
     variants: [],
     labelVisibility: "hidden",
   },
@@ -3444,9 +3501,10 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
           y: 0,
         },
         to: {
-          x: -24,
+          x: -20,
           y: 0,
         },
+        part: "input-a-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3455,7 +3513,8 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "path",
-        data: "M -24 -12 L 24 -12 L 24 12 L -24 12 Z",
+        part: "body",
+        data: "M -20 -13 L 20 -13 L 20 13 L -20 13 Z",
         style: {
           strokeRole: "emphasis",
           lineCap: "butt",
@@ -3466,13 +3525,14 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       {
         kind: "line",
         from: {
-          x: 24,
+          x: 20,
           y: 0,
         },
         to: {
           x: 40,
           y: 0,
         },
+        part: "output-y-lead",
         style: {
           strokeRole: "normal",
           lineCap: "butt",
@@ -3481,6 +3541,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
       },
       {
         kind: "polyline",
+        part: "quantizer-staircase",
         points: [
           {
             x: -14,
