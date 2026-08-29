@@ -1,4 +1,4 @@
-import { createRoutePath, routeEnd } from "@icm/model";
+import { createEmptyDocument, createRoutePath, routeEnd } from "@icm/model";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -767,5 +767,74 @@ describe("direct-contact transform lifecycle", () => {
       history.document.instances.find((instance) => instance.id === "A")
         ?.placement?.position,
     ).toEqual({ x: 100, y: 300 });
+  });
+});
+
+describe("signal-flow resize direct contacts", () => {
+  // A resize carries the pins outward exactly like a move does, so a
+  // zero-length direct contact it pulls apart has to materialize a Route
+  // instead of leaving two visibly separate pins on one Net with no
+  // conductor between them.
+  function abutting(): SchematicDocument {
+    const document = createEmptyDocument("doc", "SignalFlowContact");
+    document.instances.push(
+      {
+        id: "SF",
+        symbolId: "integrator",
+        placement: {
+          position: { x: 200, y: 200 },
+          rotation: 0,
+          mirror: "none",
+        },
+      },
+      {
+        id: "P1",
+        symbolId: "port",
+        // Port pin lands on the integrator's Y pin at (240,200).
+        placement: { position: { x: 250, y: 200 }, rotation: 0, mirror: "x" },
+      },
+    );
+    document.nets.push({
+      id: "net-sf",
+      terminals: [
+        { instanceId: "SF", pinName: "Y" },
+        { instanceId: "P1", pinName: "P" },
+      ],
+    });
+    document.netlist!.terminals.push({
+      id: "cell-terminal-p1",
+      name: "OUT",
+      netId: "net-sf",
+      direction: "passive",
+      interfaceInstanceIds: ["P1"],
+    });
+    return document;
+  }
+
+  it("materializes a Route when a wider body pulls the contact apart", () => {
+    const document = abutting();
+    const result = executeTransaction(
+      document,
+      transaction(document, [
+        {
+          kind: "set_instance_signal_flow_parameters",
+          instanceId: "SF",
+          parameters: { bodyWidth: 200 },
+        },
+      ]),
+      context,
+    );
+    if (!result.ok) throw new Error(result.error.message);
+    expect(result.document.routes).toHaveLength(1);
+    const route = result.document.routes[0]!;
+    expect(route.netId).toBe("net-sf");
+    expect(
+      new Set([endpointKey(route.start), endpointKey(routeEnd(route))]),
+    ).toEqual(
+      new Set([
+        endpointKey({ kind: "terminal", instanceId: "SF", pinName: "Y" }),
+        endpointKey({ kind: "terminal", instanceId: "P1", pinName: "P" }),
+      ]),
+    );
   });
 });
