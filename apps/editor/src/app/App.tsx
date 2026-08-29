@@ -19,6 +19,7 @@ import {
   type WireSource,
 } from "@icm/edit-engine";
 import {
+  computeNetHighlight,
   deriveNetConnectivity,
   deriveRoutingAffectedClosure,
   resolveDraftingObjectGeometry,
@@ -41,6 +42,7 @@ import type {
   DerivedPoint,
   DraftingObject,
   GridRect,
+  LayoutGroup,
   Point,
   Rect,
   SchematicDocument,
@@ -68,7 +70,11 @@ import {
   type CameraRectInput,
   type CanvasInsets,
 } from "../canvas/fit-view";
-import type { CanvasDragSession } from "../canvas/canvas-drag-session";
+import {
+  startCanvasDragSession,
+  type CanvasDragSession,
+} from "../canvas/canvas-drag-session";
+import { startCanvasDragVisual } from "../canvas/canvas-drag-visual";
 import { createCanvasHitController } from "../canvas/canvas-hit-controller";
 import {
   type RouteStretchPreview,
@@ -93,7 +99,11 @@ import {
 import { EditorStatusbar } from "../features/editor-shell/editor-statusbar";
 import { TimingSimulationPanel } from "../features/simulation/timing-simulation-panel";
 import { TIMING_UI_ENABLED } from "../features/simulation/timing-ui";
-import { waveformDraftingObjects } from "../features/simulation/timing-waveform";
+import { updateComponentParameterValues } from "../features/component-insert/component-parameters";
+import {
+  waveformDraftingObjects,
+  type TimingWaveformLayout,
+} from "../features/simulation/timing-waveform";
 import { useCellSymbolLayout } from "../features/hierarchy/use-cell-symbol-layout";
 import {
   cellInsertLaunch,
@@ -187,6 +197,10 @@ import {
   draftingDragOrigin,
   translateDraftingObject,
 } from "../features/drafting/drafting-manipulation";
+import {
+  draftingGroupScaleRange,
+  scaleDraftingGroup,
+} from "../features/drafting/drafting-group-scale";
 import { createDraftingCommands } from "../features/drafting/drafting-commands";
 import {
   createDraftingCreateController,
@@ -277,6 +291,12 @@ import {
   snapCoordinate,
 } from "../snap/engine";
 import type { SnapAnchor, SnapGuideLine, SnapResult } from "../snap/engine";
+
+interface PendingWaveformPlacement {
+  groupId: string;
+  objects: DraftingObject[];
+  traceCount: number;
+}
 
 const DEFAULT_VIEWBOX: GridRect = { x: 0, y: 0, width: 960, height: 640 };
 const RECENT_COMPONENTS_STORAGE_KEY = "icm.recent-components.v1";
@@ -904,6 +924,26 @@ export function App({
   );
   const [highlightedNetOrigin, setHighlightedNetOrigin] =
     useState<HighlightedNetOrigin | null>(null);
+  const [simulationWindowOpen, setSimulationWindowOpen] = useState(false);
+  const [simulationPickNetsActive, setSimulationPickNetsActive] =
+    useState(false);
+  const [simulationHoverNetId, setSimulationHoverNetId] = useState<
+    string | null
+  >(null);
+  const [simulationSavedNetIds, setSimulationSavedNetIds] = useState<
+    Set<string>
+  >(() => new Set());
+  const [pendingWaveformPlacement, setPendingWaveformPlacement] =
+    useState<PendingWaveformPlacement | null>(null);
+  const [waveformPlacementPoint, setWaveformPlacementPoint] =
+    useState<Point | null>(null);
+  useEffect(() => {
+    setSimulationPickNetsActive(false);
+    setSimulationHoverNetId(null);
+    setSimulationSavedNetIds(new Set());
+    setPendingWaveformPlacement(null);
+    setWaveformPlacementPoint(null);
+  }, [document.id]);
   const routeCounter = useRef(0);
   const canvasDragSessionRef = useRef<CanvasDragSession | null>(null);
   /**
@@ -945,20 +985,43 @@ export function App({
   const [projectedMovePreviewDocument, setProjectedMovePreviewDocument] =
     useState<SchematicDocument | null>(null);
   const renderedDocument = useMemo(() => {
-    if (projectedMovePreviewDocument) return projectedMovePreviewDocument;
-    if (!draftingHandlePreview || !document.drafting) return document;
-    return {
-      ...document,
-      drafting: {
-        ...document.drafting,
-        objects: document.drafting.objects.map((object) =>
-          object.id === draftingHandlePreview.objectId
-            ? draftingHandlePreview.object
-            : object,
+    let rendered = projectedMovePreviewDocument ?? document;
+    if (draftingHandlePreview && rendered.drafting) {
+      rendered = {
+        ...rendered,
+        drafting: {
+          ...rendered.drafting,
+          objects: rendered.drafting.objects.map((object) =>
+            object.id === draftingHandlePreview.objectId
+              ? draftingHandlePreview.object
+              : object,
+          ),
+        },
+      };
+    }
+    if (pendingWaveformPlacement && waveformPlacementPoint) {
+      const previewObjects = pendingWaveformPlacement.objects.map((object) =>
+        translateDraftingObject(
+          object,
+          waveformPlacementPoint,
+          document.presentation.grid,
         ),
-      },
-    };
-  }, [document, draftingHandlePreview, projectedMovePreviewDocument]);
+      );
+      rendered = {
+        ...rendered,
+        drafting: {
+          objects: [...(rendered.drafting?.objects ?? []), ...previewObjects],
+        },
+      };
+    }
+    return rendered;
+  }, [
+    document,
+    draftingHandlePreview,
+    pendingWaveformPlacement,
+    projectedMovePreviewDocument,
+    waveformPlacementPoint,
+  ]);
   const lastGoodSceneRef = useRef<ReturnType<typeof buildSvgScene> | null>(
     null,
   );
@@ -1138,6 +1201,56 @@ export function App({
     wireSource,
     bulkDrawInstanceId,
   });
+  const simulationPickHighlight = useMemo(
+    () =>
+      simulationPickNetsActive && simulationHoverNetId
+        ? computeNetHighlight(
+            projectConnectivityIndex,
+            document.id,
+            simulationHoverNetId,
+            undefined,
+            documentStack,
+          )
+        : undefined,
+    [
+      document.id,
+      documentStack,
+      projectConnectivityIndex,
+      simulationHoverNetId,
+      simulationPickNetsActive,
+    ],
+  );
+  const canonicalSimulationNetId = (netId: string): string | null => {
+    const group =
+      logicalNets.byBaseNetId.get(netId) ??
+      logicalNets.groups.find((candidate) => candidate.id === netId);
+    return group?.baseNetIds[0] ?? null;
+  };
+  const toggleSimulationSavedNet = (netId: string): void => {
+    const baseNetId = canonicalSimulationNetId(netId);
+    if (!baseNetId) {
+      setStatus(`Could not resolve Net ${netId}`);
+      return;
+    }
+    const group = logicalNets.byBaseNetId.get(baseNetId);
+    setSimulationSavedNetIds((current) => {
+      const next = new Set(current);
+      if (next.has(baseNetId)) next.delete(baseNetId);
+      else next.add(baseNetId);
+      return next;
+    });
+    setStatus(`Toggled saved Net ${group?.name ?? baseNetId}`);
+  };
+  const setSimulationPickMode = (active: boolean): void => {
+    if (active) activateTool("pointer");
+    setSimulationPickNetsActive(active);
+    if (!active) setSimulationHoverNetId(null);
+    setStatus(
+      active
+        ? "Pick Nets: click a wire, label, junction, or connected pin · Esc exits"
+        : "Finished picking simulation Nets",
+    );
+  };
   const {
     enabled: cellSymbolLayoutEnabled,
     layout: selectedCellSymbolLayout,
@@ -2022,7 +2135,8 @@ export function App({
       placementOwnsCanvas: Boolean(
         (pendingSymbolId && pendingComponentPlacement) ||
         vddRailMode ||
-        copyPlacement !== null,
+        copyPlacement !== null ||
+        pendingWaveformPlacement !== null,
       ),
       tool,
       cellSymbolLayoutEnabled,
@@ -2033,6 +2147,23 @@ export function App({
       beginAnnotationDrag,
       handleRoutePointerDown,
       beginDraftingDrag,
+      beginDraftingGroupMove: (event, object, hitTarget) => {
+        const groupIds = draftingSelectionIds(object.id);
+        if (groupIds.length <= 1) return false;
+        selectOnly("drafting", groupIds);
+        beginVisualSelectionMoveFromSelection(
+          event,
+          {
+            instanceIds: [],
+            routeIds: [],
+            junctionIds: [],
+            annotationIds: [],
+            draftingIds: groupIds,
+          },
+          hitTarget,
+        );
+        return true;
+      },
       selectEndpoint,
       endpointStatusLabel: (endpoint) => endpointTestId(endpoint.endpoint),
       setStatus,
@@ -2091,6 +2222,12 @@ export function App({
       setVddRailPreviewPoint,
       copyPlacementPending: copyPlacement !== null,
       setCopyPreviewPoint,
+      waveformPlacementPending: pendingWaveformPlacement !== null,
+      setWaveformPreviewPoint: (point) =>
+        setWaveformPlacementPoint({
+          x: snapCoordinate(point.x, document.presentation.grid),
+          y: snapCoordinate(point.y, document.presentation.grid),
+        }),
     },
     drafting: {
       tool,
@@ -2715,8 +2852,19 @@ export function App({
   // Single entry point for selecting a drafting object. Editing is opened
   // separately (double-click/Enter) so selection and text caret ownership do
   // not fight drag gestures.
+  function draftingSelectionIds(id: string): string[] {
+    const group = document.layoutGroups.find((candidate) =>
+      candidate.objectIds.includes(id),
+    );
+    if (!group) return [id];
+    const draftingIds = new Set(
+      (document.drafting?.objects ?? []).map((object) => object.id),
+    );
+    return group.objectIds.filter((objectId) => draftingIds.has(objectId));
+  }
+
   function selectDraftingObject(id: string): void {
-    selectOnly("drafting", [id]);
+    selectOnly("drafting", draftingSelectionIds(id));
     setDraftingInspectorSegment(null);
     setDraftingTangentInput(null);
     setDraftingBearingInput(null);
@@ -2770,6 +2918,18 @@ export function App({
       ) {
         event.preventDefault();
         setSearchOpen(true);
+        return;
+      }
+      if (event.key === "Escape" && simulationPickNetsActive) {
+        event.preventDefault();
+        setSimulationPickMode(false);
+        return;
+      }
+      if (event.key === "Escape" && pendingWaveformPlacement) {
+        event.preventDefault();
+        setPendingWaveformPlacement(null);
+        setWaveformPlacementPoint(null);
+        setStatus("Waveform placement cancelled");
         return;
       }
       if (event.key === "Escape" && searchOpen) {
@@ -2933,6 +3093,139 @@ export function App({
     return () => window.removeEventListener("keydown", onKeyDown, true);
   });
 
+  const beginWaveformPlacement = (layout: TimingWaveformLayout): void => {
+    const objects = waveformDraftingObjects(
+      layout,
+      { x: 0, y: 0 },
+      (prefix) => {
+        uniqueSuffixCounter.current += 1;
+        return `${prefix}-${uniqueSuffixCounter.current}`;
+      },
+    );
+    uniqueSuffixCounter.current += 1;
+    const groupId = `waveform-group-${uniqueSuffixCounter.current}`;
+    setSimulationPickMode(false);
+    setPendingWaveformPlacement({
+      groupId,
+      objects,
+      traceCount: layout.rows.length,
+    });
+    const pointer = lastCanvasPointRef.current;
+    setWaveformPlacementPoint(
+      pointer
+        ? {
+            x: snapCoordinate(pointer.x, document.presentation.grid),
+            y: snapCoordinate(pointer.y, document.presentation.grid),
+          }
+        : null,
+    );
+    setStatus("Place waveform: move over the canvas and click · Esc cancels");
+  };
+
+  const commitWaveformPlacement = (point: Point): void => {
+    if (!pendingWaveformPlacement) return;
+    const snapped = {
+      x: snapCoordinate(point.x, document.presentation.grid),
+      y: snapCoordinate(point.y, document.presentation.grid),
+    };
+    const objects = pendingWaveformPlacement.objects.map((object) =>
+      translateDraftingObject(object, snapped, document.presentation.grid),
+    );
+    const placed = transact([
+      ...objects.map((object) => ({
+        kind: "upsert_drafting_object" as const,
+        object,
+      })),
+      {
+        kind: "set_layout_group" as const,
+        group: {
+          id: pendingWaveformPlacement.groupId,
+          kind: "custom" as const,
+          objectIds: objects.map((object) => object.id),
+          locked: false,
+        },
+      },
+    ]);
+    if (!placed.ok) return;
+    selectOnly(
+      "drafting",
+      objects.map((object) => object.id),
+    );
+    setPendingWaveformPlacement(null);
+    setWaveformPlacementPoint(null);
+    setStatus(
+      `Placed a grouped timing snapshot with ${pendingWaveformPlacement.traceCount} trace${pendingWaveformPlacement.traceCount === 1 ? "" : "s"}`,
+    );
+  };
+
+  const beginWaveformGroupScale = (
+    event: ReactPointerEvent<SVGElement>,
+    group: LayoutGroup,
+    bounds: Rect,
+  ): void => {
+    if (event.button !== 0 || group.locked) return;
+    event.preventDefault();
+    event.stopPropagation();
+    canvasDragSessionRef.current?.cancel();
+    const target = event.currentTarget;
+    const svg = target.ownerSVGElement!;
+    const pivot = { x: bounds.x, y: bounds.y };
+    const originalRadius = Math.max(1, Math.hypot(bounds.width, bounds.height));
+    const scaleRange = draftingGroupScaleRange(document, group.objectIds);
+    if (!scaleRange) {
+      setStatus("This waveform group cannot scale");
+      return;
+    }
+    const factorAt = (client: Point): number => {
+      const point = pointFromClient(client.x, client.y, svg, false);
+      return Math.min(
+        scaleRange.max,
+        Math.max(
+          scaleRange.min,
+          Math.hypot(point.x - pivot.x, point.y - pivot.y) / originalRadius,
+        ),
+      );
+    };
+    const visual = startCanvasDragVisual(svg, group.objectIds);
+    canvasDragSessionRef.current = startCanvasDragSession({
+      target,
+      pointerId: event.pointerId,
+      startClient: { x: event.clientX, y: event.clientY },
+      thresholdPx: DRAG_START_DISTANCE_PX,
+      onPreview: (client) => visual.scale(pivot, factorAt(client)),
+      onFinish: ({ client, dragged }) => {
+        canvasDragSessionRef.current = null;
+        visual.restore();
+        if (!dragged) return;
+        const factor = factorAt(client);
+        const objects = scaleDraftingGroup(
+          document,
+          group.objectIds,
+          pivot,
+          factor,
+        );
+        if (!objects) {
+          setStatus("This waveform group contains an object that cannot scale");
+          return;
+        }
+        if (
+          transact(
+            objects.map((object) => ({
+              kind: "upsert_drafting_object" as const,
+              object,
+            })),
+          ).ok
+        ) {
+          setStatus(`Scaled waveform to ${Math.round(factor * 100)}%`);
+        }
+      },
+      onCancel: () => {
+        canvasDragSessionRef.current = null;
+        visual.restore();
+      },
+    });
+  };
+
   const canvasEventHandlers = createEditorCanvasEventHandlers({
     model: { tool, document, resolver },
     session: {
@@ -2948,13 +3241,16 @@ export function App({
     selection: {
       commitCommandMove: commitCommandMoveFromSelection,
       clearDraftingSelection: () => replaceSelectionKind("drafting", []),
-      handleCanvasHitPointerDown,
+      handleCanvasHitPointerDown: (event) => {
+        if (!simulationPickNetsActive) handleCanvasHitPointerDown(event);
+      },
     },
     placement: {
       pendingSymbolId,
       pendingComponentPlacement: Boolean(pendingComponentPlacement),
       vddRailMode,
       copyPlacementActive: copyPlacement !== null,
+      waveformPlacementActive: pendingWaveformPlacement !== null,
       snapPlacementPoint: (point) => {
         const pitch =
           pendingComponentPlacement?.kind === "drafting-text"
@@ -2967,9 +3263,11 @@ export function App({
       },
       commitCopyPlacement: commitCopyPlacementFromSelection,
       commitPendingPlacement: commitPendingPlacementAtFromHook,
+      commitWaveformPlacement,
       clearComponentPreview: () => setComponentPreviewPoint(null),
       clearVddRailPreview: () => setVddRailPreviewPoint(null),
       clearCopyPreview: () => setCopyPreviewPoint(null),
+      clearWaveformPreview: () => setWaveformPlacementPoint(null),
     },
     gesture: {
       begin: beginCanvasGesture,
@@ -3189,6 +3487,19 @@ export function App({
             setDocumentSettingsOpen((open) => !open);
             setSelectionOpen(true);
           },
+          ...(timingUiEnabled
+            ? {
+                simulation: {
+                  open: simulationWindowOpen,
+                  onToggle: () => {
+                    setSimulationWindowOpen((open) => {
+                      if (open) setSimulationPickMode(false);
+                      return !open;
+                    });
+                  },
+                },
+              }
+            : {}),
         }}
         hierarchyToolbar={{
           documents: project.documents,
@@ -3769,10 +4080,12 @@ export function App({
                     onParameterChange: (key, value) =>
                       updateInstancePropertyDraft((current) => ({
                         ...current,
-                        parameters: {
-                          ...current.parameters,
-                          [key]: value,
-                        },
+                        parameters: updateComponentParameterValues(
+                          selectedInstance.symbolId,
+                          current.parameters,
+                          key,
+                          value,
+                        ),
                       })),
                     onReferenceVisibilityChange: (checked) =>
                       setReferenceLabelsVisible([selectedInstance.id], checked),
@@ -4009,6 +4322,7 @@ export function App({
             pendingSymbolId || vddRailMode || copyPlacement
               ? "component-mode"
               : "",
+            pendingWaveformPlacement ? "waveform-placement-active" : "",
             tool === "arrow" ||
             tool === "construction-line" ||
             tool === "rectangle" ||
@@ -4017,6 +4331,7 @@ export function App({
               : "",
             projectedMovePreviewDocument ? "semantic-move-preview" : "",
             panPreview ? "pan-mode" : "",
+            simulationPickNetsActive ? "simulation-net-pick-active" : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -4040,7 +4355,9 @@ export function App({
               : null
           }
           netHighlight={{
-            highlight: highlightedNet,
+            highlight: simulationPickNetsActive
+              ? simulationPickHighlight
+              : highlightedNet,
             document,
             resolver,
             routeGeometryRecords,
@@ -4131,6 +4448,7 @@ export function App({
                 : null,
               wouldMoveIds,
               onInstanceClick: (instance, additive) => {
+                if (simulationPickNetsActive) return;
                 if (suppressInstanceClick.current) {
                   suppressInstanceClick.current = false;
                   return;
@@ -4143,6 +4461,11 @@ export function App({
                 else inspectInstance(instance.id);
               },
               onInstancePointerDown: (event, instance) => {
+                if (simulationPickNetsActive) {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  return;
+                }
                 // While R is armed the click turns the part rather than
                 // picking it up, so the gesture reads as "rotate that one".
                 if (rotateArmedInstance(instance.id)) {
@@ -4158,15 +4481,42 @@ export function App({
                 }
                 setCanvasContextMenu({ x: clientX, y: clientY });
               },
-              onRoutePointerDown: handleRoutePointerDown,
-              onAnnotationPointerDown: beginAnnotationDrag,
+              onRoutePointerDown: (event, routeId) => {
+                if (simulationPickNetsActive) {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  const route = document.routes.find(
+                    (candidate) => candidate.id === routeId,
+                  );
+                  if (route) toggleSimulationSavedNet(route.netId);
+                  return;
+                }
+                handleRoutePointerDown(event, routeId);
+              },
+              onAnnotationPointerDown: (event, annotation) => {
+                if (simulationPickNetsActive && annotation.netId) {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  toggleSimulationSavedNet(annotation.netId);
+                  return;
+                }
+                beginAnnotationDrag(event, annotation);
+              },
               onAnnotationEdit: beginAnnotationTextEditing,
+              onNetPointerEnter: (netId) => {
+                if (simulationPickNetsActive) setSimulationHoverNetId(netId);
+              },
+              onNetPointerLeave: () => {
+                if (simulationPickNetsActive) setSimulationHoverNetId(null);
+              },
             },
             endpoints: {
               document,
               endpoints: wiringEndpoints,
               tool,
-              selectedRoute,
+              selectedRoute: simulationPickNetsActive
+                ? undefined
+                : selectedRoute,
               selectedRouteSegmentIndex,
               selectedEndpoint,
               supplementalJunctionIds: supplementalSelection.junctionIds,
@@ -4179,10 +4529,30 @@ export function App({
               },
               onPowerRailStretch: beginRouteStretch,
               onJunctionSelect: (candidate) => {
+                if (simulationPickNetsActive) {
+                  if (candidate.netId)
+                    toggleSimulationSavedNet(candidate.netId);
+                  return;
+                }
                 selectEndpoint(candidate);
                 setStatus(`Selected ${endpointTestId(candidate.endpoint)}`);
               },
-              onWireEndpoint: handleWireEndpoint,
+              onWireEndpoint: (event, candidate) => {
+                if (simulationPickNetsActive) {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  if (candidate.netId)
+                    toggleSimulationSavedNet(candidate.netId);
+                  return;
+                }
+                handleWireEndpoint(event, candidate);
+              },
+              onNetPointerEnter: (netId) => {
+                if (simulationPickNetsActive) setSimulationHoverNetId(netId);
+              },
+              onNetPointerLeave: () => {
+                if (simulationPickNetsActive) setSimulationHoverNetId(null);
+              },
             },
           }}
           draftingHitTargets={{
@@ -4192,7 +4562,21 @@ export function App({
             selectedDraftingId,
             supplementalDraftingIds: supplementalSelection.draftingIds,
             onPointerDown: (event, object, draggable) => {
-              if (draggable) beginDraftingDrag(event, object);
+              const groupIds = draftingSelectionIds(object.id);
+              if (draggable && groupIds.length > 1) {
+                selectOnly("drafting", groupIds);
+                beginVisualSelectionMoveFromSelection(
+                  event,
+                  {
+                    instanceIds: [],
+                    routeIds: [],
+                    junctionIds: [],
+                    annotationIds: [],
+                    draftingIds: groupIds,
+                  },
+                  event.currentTarget,
+                );
+              } else if (draggable) beginDraftingDrag(event, object);
               else {
                 event.stopPropagation();
                 selectDraftingObject(object.id);
@@ -4226,7 +4610,9 @@ export function App({
             document,
             resolver,
             selectedDraftingId,
+            selectedDraftingIds: visualSelection.draftingIds,
             onHandlePointerDown: beginDraftingHandleDrag,
+            onGroupScalePointerDown: beginWaveformGroupScale,
             onDeleteVertex: deleteConstructionVertex,
           }}
           interactionPreviews={{
@@ -4306,34 +4692,18 @@ export function App({
         <TimingSimulationPanel
           key={document.id}
           document={document}
-          onStatus={setStatus}
-          onPlaceOnCanvas={(result) => {
-            const grid = document.presentation.grid;
-            const origin = {
-              x: snapCoordinate(viewBox.x + viewBox.width * 0.08, grid),
-              y: snapCoordinate(viewBox.y + viewBox.height * 0.08, grid),
-            };
-            const objects = waveformDraftingObjects(
-              result,
-              origin,
-              grid,
-              (prefix) => {
-                uniqueSuffixCounter.current += 1;
-                return `${prefix}-${uniqueSuffixCounter.current}`;
-              },
-            );
-            const placed = transact(
-              objects.map((object) => ({
-                kind: "upsert_drafting_object" as const,
-                object,
-              })),
-            );
-            if (placed.ok) {
-              setStatus(
-                `Placed a static vector timing snapshot with ${result.traces.length} trace${result.traces.length === 1 ? "" : "s"}`,
-              );
-            }
+          open={simulationWindowOpen}
+          savedNetIds={simulationSavedNetIds}
+          pickNetsActive={simulationPickNetsActive}
+          onOpenChange={(open) => {
+            setSimulationWindowOpen(open);
+            if (!open) setSimulationPickMode(false);
           }}
+          onPickNetsChange={setSimulationPickMode}
+          onToggleSavedNet={toggleSimulationSavedNet}
+          onSetSavedNets={(netIds) => setSimulationSavedNetIds(new Set(netIds))}
+          onStatus={setStatus}
+          onPlaceOnCanvas={beginWaveformPlacement}
         />
       ) : null}
       <EditorStatusbar

@@ -1241,7 +1241,7 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       "Pulse semantics require authored timing parameters and must not replace imported DC voltage sources automatically.",
     assetPath: "pulse-voltage-source.symbol.json",
     assetHash:
-      "6fd7e349e50a2661f602077753387f6d865b84b4d03360027c16f7116976df29",
+      "ed85c05f409cd66ff2d969bc84c4803a8352b5d022dcd26c7fc998715924717f",
     visualAuthority: {
       kind: "razavi-reference-v1",
       referenceManifestPath:
@@ -1261,7 +1261,7 @@ export const razaviSymbolCatalogEntries: readonly RazaviSymbolCatalogEntry[] = [
       referencePath:
         "fixtures/visual-reference/razavi-reference-v1/data-converters-clock-pulse-vector-source.json",
       converterPath: "scripts/generate-razavi-peripheral-assets.mjs",
-      converterVersion: 2,
+      converterVersion: 4,
     },
   },
   {
@@ -7304,7 +7304,7 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
   {
     schemaVersion: 1,
     id: "pulse-voltage-source",
-    name: "Pulse Voltage Source",
+    name: "Digital Clock",
     viewBox: {
       x: -24,
       y: -24,
@@ -7354,79 +7354,33 @@ export const razaviCatalogSymbols: readonly SymbolDefinition[] = [
         },
       },
       {
-        kind: "line",
-        from: {
-          x: -7,
-          y: 4,
-        },
-        to: {
-          x: -4,
-          y: 4,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "butt",
-          lineJoin: "miter",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: -4,
-          y: 4,
-        },
-        to: {
-          x: -4,
-          y: -4,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "butt",
-          lineJoin: "miter",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: -4,
-          y: -4,
-        },
-        to: {
-          x: 4,
-          y: -4,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "butt",
-          lineJoin: "miter",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: 4,
-          y: -4,
-        },
-        to: {
-          x: 4,
-          y: 4,
-        },
-        style: {
-          strokeRole: "normal",
-          lineCap: "butt",
-          lineJoin: "miter",
-        },
-      },
-      {
-        kind: "line",
-        from: {
-          x: 4,
-          y: 4,
-        },
-        to: {
-          x: 7,
-          y: 4,
-        },
+        kind: "polyline",
+        points: [
+          {
+            x: 4,
+            y: 7,
+          },
+          {
+            x: 4,
+            y: 4,
+          },
+          {
+            x: -4,
+            y: 4,
+          },
+          {
+            x: -4,
+            y: -4,
+          },
+          {
+            x: 4,
+            y: -4,
+          },
+          {
+            x: 4,
+            y: -7,
+          },
+        ],
         style: {
           strokeRole: "normal",
           lineCap: "butt",

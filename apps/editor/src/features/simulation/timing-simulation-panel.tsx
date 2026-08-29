@@ -1,18 +1,35 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { resolveDocumentLogicalNets } from "@icm/derived";
-import type { SchematicDocument } from "@icm/model";
+import { flattenRichText } from "@icm/model";
+import type { RichTextDocument, SchematicDocument } from "@icm/model";
 import {
+  digitalSimulationInputFingerprint,
   simulateDigitalDocument,
   type DigitalSimulationResult,
 } from "@icm/simulation";
 
-import { parseSimulationTimePs, timingWaveformSvg } from "./timing-waveform";
+import { RichTextEditor } from "../text-editing/rich-text-editor";
+import {
+  createTimingWaveformDiagram,
+  defaultWaveformLabelDocument,
+  layoutTimingWaveformDiagram,
+  parseSimulationTimePs,
+  timingWaveformSvg,
+  type TimingWaveformLayout,
+} from "./timing-waveform";
 
 export interface TimingSimulationPanelProps {
   document: SchematicDocument;
-  defaultOpen?: boolean;
-  onPlaceOnCanvas: (result: DigitalSimulationResult) => void;
+  open: boolean;
+  savedNetIds: ReadonlySet<string>;
+  pickNetsActive: boolean;
+  onOpenChange: (open: boolean) => void;
+  onPickNetsChange: (active: boolean) => void;
+  onToggleSavedNet: (netId: string) => void;
+  onSetSavedNets: (netIds: readonly string[]) => void;
+  onPlaceOnCanvas: (layout: TimingWaveformLayout) => void;
   onStatus: (message: string) => void;
 }
 
@@ -26,7 +43,7 @@ function download(blob: Blob, fileName: string): void {
 }
 
 function safeFileStem(value: string): string {
-  return value.trim().replace(/[^A-Za-z0-9._-]+/gu, "-") || "timing";
+  return value.trim().replace(/[^A-Za-z0-9._-]+/gu, "-") || "simulation";
 }
 
 function exportPng(svg: string, fileName: string): void {
@@ -55,30 +72,74 @@ function exportPng(svg: string, fileName: string): void {
 
 export function TimingSimulationPanel({
   document,
-  defaultOpen = false,
+  open,
+  savedNetIds,
+  pickNetsActive,
+  onOpenChange,
+  onPickNetsChange,
+  onToggleSavedNet,
+  onSetSavedNets,
   onPlaceOnCanvas,
   onStatus,
 }: TimingSimulationPanelProps) {
-  const [open, setOpen] = useState(defaultOpen);
   const [stopTime, setStopTime] = useState("40ns");
-  const [savedNetIds, setSavedNetIds] = useState<Set<string>>(() => new Set());
   const [result, setResult] = useState<DigitalSimulationResult | null>(null);
+  const [netAliases, setNetAliases] = useState<
+    Record<string, RichTextDocument>
+  >({});
+  const [labelEditor, setLabelEditor] = useState<{
+    baseNetId: string;
+    netName: string;
+    draft: RichTextDocument;
+  } | null>(null);
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const drag = useRef<{
+    pointerId: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
   const logicalNets = useMemo(
     () => resolveDocumentLogicalNets(document).groups,
     [document],
   );
-  const waveformSvg = result ? timingWaveformSvg(result) : null;
-  const stale =
-    result !== null && result.documentRevision !== document.revision;
-
-  const toggleSavedNet = (netId: string): void => {
-    setSavedNetIds((current) => {
-      const next = new Set(current);
-      if (next.has(netId)) next.delete(netId);
-      else next.add(netId);
-      return next;
+  useEffect(() => {
+    setNetAliases((current) => {
+      const retained = Object.fromEntries(
+        Object.entries(current).filter(([baseNetId]) =>
+          savedNetIds.has(baseNetId),
+        ),
+      );
+      return Object.keys(retained).length === Object.keys(current).length
+        ? current
+        : retained;
     });
-  };
+  }, [savedNetIds]);
+  useEffect(() => {
+    if (labelEditor && !savedNetIds.has(labelEditor.baseNetId)) {
+      setLabelEditor(null);
+    }
+  }, [labelEditor, savedNetIds]);
+  const waveformDiagram = useMemo(
+    () => (result ? createTimingWaveformDiagram(result, netAliases) : null),
+    [netAliases, result],
+  );
+  const waveformLayout = useMemo(
+    () =>
+      waveformDiagram
+        ? layoutTimingWaveformDiagram(waveformDiagram, document.presentation)
+        : null,
+    [document.presentation, waveformDiagram],
+  );
+  const waveformSvg = waveformLayout
+    ? timingWaveformSvg(waveformLayout, document.presentation)
+    : null;
+  const stale =
+    result !== null &&
+    result.inputFingerprint !== digitalSimulationInputFingerprint(document);
+
   const run = (): void => {
     const stopTimePs = parseSimulationTimePs(stopTime);
     if (!stopTimePs) {
@@ -88,7 +149,7 @@ export function TimingSimulationPanel({
       return;
     }
     if (savedNetIds.size === 0) {
-      onStatus("Save at least one Net before running the timing simulation");
+      onStatus("Save at least one Net before running Digital Simulation");
       return;
     }
     const next = simulateDigitalDocument({
@@ -98,130 +159,267 @@ export function TimingSimulationPanel({
     setResult(next);
     onStatus(
       next.completed
-        ? `Digital simulation completed with ${next.traces.length} saved Net${next.traces.length === 1 ? "" : "s"}`
-        : "Digital simulation stopped with errors; inspect the waveform panel diagnostics",
+        ? `Digital Simulation completed with ${next.traces.length} saved Net${next.traces.length === 1 ? "" : "s"}`
+        : "Digital Simulation stopped with errors; inspect the diagnostics",
     );
   };
-  const fileStem = `${safeFileStem(document.name)}-timing`;
+  const fileStem = `${safeFileStem(document.name)}-digital-timing`;
+  const close = (): void => {
+    onPickNetsChange(false);
+    onOpenChange(false);
+  };
+  const beginWindowDrag = (event: ReactPointerEvent<HTMLElement>): void => {
+    if (
+      event.button !== 0 ||
+      (event.target instanceof Element && event.target.closest("button"))
+    ) {
+      return;
+    }
+    const windowElement = event.currentTarget.parentElement;
+    if (!windowElement) return;
+    const bounds = windowElement.getBoundingClientRect();
+    drag.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - bounds.left,
+      offsetY: event.clientY - bounds.top,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  };
+  const moveWindow = (event: ReactPointerEvent<HTMLElement>): void => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    const left = Math.max(
+      8,
+      Math.min(
+        globalThis.innerWidth - 280,
+        event.clientX - drag.current.offsetX,
+      ),
+    );
+    const top = Math.max(
+      64,
+      Math.min(
+        globalThis.innerHeight - 120,
+        event.clientY - drag.current.offsetY,
+      ),
+    );
+    setPosition({ left, top });
+  };
+  const endWindowDrag = (event: ReactPointerEvent<HTMLElement>): void => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    drag.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
+  if (!open) return null;
 
   return (
     <section
-      className={open ? "timing-panel" : "timing-panel collapsed"}
-      aria-label="Digital timing simulation"
+      className="digital-simulation-window"
+      aria-label="Digital Simulation"
+      aria-modal={false}
+      role="dialog"
       data-testid="timing-simulation-panel"
+      style={position ?? undefined}
     >
-      <header className="timing-panel-header">
-        <button
-          type="button"
-          className="timing-panel-toggle"
-          aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
+      <header
+        className="digital-simulation-header"
+        onPointerDown={beginWindowDrag}
+        onPointerMove={moveWindow}
+        onPointerUp={endWindowDrag}
+        onPointerCancel={endWindowDrag}
+      >
+        <strong>Digital Simulation</strong>
+        <span
+          className={
+            stale ? "simulation-run-state stale" : "simulation-run-state"
+          }
         >
-          <span aria-hidden="true">{open ? "▾" : "▸"}</span> Timing
-        </button>
-        {result ? (
-          <span
-            className={stale ? "timing-run-state stale" : "timing-run-state"}
-          >
-            {stale
+          {result
+            ? stale
               ? "Circuit changed · run again"
               : result.completed
                 ? "Complete"
-                : "Errors"}
-          </span>
-        ) : (
-          <span className="timing-run-state">Temporary results</span>
-        )}
-        {open ? (
-          <div className="timing-panel-actions">
-            <details className="timing-node-picker">
-              <summary>Saved nodes ({savedNetIds.size})</summary>
-              <div className="timing-node-picker-menu">
-                <div className="timing-node-picker-actions">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSavedNetIds(
-                        new Set(logicalNets.map((net) => net.baseNetIds[0]!)),
-                      )
-                    }
-                  >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSavedNetIds(new Set())}
-                  >
-                    Clear
-                  </button>
-                </div>
-                {logicalNets.length === 0 ? (
-                  <p>No Nets in this Cell.</p>
-                ) : (
-                  logicalNets.map((net) => {
-                    const baseNetId = net.baseNetIds[0]!;
-                    return (
-                      <label key={net.id}>
-                        <input
-                          type="checkbox"
-                          checked={savedNetIds.has(baseNetId)}
-                          onChange={() => toggleSavedNet(baseNetId)}
-                        />
-                        <span>{net.name ?? net.id}</span>
-                        <code>{baseNetId}</code>
-                      </label>
-                    );
-                  })
-                )}
+                : "Errors"
+            : "Temporary results"}
+        </span>
+        <button
+          type="button"
+          aria-label="Close Digital Simulation"
+          onClick={close}
+        >
+          ×
+        </button>
+      </header>
+
+      <div className="digital-simulation-controls">
+        <label className="simulation-stop-time">
+          Stop
+          <input
+            value={stopTime}
+            aria-label="Simulation stop time"
+            onChange={(event) => setStopTime(event.currentTarget.value)}
+          />
+        </label>
+        <select
+          aria-label="Add saved Net"
+          value=""
+          onChange={(event) => {
+            const netId = event.currentTarget.value;
+            if (netId) onToggleSavedNet(netId);
+          }}
+        >
+          <option value="">Add Net…</option>
+          {logicalNets
+            .filter((net) => !savedNetIds.has(net.baseNetIds[0]!))
+            .map((net) => (
+              <option key={net.id} value={net.baseNetIds[0]!}>
+                {net.name ?? net.id}
+              </option>
+            ))}
+        </select>
+        <button
+          type="button"
+          aria-pressed={pickNetsActive}
+          className={pickNetsActive ? "active" : undefined}
+          onClick={() => onPickNetsChange(!pickNetsActive)}
+        >
+          {pickNetsActive ? "Picking Nets…" : "Pick Nets"}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onSetSavedNets(logicalNets.map((net) => net.baseNetIds[0]!))
+          }
+        >
+          All
+        </button>
+        <button type="button" onClick={() => onSetSavedNets([])}>
+          Clear
+        </button>
+        <button type="button" className="primary" onClick={run}>
+          Run Simulation
+        </button>
+      </div>
+
+      <div className="digital-simulation-workspace">
+        {labelEditor ? (
+          <section
+            className="simulation-waveform-label-editor"
+            aria-label={`Edit waveform name for ${labelEditor.netName}`}
+          >
+            <header>
+              <div>
+                <strong>Waveform name</strong>
+                <small>Display only · Net {labelEditor.netName}</small>
               </div>
-            </details>
-            <label className="timing-stop-time">
-              Stop
-              <input
-                value={stopTime}
-                aria-label="Simulation stop time"
-                onChange={(event) => setStopTime(event.currentTarget.value)}
-              />
-            </label>
-            <button type="button" className="primary" onClick={run}>
-              Run
-            </button>
-            <button
-              type="button"
-              disabled={!waveformSvg}
-              onClick={() =>
-                waveformSvg &&
-                download(
-                  new Blob([waveformSvg], {
-                    type: "image/svg+xml;charset=utf-8",
-                  }),
-                  `${fileStem}.svg`,
+              <button
+                type="button"
+                aria-label="Close waveform name editor"
+                onClick={() => setLabelEditor(null)}
+              >
+                ×
+              </button>
+            </header>
+            <RichTextEditor
+              targetKey={`waveform-${labelEditor.baseNetId}`}
+              content={labelEditor.draft}
+              sizeScale={1}
+              alignment="start"
+              multiline={false}
+              compact
+              deleteLabel="Reset"
+              onChange={(draft) =>
+                setLabelEditor((current) =>
+                  current ? { ...current, draft } : current,
                 )
               }
-            >
-              Export SVG
-            </button>
-            <button
-              type="button"
-              disabled={!waveformSvg}
-              onClick={() =>
-                waveformSvg && exportPng(waveformSvg, `${fileStem}.png`)
-              }
-            >
-              Export PNG
-            </button>
-            <button
-              type="button"
-              disabled={!result || result.traces.length === 0 || stale}
-              onClick={() => result && onPlaceOnCanvas(result)}
-            >
-              Place on Canvas
-            </button>
-          </div>
+              onSizeChange={() => undefined}
+              onAlignmentChange={() => undefined}
+              onCommit={() => {
+                const { baseNetId, draft } = labelEditor;
+                setNetAliases((current) => {
+                  const next = { ...current };
+                  if (flattenRichText(draft).trim()) next[baseNetId] = draft;
+                  else delete next[baseNetId];
+                  return next;
+                });
+                setLabelEditor(null);
+              }}
+              onDelete={() => {
+                const { baseNetId } = labelEditor;
+                setNetAliases((current) => {
+                  const next = { ...current };
+                  delete next[baseNetId];
+                  return next;
+                });
+                setLabelEditor(null);
+              }}
+            />
+          </section>
         ) : null}
-      </header>
-      {open ? (
-        <div className="timing-panel-body">
+        <aside className="simulation-saved-nets" aria-label="Saved Nets">
+          <div className="simulation-saved-nets-heading">
+            <span>Saved Nets</span>
+            <small>Names below only affect waveform labels.</small>
+          </div>
+          <div className="simulation-saved-net-list" role="list">
+            {savedNetIds.size === 0 ? (
+              <small className="simulation-saved-nets-empty">None</small>
+            ) : null}
+            {[...savedNetIds].map((baseNetId) => {
+              const net = logicalNets.find((candidate) =>
+                candidate.baseNetIds.includes(baseNetId),
+              );
+              const netName = net?.name ?? baseNetId;
+              const waveformName =
+                netAliases[baseNetId] ?? defaultWaveformLabelDocument(netName);
+              return (
+                <div
+                  className="simulation-saved-net"
+                  key={baseNetId}
+                  role="listitem"
+                >
+                  <div className="simulation-saved-net-header">
+                    <span
+                      className="simulation-saved-net-source"
+                      title={netName}
+                    >
+                      <small>Net</small>
+                      <strong>{netName}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={`Remove saved Net ${netName}`}
+                      title={`Remove ${netName}`}
+                      onClick={() => onToggleSavedNet(baseNetId)}
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="simulation-waveform-name"
+                    aria-label={`Edit waveform name for ${netName}`}
+                    title={`Edit waveform display name for Net ${netName}`}
+                    onClick={() =>
+                      setLabelEditor({
+                        baseNetId,
+                        netName,
+                        draft: waveformName,
+                      })
+                    }
+                  >
+                    <small>Waveform name</small>
+                    <span>{flattenRichText(waveformName)}</span>
+                    <span aria-hidden="true">✎</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="digital-simulation-body">
           {waveformSvg ? (
             <div
               className="timing-waveform-preview"
@@ -229,25 +427,58 @@ export function TimingSimulationPanel({
               dangerouslySetInnerHTML={{ __html: waveformSvg }}
             />
           ) : (
-            <div className="timing-panel-empty">
-              Save the Nets you want to observe, then run the digital
-              simulation.
+            <div className="simulation-empty">
+              Pick the Nets to observe, then run the simulation.
             </div>
           )}
           {result && result.diagnostics.length > 0 ? (
-            <details className="timing-diagnostics">
-              <summary>{result.diagnostics.length} diagnostics</summary>
-              <ul>
-                {result.diagnostics.map((diagnostic, index) => (
-                  <li key={`${diagnostic.code}-${index}`}>
-                    <strong>{diagnostic.code}</strong> {diagnostic.message}
-                  </li>
-                ))}
-              </ul>
-            </details>
+            <ul
+              className="simulation-diagnostics"
+              aria-label="Simulation diagnostics"
+            >
+              {result.diagnostics.map((diagnostic, index) => (
+                <li key={`${diagnostic.code}-${index}`}>
+                  <strong>{diagnostic.code}</strong> {diagnostic.message}
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
-      ) : null}
+      </div>
+
+      <footer className="digital-simulation-footer">
+        <button
+          type="button"
+          disabled={!waveformSvg}
+          onClick={() =>
+            waveformSvg &&
+            download(
+              new Blob([waveformSvg], {
+                type: "image/svg+xml;charset=utf-8",
+              }),
+              `${fileStem}.svg`,
+            )
+          }
+        >
+          Export SVG
+        </button>
+        <button
+          type="button"
+          disabled={!waveformSvg}
+          onClick={() =>
+            waveformSvg && exportPng(waveformSvg, `${fileStem}.png`)
+          }
+        >
+          Export PNG
+        </button>
+        <button
+          type="button"
+          disabled={!result || result.traces.length === 0 || stale}
+          onClick={() => waveformLayout && onPlaceOnCanvas(waveformLayout)}
+        >
+          Place on Canvas
+        </button>
+      </footer>
     </section>
   );
 }

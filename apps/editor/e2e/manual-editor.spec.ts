@@ -89,31 +89,257 @@ function markRoutingDemoNetsImported(
   }
 }
 
-test("exposes local timing tools and opens the saved-node picker", async ({
+test("opens one digital simulation window and picks a Net from the canvas", async ({
   page,
 }) => {
+  const project = createRoutingDemoProject();
+  for (const instance of project.documents[0]!.instances) {
+    if (["A", "B", "E"].includes(instance.id) && instance.placement) {
+      instance.placement.position.y = 500;
+    }
+  }
+  project.documents[0]!.routes = [
+    createRoutePath({
+      id: "route-simulation-pick",
+      netId: "net-h",
+      start: { kind: "terminal", instanceId: "A", pinName: "P" },
+      end: { kind: "terminal", instanceId: "B", pinName: "P" },
+      bends: [],
+      modes: ["manual"],
+    }),
+  ];
+  project.documents[0]!.instances.push(
+    {
+      id: "CLK",
+      symbolId: "pulse-voltage-source",
+      placement: {
+        position: { x: 700, y: 180 },
+        rotation: 0,
+        mirror: "none",
+      },
+      netlist: {
+        reference: "V1",
+        parameters: { period: "10ns", dutyCycle: "50", initial: "0" },
+      },
+    },
+    {
+      id: "GND",
+      symbolId: "ground",
+      placement: {
+        position: { x: 700, y: 300 },
+        rotation: 0,
+        mirror: "none",
+      },
+    },
+  );
+  project.documents[0]!.nets.push(
+    {
+      id: "clock",
+      terminals: [{ instanceId: "CLK", pinName: "+" }],
+    },
+    {
+      id: "ground",
+      terminals: [
+        { instanceId: "CLK", pinName: "-" },
+        { instanceId: "GND", pinName: "0" },
+      ],
+    },
+  );
+  project.documents[0]!.connectivityEvidence.push({
+    id: "clock-name",
+    kind: "name-claim",
+    netId: "clock",
+    name: "CK",
+    scope: "local",
+    owner: { kind: "explicit-net-property" },
+  });
   await page.goto("/editor");
+  await page.getByTestId("project-file").setInputFiles({
+    name: "digital-simulation-pick.icproj.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(project)),
+  });
 
   await expect(
-    page.getByLabel("Place Pulse Voltage Source", { exact: true }),
+    page.getByLabel("Place Digital Clock", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Timing" }).click();
+  const canvas = page.getByTestId("schematic-canvas");
+  await page.getByLabel("Place Resistor", { exact: true }).click();
+  await expect(canvas).toHaveClass(/component-mode/u);
+  await page.getByRole("button", { name: "Simulation", exact: true }).click();
 
-  const picker = page.locator("details.timing-node-picker");
-  await picker.locator("summary").click();
-  const menu = picker.locator(".timing-node-picker-menu");
-  await expect(menu).toBeVisible();
-  await expect(menu).toContainText("No Nets in this Cell.");
-
-  const menuReceivesPointerEvents = await menu.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    const hit = document.elementFromPoint(
-      bounds.left + bounds.width / 2,
-      bounds.top + bounds.height / 2,
-    );
-    return hit !== null && element.contains(hit);
+  const simulation = page.getByRole("dialog", {
+    name: "Digital Simulation",
   });
-  expect(menuReceivesPointerEvents).toBe(true);
+  await expect(simulation).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(simulation.locator("details")).toHaveCount(0);
+  await expect(
+    simulation.locator(".digital-simulation-workspace"),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      simulation
+        .locator(".simulation-saved-net-list")
+        .evaluate((element) => getComputedStyle(element).flexDirection),
+    )
+    .toBe("column");
+
+  await simulation.getByRole("button", { name: "Pick Nets" }).click();
+  await expect(canvas).toHaveClass(/simulation-net-pick-active/u);
+  await expect(canvas).not.toHaveClass(/component-mode/u);
+  const pickedRoute = page.getByTestId("route-hit-route-simulation-pick");
+  await expect
+    .poll(() =>
+      pickedRoute.evaluate((element) => getComputedStyle(element).strokeWidth),
+    )
+    .toBe("26px");
+  await clickRoute(page, "route-simulation-pick", 0.15);
+  await expect(simulation.getByLabel("Saved Nets")).toContainText("HORIZONTAL");
+  await clickRoute(page, "route-simulation-pick", 0.85);
+  await expect(simulation.getByLabel("Saved Nets")).toContainText("None");
+  await clickRoute(page, "route-simulation-pick", 0.5);
+  await expect(simulation.getByLabel("Saved Nets")).toContainText("HORIZONTAL");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".schematic-canvas")).not.toHaveClass(
+    /simulation-net-pick-active/u,
+  );
+
+  await simulation.getByRole("button", { name: "Clear" }).click();
+  await simulation.getByLabel("Add saved Net").selectOption("clock");
+  const waveformName = simulation.getByRole("button", {
+    name: "Edit waveform name for CK",
+  });
+  await expect(waveformName).toContainText("CK");
+  await waveformName.click();
+  const labelEditor = simulation.getByRole("region", {
+    name: "Edit waveform name for CK",
+  });
+  const labelEditable = labelEditor.getByRole("textbox", {
+    name: "Canvas text editor",
+  });
+  await expect(labelEditor.getByRole("button", { name: "Bold" })).toBeVisible();
+  await expect(
+    labelEditor.getByRole("button", { name: "Subscript" }),
+  ).toBeVisible();
+  await labelEditable.fill("");
+  await labelEditor.getByRole("button", { name: "Apply text changes" }).click();
+  await expect(waveformName).toContainText("CK");
+  await waveformName.click();
+  await labelEditor
+    .getByRole("textbox", { name: "Canvas text editor" })
+    .fill("CLK_ALIAS");
+  await labelEditor.getByRole("button", { name: "Apply text changes" }).click();
+  await expect(
+    simulation.locator(".simulation-saved-net-source"),
+  ).toContainText("CK");
+  await simulation.getByRole("button", { name: "Run Simulation" }).click();
+  const waveformPreview = simulation.getByTestId("timing-waveform-preview");
+  await expect(waveformPreview).toBeVisible();
+  await expect(waveformPreview).toContainText("CLK_ALIAS");
+  const razaviTitleRun = waveformPreview
+    .locator("text")
+    .first()
+    .locator("tspan tspan");
+  await expect(razaviTitleRun).toHaveCSS("font-weight", "700");
+  await expect(razaviTitleRun).toHaveCSS("font-style", "italic");
+
+  const placeSnapshot = async (xRatio: number, yRatio: number) => {
+    await simulation.getByRole("button", { name: "Place on Canvas" }).click();
+    await simulation
+      .getByRole("button", { name: "Close Digital Simulation" })
+      .click();
+    await expect(canvas).toHaveClass(/waveform-placement-active/u);
+    const bounds = await canvas.boundingBox();
+    expect(bounds).not.toBeNull();
+    await page.mouse.move(
+      bounds!.x + bounds!.width * xRatio,
+      bounds!.y + bounds!.height * yRatio,
+    );
+    await page.mouse.click(
+      bounds!.x + bounds!.width * xRatio,
+      bounds!.y + bounds!.height * yRatio,
+    );
+    await expect(page.getByTestId("status")).toContainText(
+      "Placed a grouped timing snapshot",
+    );
+    await expect(canvas).not.toHaveClass(/waveform-placement-active/u);
+  };
+
+  await placeSnapshot(0.7, 0.72);
+  const draftingHits = page.locator('[data-testid^="drafting-hit-"]');
+  const selectedDraftingHits = page.locator(
+    '[data-testid^="drafting-hit-"].selected',
+  );
+  const firstSnapshotSize = await draftingHits.count();
+  expect(firstSnapshotSize).toBeGreaterThan(2);
+  await expect(selectedDraftingHits).toHaveCount(firstSnapshotSize);
+
+  await page.getByRole("button", { name: "Simulation", exact: true }).click();
+  await expect(
+    simulation.getByRole("button", { name: "Place on Canvas" }),
+  ).toBeEnabled();
+  await placeSnapshot(0.35, 0.55);
+  await expect(draftingHits).toHaveCount(firstSnapshotSize * 2);
+  await expect(selectedDraftingHits).toHaveCount(firstSnapshotSize);
+
+  const secondSnapshotTitle = draftingHits.nth(firstSnapshotSize);
+  const secondSnapshotTrace = draftingHits.nth(firstSnapshotSize + 2);
+  const secondSnapshotTraceId = await secondSnapshotTrace.getAttribute(
+    "data-drag-object-id",
+  );
+  expect(secondSnapshotTraceId).not.toBeNull();
+  const secondSnapshotTraceLine = canvas.locator(
+    `[data-object-id="${secondSnapshotTraceId}"][data-kind="construction-line"]`,
+  );
+  const traceStrokeBefore = Number(
+    await secondSnapshotTraceLine.getAttribute("stroke-width"),
+  );
+  const titleBeforeScale = await secondSnapshotTitle.boundingBox();
+  expect(titleBeforeScale).not.toBeNull();
+  const scaleHandle = page.locator(
+    '[data-testid^="draft-group-scale-waveform-group-"]',
+  );
+  await expect(scaleHandle).toBeVisible();
+  const scaleHandleBounds = await scaleHandle.boundingBox();
+  expect(scaleHandleBounds).not.toBeNull();
+  const scaleStart = {
+    x: scaleHandleBounds!.x + scaleHandleBounds!.width / 2,
+    y: scaleHandleBounds!.y + scaleHandleBounds!.height / 2,
+  };
+  await page.mouse.move(scaleStart.x, scaleStart.y);
+  await page.mouse.down();
+  await page.mouse.move(scaleStart.x + 90, scaleStart.y + 60, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.getByTestId("status")).toContainText("Scaled waveform to");
+  const titleAfterScale = await secondSnapshotTitle.boundingBox();
+  expect(titleAfterScale!.width).toBeGreaterThan(titleBeforeScale!.width * 1.1);
+  const traceStrokeAfter = Number(
+    await secondSnapshotTraceLine.getAttribute("stroke-width"),
+  );
+  expect(traceStrokeAfter).toBeGreaterThan(traceStrokeBefore * 1.1);
+
+  const firstGroupMember = draftingHits.first();
+  const secondGroupMember = draftingHits.nth(1);
+  await expect(firstGroupMember).not.toHaveClass(/selected/u);
+  const firstBefore = await firstGroupMember.boundingBox();
+  const secondBefore = await secondGroupMember.boundingBox();
+  expect(firstBefore).not.toBeNull();
+  expect(secondBefore).not.toBeNull();
+  const start = {
+    x: firstBefore!.x + firstBefore!.width / 2,
+    y: firstBefore!.y + firstBefore!.height / 2,
+  };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 45, start.y + 25, { steps: 4 });
+  await page.mouse.up();
+  await expect(firstGroupMember).toHaveClass(/selected/u);
+  await expect(selectedDraftingHits).toHaveCount(firstSnapshotSize);
+  const firstAfter = await firstGroupMember.boundingBox();
+  const secondAfter = await secondGroupMember.boundingBox();
+  expect(firstAfter!.x - firstBefore!.x).toBeGreaterThan(20);
+  expect(secondAfter!.x - secondBefore!.x).toBeGreaterThan(20);
 });
 
 test("opens netlist preflight and navigates its canonical finding", async ({
