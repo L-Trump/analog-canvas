@@ -192,6 +192,7 @@ import {
 import { useDocumentController } from "../document/document-controller";
 import { useProjectFileLifecycle } from "../document/use-project-file-lifecycle";
 import { useUnsavedWorkGuard } from "../document/use-unsaved-work-guard";
+import { authoredObjectCount } from "../document/project-content";
 import {
   draftingDragOrigin,
   translateDraftingObject,
@@ -2296,6 +2297,33 @@ export function App({
       completeDrag: completeCellSymbolLayoutDrag,
     },
   });
+
+  // Every opened schematic lands fitted — shelf, gallery, examples,
+  // imports, and recoveries alike — exactly as if F were pressed once the
+  // new document's content bounds exist. An empty project keeps the
+  // default camera.
+  const pendingAutoFitRef = useRef(false);
+  const autoFitProjectRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (autoFitProjectRef.current !== projectSessionId) {
+      autoFitProjectRef.current = projectSessionId;
+      pendingAutoFitRef.current = true;
+    }
+  }, [projectSessionId]);
+  const autoFitBounds = contentScene?.viewBox ?? null;
+  const autoFitHasContent = authoredObjectCount(project) > 0;
+  useEffect(() => {
+    if (!pendingAutoFitRef.current || !autoFitBounds) return;
+    // One decision per open, taken the moment the scene bounds exist: a
+    // project that arrives with content lands fitted; an empty one keeps
+    // the default camera — and the request is spent either way, so the
+    // first authored edit never yanks the camera afterwards.
+    pendingAutoFitRef.current = false;
+    if (!autoFitHasContent) return;
+    // Silent: the open's own status ("Opened …", "Restored …") must
+    // survive the landing fit.
+    fitView({ announce: false });
+  }, [autoFitBounds, autoFitHasContent, projectSessionId]);
   /**
    * The canvas element and the docks floating over it. Fit reads this at the
    * moment it runs, so a panel opened since the last fit is accounted for.
