@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { PointSchema, RotationSchema, StableIdSchema } from "./common.js";
+import {
+  HexColorSchema,
+  PointSchema,
+  RotationSchema,
+  StableIdSchema,
+} from "./common.js";
 import { RichTextDocumentSchema } from "./rich-text.js";
 
 export const VisualAnchorSchema = z.discriminatedUnion("kind", [
@@ -88,6 +93,8 @@ export const AnnotationSchema = z
     sizeScale: z.number().finite().positive().optional(),
     markerKind: RouteMarkerKindSchema.optional(),
     visible: z.boolean().optional(),
+    /** Optional presentation-only rendered text color override. */
+    textColor: HexColorSchema.optional(),
   })
   .superRefine((annotation, context) => {
     if (Boolean(annotation.content) === Boolean(annotation.binding)) {

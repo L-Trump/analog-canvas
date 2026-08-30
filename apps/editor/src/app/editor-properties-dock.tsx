@@ -12,6 +12,7 @@ import { ComponentElectricalProperties } from "../features/properties/component-
 import { ComponentSignalFlowProperties } from "../features/properties/component-signal-flow-properties";
 import { ComponentPlacementProperties } from "../features/properties/component-placement-properties";
 import { ComponentStyleProperties } from "../features/properties/component-style-properties";
+import { AnnotationColorProperties } from "../features/properties/annotation-color-properties";
 import { DraftingPropertiesPanel } from "../features/drafting/drafting-properties-panel";
 import {
   AnnotationActionsSection,
@@ -50,6 +51,7 @@ export interface EditorPropertiesDockProps {
   routingGuidance: ComponentProps<typeof RoutingGuidanceSection>;
   groupDisplay: ComponentProps<typeof GroupDisplayToggles>;
   component: ComponentPropertiesModel | null;
+  annotationText: ComponentProps<typeof AnnotationColorProperties> | null;
   drafting: ComponentProps<typeof DraftingPropertiesPanel> | null;
   placementTray: ComponentProps<typeof PlacementTrayPanel>;
   routeActions: ComponentProps<typeof RouteActionsSection>;
@@ -74,6 +76,7 @@ export function EditorPropertiesDock({
   routingGuidance,
   groupDisplay,
   component,
+  annotationText,
   drafting,
   placementTray,
   routeActions,
@@ -146,11 +149,22 @@ export function EditorPropertiesDock({
                 <ComponentSignalFlowProperties {...component.signalFlow} />
               ) : null}
               <ComponentElectricalProperties {...component.electrical} />
-              <ComponentStyleProperties {...component.style} />
+              <ComponentStyleProperties
+                key={component.style.instance.id}
+                {...component.style}
+              />
               <ComponentPlacementProperties {...component.placement} />
             </section>
           ) : null}
-          {drafting ? <DraftingPropertiesPanel {...drafting} /> : null}
+          {annotationText ? (
+            <AnnotationColorProperties
+              key={annotationText.annotation.id}
+              {...annotationText}
+            />
+          ) : null}
+          {drafting ? (
+            <DraftingPropertiesPanel key={drafting.object.id} {...drafting} />
+          ) : null}
           <PlacementTrayPanel {...placementTray} />
           <RouteActionsSection {...routeActions} />
           <EndpointActionsSection {...endpointActions} />

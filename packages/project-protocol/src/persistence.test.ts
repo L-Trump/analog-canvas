@@ -13,6 +13,7 @@ import {
   loadProject,
   parseProject,
   parseProjectWithMetadata,
+  PREVIOUS_PROJECT_SCHEMA_VERSION,
   saveProject,
   serializeProject,
   type ProjectStorage,
@@ -23,6 +24,7 @@ import {
   upgradeSchema27To28,
   upgradeSchema28To29,
   upgradeSchema29To30,
+  upgradeSchema30To31,
 } from "./index.js";
 
 class MemoryStorage implements ProjectStorage {
@@ -65,6 +67,28 @@ describe("Project persistence", () => {
     await saveProject(storage, "project.icproj.json", loaded);
     expect(storage.files.get("project.icproj.json")).toBe(first);
     expect(first?.endsWith("\n")).toBe(true);
+  });
+
+  it("round-trips annotation textColor through persistence", async () => {
+    const storage = new MemoryStorage();
+    const project = createEmptyProject("project-text-color", "Text color");
+    project.documents[0]!.annotations.push({
+      id: "note-1",
+      kind: "route-marker",
+      markerKind: "current",
+      content: { runs: [{ kind: "text", value: "I_bias" }] },
+      anchor: { kind: "free", position: { x: 20, y: 20 } },
+      alignment: "middle",
+      rotation: 0,
+      locked: false,
+      textColor: "#224488",
+    });
+
+    await saveProject(storage, "project.icproj.json", project);
+    const loaded = await loadProject(storage, "project.icproj.json");
+
+    expect(loaded.documents[0]!.annotations[0]!.textColor).toBe("#224488");
+    expect(storage.files.get("project.icproj.json")).toContain("textColor");
   });
 
   it("rejects invalid JSON with a typed diagnostic", () => {
@@ -179,17 +203,19 @@ describe("Project persistence", () => {
 
     const migrated = parseProjectWithMetadata(
       JSON.stringify(
-        upgradeSchema29To30(
-          upgradeSchema28To29(
-            upgradeSchema27To28(
-              upgradeSchema26To27(upgradeSchema25To26(direct.project)),
+        upgradeSchema30To31(
+          upgradeSchema29To30(
+            upgradeSchema28To29(
+              upgradeSchema27To28(
+                upgradeSchema26To27(upgradeSchema25To26(direct.project)),
+              ),
             ),
           ),
         ),
       ),
     );
     expect(migrated).toMatchObject({
-      sourceSchemaVersion: 30,
+      sourceSchemaVersion: PREVIOUS_PROJECT_SCHEMA_VERSION,
       migrated: true,
       project: { schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION },
     });
@@ -332,17 +358,19 @@ describe("Project persistence", () => {
     // replay the complete history before the current boundary validates it.
     const parsed = parseProjectWithMetadata(
       JSON.stringify(
-        upgradeSchema29To30(
-          upgradeSchema28To29(
-            upgradeSchema27To28(
-              upgradeSchema26To27(upgradeSchema25To26(source)),
+        upgradeSchema30To31(
+          upgradeSchema29To30(
+            upgradeSchema28To29(
+              upgradeSchema27To28(
+                upgradeSchema26To27(upgradeSchema25To26(source)),
+              ),
             ),
           ),
         ),
       ),
     );
     expect(parsed).toMatchObject({
-      sourceSchemaVersion: 30,
+      sourceSchemaVersion: PREVIOUS_PROJECT_SCHEMA_VERSION,
       migrated: true,
       project: { schemaVersion: CURRENT_PROJECT_SCHEMA_VERSION },
     });
@@ -362,10 +390,10 @@ describe("Project persistence", () => {
 
   it("rejects schemas outside the current-and-previous window", () => {
     const project = createEmptyProject("project-test", "Test Project");
-    for (const schemaVersion of [23, 24, 25, 26, 27, 28, 29, 32, 99]) {
+    for (const schemaVersion of [23, 24, 25, 26, 27, 28, 29, 30, 33, 99]) {
       expect(() =>
         parseProject(JSON.stringify({ ...project, schemaVersion })),
-      ).toThrow(/must be 30 or 31/);
+      ).toThrow(/must be 31 or 32/);
     }
   });
 });

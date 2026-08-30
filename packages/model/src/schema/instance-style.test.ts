@@ -31,7 +31,7 @@ describe("HexColorSchema", () => {
 });
 
 describe("InstanceStyleOverrideSchema", () => {
-  it("accepts both foreground and background", () => {
+  it("accepts independent foreground and background colors", () => {
     expect(
       InstanceStyleOverrideSchema.safeParse({
         foreground: "#FF0000",
@@ -57,6 +57,12 @@ describe("InstanceStyleOverrideSchema", () => {
     ).toBe(false);
     expect(
       InstanceStyleOverrideSchema.safeParse({ borderColor: "#000000" }).success,
+    ).toBe(false);
+    expect(
+      InstanceStyleOverrideSchema.safeParse({
+        foreground: "#FF0000",
+        labelColor: "#0000FF",
+      }).success,
     ).toBe(false);
   });
 });
@@ -143,13 +149,14 @@ describe("SignalFlowParametersSchema", () => {
 });
 
 describe("CircuitProject schema version", () => {
-  it("current schema version is 31", () => {
-    expect(CURRENT_PROJECT_SCHEMA_VERSION).toBe(31);
+  it("current schema version is 32", () => {
+    expect(CURRENT_PROJECT_SCHEMA_VERSION).toBe(32);
   });
 
-  it("createEmptyProject produces schema version 31", () => {
-    expect(createEmptyProject("test", "Test").schemaVersion).toBe(31);
+  it("createEmptyProject produces schema version 32", () => {
+    expect(createEmptyProject("test", "Test").schemaVersion).toBe(32);
   });
+
   it("validates style and Signal Flow metadata together", () => {
     const project = createEmptyProject("test", "Test");
     project.documents[0]!.instances.push({

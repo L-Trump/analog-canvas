@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyDocument, createRoutePath } from "@icm/model";
+import {
+  ANALOG_CANVAS_MATH_PROFILE_ID,
+  clearFormulaArtifactCacheForTests,
+  prepareFormula,
+} from "@icm/math-typesetting/cache";
 import { builtInSymbols, InMemorySymbolResolver } from "@icm/symbols";
 
 import { renderDocumentSvg, buildSvgScene } from "./render.js";
@@ -101,6 +106,297 @@ describe("instance style override rendering", () => {
     expect(svg).toContain('data-pin-name="D"');
     expect(svg).toContain('style="fill:#FF0000"');
     expect(svg).toContain('stroke="#FF0000"');
+  });
+
+  it("makes bound instance labels and values inherit the effective foreground", () => {
+    const doc = createEmptyDocument("doc-1", "Test");
+    doc.instances.push({
+      id: "inst-1",
+      symbolId: "resistor",
+      schematicReference: "R1",
+      schematicName: { runs: [{ kind: "text", value: "R1" }] },
+      placement: {
+        position: { x: 100, y: 100 },
+        rotation: 0,
+        mirror: "none",
+      },
+      netlist: { reference: "R1", parameters: { value: "10k" } },
+      styleOverride: { foreground: "#FF0000" },
+    });
+    doc.annotations.push(
+      {
+        id: "label-1",
+        kind: "instance-label",
+        binding: { kind: "instance-schematic-name", instanceId: "inst-1" },
+        anchor: {
+          kind: "object",
+          objectId: "inst-1",
+          localOffset: { x: 0, y: -20 },
+          fallbackPosition: { x: 100, y: 80 },
+        },
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+      },
+      {
+        id: "value-1",
+        kind: "instance-value",
+        binding: { kind: "instance-value", instanceId: "inst-1" },
+        anchor: {
+          kind: "object",
+          objectId: "inst-1",
+          localOffset: { x: 0, y: 30 },
+          fallbackPosition: { x: 100, y: 130 },
+        },
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+      },
+    );
+
+    const svg = renderDocumentSvg(doc, resolver);
+    expect(svg).toMatch(/data-object-id="label-1"[^>]*fill="#FF0000"/u);
+    expect(svg).toMatch(/data-object-id="value-1"[^>]*fill="#FF0000"/u);
+  });
+
+  it("uses independent per-Annotation colors without recoloring the symbol", () => {
+    const doc = createEmptyDocument("doc-1", "Test");
+    doc.instances.push({
+      id: "inst-1",
+      symbolId: "resistor",
+      schematicReference: "R1",
+      placement: {
+        position: { x: 100, y: 100 },
+        rotation: 0,
+        mirror: "none",
+      },
+      netlist: { reference: "R1", parameters: { value: "10k" } },
+      styleOverride: { foreground: "#FF0000" },
+    });
+    doc.annotations.push(
+      {
+        id: "label-1",
+        kind: "instance-label",
+        binding: { kind: "instance-schematic-name", instanceId: "inst-1" },
+        anchor: {
+          kind: "object",
+          objectId: "inst-1",
+          localOffset: { x: 0, y: -20 },
+          fallbackPosition: { x: 100, y: 80 },
+        },
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+        textColor: "#0000FF",
+      },
+      {
+        id: "value-1",
+        kind: "instance-value",
+        binding: { kind: "instance-value", instanceId: "inst-1" },
+        anchor: {
+          kind: "object",
+          objectId: "inst-1",
+          localOffset: { x: 0, y: 30 },
+          fallbackPosition: { x: 100, y: 130 },
+        },
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+        textColor: "#00AA00",
+      },
+    );
+
+    const svg = renderDocumentSvg(doc, resolver);
+    expect(svg).toContain('stroke="#FF0000"');
+    expect(svg).toMatch(/data-object-id="label-1"[^>]*fill="#0000FF"/u);
+    expect(svg).toMatch(/data-object-id="value-1"[^>]*fill="#00AA00"/u);
+  });
+
+  it("colors positioned rich text, cached formulas, and fractions through an object anchor", async () => {
+    clearFormulaArtifactCacheForTests();
+    await prepareFormula({
+      latex: "x_{labelColorContract}",
+      display: "inline",
+      profileId: ANALOG_CANVAS_MATH_PROFILE_ID,
+    });
+    const doc = createEmptyDocument("doc-1", "Test");
+    doc.instances.push({
+      id: "inst-1",
+      symbolId: "resistor",
+      placement: {
+        position: { x: 100, y: 100 },
+        rotation: 0,
+        mirror: "none",
+      },
+      styleOverride: { foreground: "#FF0000" },
+    });
+    const anchor = (y: number) => ({
+      kind: "object" as const,
+      objectId: "inst-1",
+      localOffset: { x: 0, y },
+      fallbackPosition: { x: 100, y: 100 + y },
+    });
+    doc.annotations.push(
+      {
+        id: "rich-label",
+        kind: "instance-label",
+        content: {
+          runs: [
+            {
+              kind: "span",
+              style: "overbar",
+              children: [{ kind: "text", value: "R" }],
+            },
+          ],
+        },
+        anchor: anchor(-30),
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+        textColor: "#0000FF",
+      },
+      {
+        id: "formula-value",
+        kind: "instance-value",
+        content: {
+          runs: [
+            {
+              kind: "math",
+              latex: "x_{labelColorContract}",
+              display: "inline",
+            },
+          ],
+        },
+        anchor: anchor(30),
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+        textColor: "#0000FF",
+      },
+      {
+        id: "fraction-value",
+        kind: "instance-value",
+        content: {
+          runs: [
+            {
+              kind: "fraction",
+              numerator: {
+                runs: [
+                  {
+                    kind: "span",
+                    style: "overbar",
+                    children: [{ kind: "text", value: "W" }],
+                  },
+                ],
+              },
+              denominator: { runs: [{ kind: "text", value: "L" }] },
+            },
+          ],
+        },
+        anchor: anchor(60),
+        alignment: "middle",
+        rotation: 0,
+        locked: false,
+        textColor: "#0000FF",
+      },
+    );
+
+    const svg = renderDocumentSvg(doc, resolver);
+    expect(svg).toMatch(
+      /data-object-id="rich-label"[^>]*fill="#0000FF"[^>]*>.*data-text-run="overbar"/u,
+    );
+    expect(svg).toMatch(/data-text-decoration="overbar"[^>]*stroke="#0000FF"/u);
+    expect(svg).toMatch(
+      /data-object-id="formula-value"[^>]*>.*data-role="formula"/u,
+    );
+    expect(svg).toMatch(/<svg[^>]*color="#0000FF"[^>]*data-role="formula"/u);
+    expect(svg).not.toContain('data-role="formula-pending"');
+    expect(svg).toMatch(
+      /data-role="fraction-numerator"[^>]*fill="#0000FF"[^>]*color="#0000FF"[^>]*>.*data-text-run="overbar"/u,
+    );
+    expect(svg).toMatch(
+      /data-role="fraction-denominator"[^>]*fill="#0000FF"[^>]*color="#0000FF"/u,
+    );
+    expect(svg).toMatch(/data-role="fraction-bar"[^>]*stroke="#0000FF"/u);
+  });
+
+  it("prefers the bound instance over a different object anchor", () => {
+    const doc = createEmptyDocument("doc-1", "Test");
+    doc.instances.push(
+      {
+        id: "bound-instance",
+        symbolId: "resistor",
+        schematicReference: "R1",
+        placement: {
+          position: { x: 100, y: 100 },
+          rotation: 0,
+          mirror: "none",
+        },
+        styleOverride: { foreground: "#FF0000" },
+      },
+      {
+        id: "anchor-instance",
+        symbolId: "resistor",
+        placement: {
+          position: { x: 200, y: 100 },
+          rotation: 0,
+          mirror: "none",
+        },
+        styleOverride: { foreground: "#0000FF" },
+      },
+    );
+    doc.annotations.push({
+      id: "label-1",
+      kind: "instance-label",
+      binding: {
+        kind: "instance-designator",
+        instanceId: "bound-instance",
+      },
+      anchor: {
+        kind: "object",
+        objectId: "anchor-instance",
+        localOffset: { x: 0, y: -20 },
+        fallbackPosition: { x: 200, y: 80 },
+      },
+      alignment: "middle",
+      rotation: 0,
+      locked: false,
+    });
+
+    const svg = renderDocumentSvg(doc, resolver);
+    expect(svg).toMatch(/data-object-id="label-1"[^>]*fill="#FF0000"/u);
+  });
+
+  it("keeps unrelated annotations on the document foreground", () => {
+    const doc = createEmptyDocument("doc-1", "Test");
+    doc.instances.push({
+      id: "inst-1",
+      symbolId: "resistor",
+      placement: {
+        position: { x: 100, y: 100 },
+        rotation: 0,
+        mirror: "none",
+      },
+      styleOverride: { foreground: "#FF0000" },
+    });
+    doc.annotations.push({
+      id: "marker-1",
+      kind: "route-marker",
+      markerKind: "voltage",
+      content: { runs: [{ kind: "text", value: "Vx" }] },
+      anchor: { kind: "free", position: { x: 100, y: 150 } },
+      alignment: "middle",
+      rotation: 0,
+      locked: false,
+      textColor: "#0000FF",
+    });
+
+    const svg = renderDocumentSvg(doc, resolver);
+    expect(svg).toMatch(/data-object-id="marker-1"[\s\S]*fill="#0000FF"/u);
+    expect(svg).toMatch(/data-role="polarity-positive"[^>]*>\+<\/text>/u);
+    expect(svg).not.toMatch(
+      /data-role="polarity-positive"[^>]*fill="#0000FF"/u,
+    );
   });
 
   it("does not apply an instance foreground override to wires", () => {

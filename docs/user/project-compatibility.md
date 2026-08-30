@@ -1,6 +1,6 @@
 # Project File Compatibility
 
-The released Project schema version is `31`. It retains schematic-only
+The released Project schema version is `32`. It retains schematic-only
 hierarchy integrity, a Project structural revision, stable formal Cell ports,
 and definition-level Cell symbol presentation. It also has one typed Instance
 netlist authority, formal Cell parameters, and Project-local external
@@ -19,22 +19,27 @@ drafting objects position at 1-unit integer precision, while Instance
 placements, route bends, and Junctions stay aligned to the Document grid. An
 Instance may carry an optional `styleOverride` with independent foreground and
 background colors; when absent, document style defaults remain authoritative.
+Each Annotation may independently carry an optional presentation-only
+`textColor`. An instance reference or value with Automatic text color inherits
+its owning Instance foreground; other annotations inherit the document
+foreground. Drafting text keeps its separate drawing-object color override.
 An Instance may also carry optional schematic-only `signalFlowParameters`
 (`formula`, `coefficient`, `bodyWidth`, `bodyHeight`) that are independent from
 netlist/SPICE parameters. Width and height are optional 10-unit-grid minimums:
 the shared Transfer Function renderer expands beyond them when 12-unit formula
 text, a fraction, or a coefficient needs more room, and never clips or shrinks
-the formula to satisfy an undersized request. A canonical v31 file can be
+the formula to satisfy an undersized request. A canonical v32 file can be
 opened, saved, reopened, and saved again without byte drift.
 
-Schema v30 is accepted through a bounded upgrade to v31. Schema v30 introduced
-atomic formula RichText; schema v31 adds the optional Signal Flow presentation
-metadata. The 30→31 upgrade preserves all existing circuit and drawing content
-and stamps the current version. The next save writes v31. The retained 29→30
-adapter remains available to controlled historical maintenance paths but schema
-v29 is not in the interactive rolling window. The original file is never
-overwritten silently. Schema v29 and older, and versions newer than v31, are
-rejected by the interactive project-file boundary.
+Schema v31 is accepted through a bounded upgrade to v32. Schema v31 added the
+optional Signal Flow presentation metadata; schema v32 adds optional
+`Annotation.textColor`. The 31→32 upgrade preserves all existing circuit and
+drawing content, materializes no color field, and stamps the current version.
+The next save writes v32. Retained 29→30 and 30→31 adapters remain available to
+controlled historical maintenance paths, but schema v30 is not in the
+interactive rolling window. The original file is never overwritten silently.
+Schema v30 and older, and versions newer than v32, are rejected by the
+interactive project-file boundary.
 
 The canonical-current corpus at
 [`fixtures/projects/compatibility-corpus.json`](../../fixtures/projects/compatibility-corpus.json)
@@ -46,7 +51,7 @@ Retired fields such as first-class
 
 An incompatible Project is rejected before it can replace the current browser
 Project. Conversion, when needed, is an explicit external operation that must
-produce and validate a complete v31 candidate before a human chooses to load it.
+produce and validate a complete v32 candidate before a human chooses to load it.
 
 The editor never silently merges duplicate canonical Ground (`0`) or VDD Nets.
 Duplicate folded Net names are invalid and remain diagnostics until the author

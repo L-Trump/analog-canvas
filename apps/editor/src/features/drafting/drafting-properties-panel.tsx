@@ -1,4 +1,7 @@
-import { resolveDraftingObjectGeometry } from "@icm/derived";
+import {
+  resolveDocumentStyleProfile,
+  resolveDraftingObjectGeometry,
+} from "@icm/derived";
 import type { DraftingObject, SchematicDocument } from "@icm/model";
 import type { SymbolResolver } from "@icm/symbols";
 
@@ -56,6 +59,36 @@ export function DraftingPropertiesPanel({
   onToggleLock,
 }: DraftingPropertiesPanelProps) {
   const geometry = resolveDraftingObjectGeometry(document, resolver, object);
+  if (geometry.kind === "text" && object.kind === "text") {
+    const profile = resolveDocumentStyleProfile(document.presentation);
+    return (
+      <section
+        className="property-section drafting-text-properties"
+        aria-label="Drawing text properties"
+        data-testid="drafting-properties"
+      >
+        <div className="property-card">
+          <div className="property-section-heading">Text</div>
+          <ColorOverrideControl
+            label="Text color"
+            value={object.styleOverride?.color}
+            fallback={profile.foreground}
+            disabled={object.locked}
+            onChange={(color) => onStyleChange({ color })}
+          />
+          <small>Auto inherits the document text color.</small>
+          <button
+            type="button"
+            className="drafting-text-lock"
+            onClick={onToggleLock}
+          >
+            <ToolIcon name="lock" />
+            {object.locked ? "Unlock" : "Lock"}
+          </button>
+        </div>
+      </section>
+    );
+  }
   if (
     geometry.kind !== "arrow" &&
     geometry.kind !== "construction-line" &&

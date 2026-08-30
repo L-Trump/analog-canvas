@@ -59,6 +59,7 @@ export function ColorOverrideControl({
   value,
   fallback,
   transparentDefault,
+  autoTitle,
   disabled = false,
   onChange,
 }: {
@@ -66,6 +67,7 @@ export function ColorOverrideControl({
   value: string | undefined;
   fallback: string;
   transparentDefault?: boolean;
+  autoTitle?: string;
   disabled?: boolean;
   onChange: (value: string | undefined) => void;
 }) {
@@ -95,6 +97,22 @@ export function ColorOverrideControl({
     if (pending === null) return;
     commitNow(pending);
   };
+  const commitOnBlur = (relatedTarget: EventTarget | null): void => {
+    // Auto and preset buttons replace the draft. Let their activation own the
+    // one document transaction instead of persisting a transient value first.
+    if (
+      relatedTarget instanceof Element &&
+      relatedTarget.closest('[data-color-action="immediate"]')
+    ) {
+      return;
+    }
+    if (draftRef.current === null) return;
+    // Blur fires before a canvas click can remount the keyed Properties panel.
+    // Deferring one turn lets the unmount cleanup cancel a draft that belongs
+    // to the old selection while ordinary field blur still commits once.
+    cancelSettle();
+    settleRef.current = setTimeout(commitPending, 0);
+  };
   const setPending = (next: string): void => {
     draftRef.current = next;
     setDraft(next);
@@ -121,20 +139,23 @@ export function ColorOverrideControl({
           type="color"
           value={shown}
           onChange={(event) => setPending(event.currentTarget.value)}
-          onBlur={commitPending}
+          onBlur={(event) => commitOnBlur(event.relatedTarget)}
         />
         <output aria-label={`${colorLabel} hex value`}>
           {draft ?? value ?? (transparentDefault ? "Transparent" : "Automatic")}
         </output>
         <button
           type="button"
-          disabled={disabled || !value}
+          disabled={disabled || (!value && draft === null)}
+          data-color-action="immediate"
           aria-label={`Reset ${label.toLowerCase()}`}
           title={
-            transparentDefault
+            autoTitle ??
+            (transparentDefault
               ? "Remove the component background"
-              : "Use the document ink color"
+              : "Use the document ink color")
           }
+          onPointerDown={(event) => event.preventDefault()}
           onClick={() => commitNow(undefined)}
         >
           Auto
@@ -153,7 +174,9 @@ export function ColorOverrideControl({
             }
             aria-label={`Use ${preset.label} for ${label.toLowerCase()}`}
             aria-pressed={shown.toLowerCase() === preset.value}
+            data-color-action="immediate"
             title={`${preset.label} · ${preset.value}`}
+            onPointerDown={(event) => event.preventDefault()}
             onClick={() => commitNow(preset.value)}
           >
             <span aria-hidden="true" />
@@ -176,7 +199,7 @@ export function ColorOverrideControl({
               onChange={(event) =>
                 updateChannel(channel, event.currentTarget.value)
               }
-              onBlur={commitPending}
+              onBlur={(event) => commitOnBlur(event.relatedTarget)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") commitPending();
               }}

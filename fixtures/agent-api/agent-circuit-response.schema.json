@@ -1181,6 +1181,9 @@
                       },
                       "visible": {
                         "$ref": "#/$defs/__schema227"
+                      },
+                      "textColor": {
+                        "$ref": "#/$defs/__schema228"
                       }
                     },
                     "required": [
@@ -1211,16 +1214,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1276,16 +1279,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1335,16 +1338,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1371,16 +1374,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1432,16 +1435,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1494,16 +1497,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1557,16 +1560,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1608,16 +1611,16 @@
                                     "$ref": "#/$defs/__schema0"
                                   },
                                   "locked": {
-                                    "$ref": "#/$defs/__schema228"
+                                    "$ref": "#/$defs/__schema229"
                                   },
                                   "zIndex": {
-                                    "$ref": "#/$defs/__schema229"
+                                    "$ref": "#/$defs/__schema230"
                                   },
                                   "anchor": {
                                     "$ref": "#/$defs/__schema221"
                                   },
                                   "styleOverride": {
-                                    "$ref": "#/$defs/__schema230"
+                                    "$ref": "#/$defs/__schema231"
                                   },
                                   "kind": {
                                     "type": "string",
@@ -1708,7 +1711,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -1770,7 +1773,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -1806,7 +1809,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -1844,7 +1847,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -1897,7 +1900,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -1946,7 +1949,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -1982,7 +1985,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -2014,7 +2017,7 @@
                                   "diagnostics": {
                                     "type": "array",
                                     "items": {
-                                      "$ref": "#/$defs/__schema231"
+                                      "$ref": "#/$defs/__schema232"
                                     }
                                   }
                                 },
@@ -2032,7 +2035,7 @@
                           "diagnostics": {
                             "type": "array",
                             "items": {
-                              "$ref": "#/$defs/__schema231"
+                              "$ref": "#/$defs/__schema232"
                             }
                           }
                         },
@@ -2128,7 +2131,7 @@
                 "diagnostics": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/$defs/__schema232"
+                    "$ref": "#/$defs/__schema233"
                   }
                 }
               },
@@ -2166,7 +2169,7 @@
         "diagnostics": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/__schema232"
+            "$ref": "#/$defs/__schema233"
           }
         }
       },
@@ -2254,7 +2257,7 @@
         "diagnostics": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/__schema232"
+            "$ref": "#/$defs/__schema233"
           }
         },
         "diagnosticDelta": {
@@ -2263,13 +2266,13 @@
             "added": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/__schema232"
+                "$ref": "#/$defs/__schema233"
               }
             },
             "removed": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/__schema232"
+                "$ref": "#/$defs/__schema233"
               }
             }
           },
@@ -2443,7 +2446,7 @@
         "diagnostics": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/__schema232"
+            "$ref": "#/$defs/__schema233"
           }
         }
       },
@@ -2506,7 +2509,7 @@
         "diagnostics": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/__schema232"
+            "$ref": "#/$defs/__schema233"
           }
         }
       },
@@ -13200,14 +13203,18 @@
       "type": "boolean"
     },
     "__schema228": {
-      "type": "boolean"
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
     },
     "__schema229": {
+      "type": "boolean"
+    },
+    "__schema230": {
       "type": "integer",
       "minimum": 0,
       "maximum": 9007199254740991
     },
-    "__schema230": {
+    "__schema231": {
       "type": "object",
       "properties": {
         "sizeScale": {
@@ -13272,7 +13279,7 @@
       },
       "additionalProperties": false
     },
-    "__schema231": {
+    "__schema232": {
       "type": "object",
       "properties": {
         "code": {
@@ -13322,7 +13329,7 @@
       ],
       "additionalProperties": false
     },
-    "__schema232": {
+    "__schema233": {
       "type": "object",
       "properties": {
         "code": {

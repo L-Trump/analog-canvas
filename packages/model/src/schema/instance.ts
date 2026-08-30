@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  HexColorSchema,
   MirrorSchema,
   PointSchema,
   RotationSchema,
@@ -10,19 +11,10 @@ import { SourceSpanSchema } from "./source.js";
 import { RichTextDocumentSchema } from "./rich-text.js";
 
 /**
- * A reusable, strict hex color string. Format: `#RRGGBB` (lowercase or
- * uppercase hex digits). No named colors, no alpha, no shorthand.
- */
-export const HexColorSchema = z
-  .string()
-  .regex(/^#[0-9A-Fa-f]{6}$/u, "Color must be #RRGGBB hex format");
-
-/**
  * Optional per-instance visual style override. When absent, the instance
  * renders with the document style profile defaults — preserving the exact
  * appearance of pre-existing projects. Each field is independently optional
- * so an editor can set only a foreground (line/stroke) color, only a
- * background (fill) color, or both.
+ * so an editor can set each color independently.
  *
  * - `foreground`: replaces the profile foreground for this instance's
  *   symbol strokes (lines, polylines, paths, polygon strokes, circle

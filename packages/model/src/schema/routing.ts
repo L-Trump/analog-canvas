@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-import { PointSchema, StableIdSchema } from "./common.js";
-import { HexColorSchema } from "./instance.js";
+import { HexColorSchema, PointSchema, StableIdSchema } from "./common.js";
 
 export const RouteEndpointSchema = z.discriminatedUnion("kind", [
   z.strictObject({

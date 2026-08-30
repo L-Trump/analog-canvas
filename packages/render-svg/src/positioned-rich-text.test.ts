@@ -230,6 +230,26 @@ describe("renderPositionedOverbarScriptDocument", () => {
     expect(Number(line[2])).toBeCloseTo(positioned!.width, 5);
   });
 
+  it("uses the requested paint for the explicit overbar decoration", () => {
+    const positioned = renderPositionedOverbarScriptDocument(
+      overbarExpression(),
+      razaviTextbookProfile,
+      {
+        x: 0,
+        y: 0,
+        fontSize: 20,
+        alignment: "start",
+        color: "#2563EB",
+      },
+    );
+
+    expect(positioned).not.toBeNull();
+    expect(positioned!.decorations).toContain('stroke="#2563EB"');
+    expect(positioned!.decorations).not.toContain(
+      `stroke="${razaviTextbookProfile.foreground}"`,
+    );
+  });
+
   it("draws one overbar over a base carrying a single script", () => {
     const positioned = renderPositionedOverbarScriptDocument(
       {

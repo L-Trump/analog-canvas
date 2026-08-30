@@ -15,6 +15,8 @@ import {
   resolveEndpointPoint,
   resolveDocumentRoutingGeometry,
   resolveAnnotationPresentation,
+  annotationOwningInstanceId,
+  resolveAnnotationTextColor,
   isSchematicAnnotationVisible,
   resolveAnnotationText,
   resolveDocumentStyleProfile,
@@ -112,6 +114,7 @@ function renderStackedFractionAnnotation(
     alignment: "start" | "middle" | "end";
     width: number;
     fontSize: number;
+    color?: string;
     profile: SchematicStyleProfile;
   },
 ): string {
@@ -136,7 +139,12 @@ function renderStackedFractionAnnotation(
     options.position.y +
     fontSize * partScale * fractionGeometry.denominatorBaselineDropEm;
   const partStyle = `font-style:normal;font-weight:${profile.typography.mathWeight}`;
-  return `<g ${options.attributes}><text data-role="fraction-numerator" x="${centerX}" y="${numeratorY}" text-anchor="middle" font-size="${partFont}" style="${partStyle}">${renderRichTextDocument(fraction.numerator, profile, { defaultBold: true, fontSize: partFont })}</text><line data-role="fraction-bar" x1="${centerX - halfWidth}" y1="${barY}" x2="${centerX + halfWidth}" y2="${barY}" stroke="${profile.foreground}" stroke-width="${profile.strokes.annotation}"/><text data-role="fraction-denominator" x="${centerX}" y="${denominatorY}" text-anchor="middle" font-size="${partFont}" style="${partStyle}">${renderRichTextDocument(fraction.denominator, profile, { defaultBold: true, fontSize: partFont })}</text></g>`;
+  // `fill` paints glyphs; `color` supplies currentColor for nested RichText
+  // decorations such as CSS overbars inside a fraction part.
+  const textColor = options.color
+    ? ` fill="${options.color}" color="${options.color}"`
+    : "";
+  return `<g ${options.attributes}><text data-role="fraction-numerator" x="${centerX}" y="${numeratorY}" text-anchor="middle" font-size="${partFont}"${textColor} style="${partStyle}">${renderRichTextDocument(fraction.numerator, profile, { defaultBold: true, fontSize: partFont })}</text><line data-role="fraction-bar" x1="${centerX - halfWidth}" y1="${barY}" x2="${centerX + halfWidth}" y2="${barY}" stroke="${options.color ?? profile.foreground}" stroke-width="${profile.strokes.annotation}"/><text data-role="fraction-denominator" x="${centerX}" y="${denominatorY}" text-anchor="middle" font-size="${partFont}"${textColor} style="${partStyle}">${renderRichTextDocument(fraction.denominator, profile, { defaultBold: true, fontSize: partFont })}</text></g>`;
 }
 
 function escapeXml(value: string): string {
@@ -687,6 +695,9 @@ export function buildSvgScene(
   ) {
     throw new Error("SVG renderer received stale routing geometry");
   }
+  const instancesById = new Map(
+    document.instances.map((instance) => [instance.id, instance] as const),
+  );
   const logicalNets = resolveDocumentLogicalNets(document);
   const powerRailNetIds = new Set(
     document.routes.flatMap((route) => {
@@ -928,6 +939,14 @@ export function buildSvgScene(
       const annotationFontSize =
         schematicTextFontSize(annotation.kind, profile) *
         (annotation.sizeScale ?? 1);
+      const ownerInstanceId = annotationOwningInstanceId(annotation);
+      const resolvedColor = resolveAnnotationTextColor(
+        annotation,
+        ownerInstanceId ? instancesById.get(ownerInstanceId) : undefined,
+        profile.foreground,
+      );
+      const colorOverride =
+        resolvedColor === profile.foreground ? undefined : resolvedColor;
       if (
         annotation.kind === "route-marker" &&
         annotation.markerKind === "current"
@@ -965,10 +984,11 @@ export function buildSvgScene(
           baselineY: markerTextY,
           fontSize: annotationFontSize,
           alignment: textAnchor,
+          ...(colorOverride ? { color: colorOverride } : {}),
         });
         const text = formula
           ? formula
-          : `<text x="${markerTextX}" y="${markerTextY}" text-anchor="${textAnchor}"${schematicTextSizeAttribute("route-marker", profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
+          : `<text x="${markerTextX}" y="${markerTextY}" text-anchor="${textAnchor}"${colorOverride ? ` fill="${colorOverride}"` : ""}${schematicTextSizeAttribute("route-marker", profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
         return `<g ${attributes}><g transform="${transform}"><polygon data-role="current-arrow-head" points="${tipX},${y} ${baseX},${y - halfHeadWidth} ${baseX},${y + halfHeadWidth}" fill="${profile.foreground}"/></g>${text}</g>`;
       }
       if (annotation.kind === "power-label") {
@@ -980,10 +1000,11 @@ export function buildSvgScene(
           baselineY: position.y,
           fontSize: annotationFontSize,
           alignment: annotation.alignment,
+          ...(colorOverride ? { color: colorOverride } : {}),
         });
         const text = formula
           ? `<g transform="${transform}">${formula}</g>`
-          : `<text x="${position.x}" y="${position.y}" text-anchor="${annotation.alignment}" transform="${transform}"${schematicTextSizeAttribute("power-label", profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
+          : `<text x="${position.x}" y="${position.y}" text-anchor="${annotation.alignment}" transform="${transform}"${colorOverride ? ` fill="${colorOverride}"` : ""}${schematicTextSizeAttribute("power-label", profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
         return `<g ${attributes}>${text}</g>`;
       }
       if (
@@ -1005,10 +1026,11 @@ export function buildSvgScene(
           baselineY: position.y,
           fontSize: annotationFontSize,
           alignment: annotation.alignment,
+          ...(colorOverride ? { color: colorOverride } : {}),
         });
         const text = formula
           ? formula
-          : `<text x="${position.x}" y="${position.y}" text-anchor="${annotation.alignment}"${schematicTextSizeAttribute("route-marker", profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
+          : `<text x="${position.x}" y="${position.y}" text-anchor="${annotation.alignment}"${colorOverride ? ` fill="${colorOverride}"` : ""}${schematicTextSizeAttribute("route-marker", profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
         return `<g ${attributes}><text data-role="polarity-positive" x="${position.x + positiveOffset.x}" y="${position.y + positiveOffset.y + 4}" text-anchor="middle" font-size="${profile.typography.polarityFontSize}" style="${polarityStyle}">+</text><text data-role="polarity-negative" x="${position.x + negativeOffset.x}" y="${position.y + negativeOffset.y + 4}" text-anchor="middle" font-size="${profile.typography.polarityFontSize}" style="${polarityStyle}">−</text>${text}</g>`;
       }
       const emphasis = "";
@@ -1027,6 +1049,7 @@ export function buildSvgScene(
           fontSize:
             schematicTextFontSize(annotation.kind, profile) *
             (annotation.sizeScale ?? 1),
+          ...(colorOverride ? { color: colorOverride } : {}),
           profile,
         });
       }
@@ -1035,11 +1058,26 @@ export function buildSvgScene(
         baselineY: position.y,
         fontSize: annotationFontSize,
         alignment: annotation.alignment,
+        ...(colorOverride ? { color: colorOverride } : {}),
       });
       if (formula) {
         return `<g ${attributes} transform="${transform}">${formula}</g>`;
       }
-      return `<text ${attributes} x="${position.x}" y="${position.y}" text-anchor="${annotation.alignment}" transform="${transform}"${emphasis}${schematicTextSizeAttribute(annotation.kind, profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
+      const positioned = renderPositionedOverbarScriptDocument(
+        content,
+        profile,
+        {
+          x: position.x,
+          y: position.y,
+          fontSize: annotationFontSize,
+          alignment: annotation.alignment,
+          ...(colorOverride ? { color: colorOverride } : {}),
+        },
+      );
+      if (positioned) {
+        return `<g transform="${transform}"><text ${attributes} x="${position.x}" y="${position.y}" text-anchor="start"${emphasis}${colorOverride ? ` fill="${colorOverride}"` : ""}${schematicTextSizeAttribute(annotation.kind, profile, annotation.sizeScale)}>${positioned.tspans}</text>${positioned.decorations}</g>`;
+      }
+      return `<text ${attributes} x="${position.x}" y="${position.y}" text-anchor="${annotation.alignment}" transform="${transform}"${emphasis}${colorOverride ? ` fill="${colorOverride}" color="${colorOverride}"` : ""}${schematicTextSizeAttribute(annotation.kind, profile, annotation.sizeScale)}>${renderAnnotationText(document, annotation, profile)}</text>`;
     })
     .join("");
 
@@ -1187,6 +1225,7 @@ function renderDraftText(
   unresolved: string,
 ): string {
   const { position, textPosition, rotation } = geometry;
+  const color = object.styleOverride?.color ?? profile.foreground;
   const fontSize =
     typographyFontSize(object.typographyToken ?? "body", profile) *
     (object.styleOverride?.sizeScale ?? 1);
@@ -1216,6 +1255,9 @@ function renderDraftText(
     y: baselineY,
     fontSize,
     alignment: object.alignment,
+    ...(object.styleOverride?.color
+      ? { color: object.styleOverride.color }
+      : {}),
     defaultBold: weight === "bold",
     defaultItalic: italic === "italic",
   });
@@ -1229,7 +1271,6 @@ function renderDraftText(
       : {}),
   });
   if (object.polarity) {
-    const color = object.styleOverride?.color ?? profile.foreground;
     const strokeWidth =
       profile.strokes.annotation * (object.styleOverride?.strokeScale ?? 1);
     const markers = geometry.polarityLines
@@ -1252,13 +1293,13 @@ function renderDraftText(
     return `<g data-object-id="${object.id}" data-kind="draft-text"${unresolved} transform="rotate(${rotation} ${position.x} ${position.y})">${formula}</g>`;
   }
   if (positioned) {
-    return `<g transform="rotate(${rotation} ${position.x} ${position.y})"><text data-object-id="${object.id}" data-kind="draft-text"${unresolved} x="${textPosition.x}" y="${baselineY}" text-anchor="start" font-size="${fontSize}" font-weight="${weight}" font-style="${italic}">${positioned.tspans}</text>${positioned.decorations}</g>`;
+    return `<g transform="rotate(${rotation} ${position.x} ${position.y})"><text data-object-id="${object.id}" data-kind="draft-text"${unresolved} x="${textPosition.x}" y="${baselineY}" text-anchor="start" font-size="${fontSize}" font-weight="${weight}" font-style="${italic}" fill="${color}">${positioned.tspans}</text>${positioned.decorations}</g>`;
   }
   const markup = renderRichTextDocument(content, profile, {
     lineOriginX: textPosition.x,
     fontSize,
   });
-  return `<text data-object-id="${object.id}" data-kind="draft-text"${unresolved} x="${textPosition.x}" y="${baselineY}" text-anchor="${object.alignment}" transform="rotate(${rotation} ${position.x} ${position.y})" font-size="${fontSize}" font-weight="${weight}" font-style="${italic}">${markup}</text>`;
+  return `<text data-object-id="${object.id}" data-kind="draft-text"${unresolved} x="${textPosition.x}" y="${baselineY}" text-anchor="${object.alignment}" transform="rotate(${rotation} ${position.x} ${position.y})" font-size="${fontSize}" font-weight="${weight}" font-style="${italic}" fill="${color}">${markup}</text>`;
 }
 
 /** Glyph cap height is ~0.7 em; dropping the baseline by 0.35 em sits the

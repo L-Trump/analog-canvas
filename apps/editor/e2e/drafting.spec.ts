@@ -196,6 +196,62 @@ test("adds formatted drafting text and undo/redo restores it", async ({
   await expect(page.getByTestId("revision")).toHaveText("6");
 });
 
+test("drafting text owns an independent color override with Auto inheritance", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await clickDrawTool(page, "text");
+  const draftInput = page.getByRole("textbox", {
+    name: "Canvas text editor",
+  });
+  await draftInput.fill("Colored note");
+  await page.getByRole("button", { name: "Apply text changes" }).click();
+
+  const hit = page.getByTestId(/^drafting-hit-note-/);
+  const text = page.locator('[data-kind="draft-text"]');
+  await hit.click({ force: true });
+  await page.keyboard.press("q");
+  const properties = page.getByTestId("drafting-properties");
+  await expect(properties).toHaveAttribute(
+    "aria-label",
+    "Drawing text properties",
+  );
+  await expect(properties).toHaveClass(/property-section/u);
+  await expect(properties.locator(":scope > .property-card")).toBeVisible();
+  const colorPicker = properties.getByLabel("Text color picker");
+  await expect(colorPicker).toHaveCSS("width", "32px");
+  await expect(colorPicker).toHaveCSS("height", "32px");
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "Automatic",
+  );
+
+  await properties
+    .getByRole("button", { name: "Use Blue for text color" })
+    .click();
+  await expect(text).toHaveAttribute("fill", "#2563eb");
+
+  const coloredProject = JSON.parse(
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
+  );
+  const coloredText = coloredProject.documents[0].drafting.objects.find(
+    (object: { kind: string }) => object.kind === "text",
+  );
+  expect(coloredText.styleOverride.color).toBe("#2563eb");
+
+  await properties.getByRole("button", { name: "Reset text color" }).click();
+  await expect(text).toHaveAttribute("fill", "#000");
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "Automatic",
+  );
+
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(text).toHaveAttribute("fill", "#2563eb");
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(text).toHaveAttribute("fill", "#000");
+});
+
 test("authors one validated formula through the canonical text editor", async ({
   page,
 }) => {

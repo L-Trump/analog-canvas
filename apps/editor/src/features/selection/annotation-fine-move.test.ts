@@ -22,7 +22,7 @@ describe("free annotation fine placement (#11)", () => {
       kind: "route-marker",
       markerKind: "current",
       netId: "net-a",
-      // Legal under the 1-unit annotation pitch (schema 29).
+      // Legal under the 1-unit annotation pitch (since schema 30).
       anchor: { kind: "free", position: { x: 103, y: 57 } },
       alignment: "middle",
       rotation: 0,
