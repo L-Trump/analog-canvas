@@ -15,8 +15,11 @@ describe("selection context actions", () => {
         active
         netLabelInputRef={createRef<HTMLInputElement>()}
         netLabel="OUT"
+        color={undefined}
+        defaultColor="#000"
         highlightActive
         onNetLabelChange={vi.fn()}
+        onColorChange={vi.fn()}
         onDeleteNetLabel={vi.fn()}
         onAddCurrentArrow={vi.fn()}
         onToggleHighlight={vi.fn()}
@@ -25,6 +28,12 @@ describe("selection context actions", () => {
     );
     expect(markup).toContain('aria-label="Electrical Net label"');
     expect(markup).toContain('value="OUT"');
+    expect(markup).toContain('aria-label="Wire color picker"');
+    expect(markup).toContain('value="#000000"');
+    expect(markup).toContain('aria-label="Wire color custom RGB"');
+    expect(markup).toContain("Gray · #6b7280");
+    expect(markup).not.toContain("Violet");
+    expect(markup).toContain("Use the document ink color");
     expect(markup).toContain("Clear Net highlight (H)");
   });
 

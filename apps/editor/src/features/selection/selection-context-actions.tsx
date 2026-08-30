@@ -1,5 +1,7 @@
 import type { Ref } from "react";
 
+import { ColorOverrideControl } from "../properties/color-override-control";
+
 import { DisplayToggle } from "../component-insert/display-toggle";
 
 export function MosBulkConnectionSection({
@@ -115,8 +117,11 @@ export function RouteActionsSection({
   active,
   netLabelInputRef,
   netLabel,
+  color,
+  defaultColor,
   highlightActive,
   onNetLabelChange,
+  onColorChange,
   onDeleteNetLabel,
   onAddCurrentArrow,
   onToggleHighlight,
@@ -125,8 +130,11 @@ export function RouteActionsSection({
   active: boolean;
   netLabelInputRef: Ref<HTMLInputElement>;
   netLabel: string;
+  color: string | undefined;
+  defaultColor: string;
   highlightActive: boolean;
   onNetLabelChange: (value: string) => void;
+  onColorChange: (value: string | undefined) => void;
   onDeleteNetLabel: () => void;
   onAddCurrentArrow: () => void;
   onToggleHighlight: () => void;
@@ -148,6 +156,12 @@ export function RouteActionsSection({
       <button type="button" onClick={onDeleteNetLabel}>
         Delete Net label
       </button>
+      <ColorOverrideControl
+        label="Wire color"
+        value={color}
+        fallback={defaultColor}
+        onChange={onColorChange}
+      />
       <button type="button" onClick={onAddCurrentArrow}>
         Add current arrow
       </button>

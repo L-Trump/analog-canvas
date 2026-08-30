@@ -411,21 +411,6 @@
   margin-top: 0;
 }
 
-.drawing-color-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.drawing-color-row input[type="color"] {
-  width: 2.2rem;
-  height: 1.6rem;
-  padding: 0.1rem;
-  border: 1px solid var(--icm-border);
-  border-radius: var(--icm-radius-sm);
-  background: var(--icm-surface);
-}
-
 .component-appearance-card > small {
   line-height: var(--icm-line);
 }
@@ -454,7 +439,7 @@
   gap: 0.4rem;
 }
 
-.property-section .component-color-primary-row input[type="color"] {
+.component-color-primary-row input[type="color"] {
   width: var(--icm-control-h-lg);
   height: var(--icm-control-h-lg);
   min-height: var(--icm-control-h-lg);
@@ -470,9 +455,11 @@
   white-space: nowrap;
 }
 
-.component-color-primary-row button {
+.component-color-control .component-color-primary-row button {
+  width: auto;
   min-height: var(--icm-control-h-lg);
   margin: 0;
+  padding: 0.45rem 0.55rem;
 }
 
 .component-color-presets {
@@ -481,9 +468,10 @@
   gap: 0.3rem;
 }
 
-.component-color-swatch {
+.component-color-control .component-color-swatch {
   display: grid;
   place-items: center;
+  width: 100%;
   min-width: 0;
   min-height: 1.65rem;
   margin: 0;

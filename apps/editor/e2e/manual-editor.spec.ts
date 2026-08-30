@@ -1416,6 +1416,56 @@ test("deletes a wire without exposing Unroute", async ({ page }) => {
   ).toHaveCount(0);
 });
 
+test("colors an electrical wire and restores the Razavi default with Auto", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await placeComponent(page, "resistor", { x: 340, y: 220 });
+  await placeComponent(page, "resistor", { x: 660, y: 220 });
+  await clickDrawTool(page, "wire");
+  await page.getByTestId("terminal-R1-2").click();
+  await page.getByTestId("terminal-R2-1").click();
+  await page.keyboard.press("Escape");
+
+  await clickRoute(page, "route-ui-1");
+  await openSelectionShelf(page);
+  const wire = page.locator(
+    '[data-layer="routes"] [data-object-id="route-ui-1"]',
+  );
+  const color = page.getByLabel("Wire color picker");
+  await expect(color).toHaveValue("#000000");
+  const presets = page.getByLabel("Wire color presets");
+  await expect
+    .poll(async () => (await presets.boundingBox())?.width ?? 0)
+    .toBeGreaterThan(200);
+  const swatchWidths = await presets
+    .locator(".component-color-swatch span")
+    .evaluateAll((swatches) =>
+      swatches.map((swatch) => swatch.getBoundingClientRect().width),
+    );
+  expect(swatchWidths).toHaveLength(8);
+  expect(Math.min(...swatchWidths)).toBeGreaterThanOrEqual(16);
+  await color.evaluate((input, value) => {
+    const element = input as HTMLInputElement;
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+    setter.call(element, value);
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }, "#cc2200");
+  await expect(wire).toHaveAttribute("stroke", "#cc2200");
+  await expect(page.getByTestId("status")).toContainText(
+    "Updated wire color for route-ui-1",
+  );
+
+  await page.getByTitle("Use the document ink color").click();
+  await expect(wire).toHaveAttribute("stroke", "#000");
+  await expect(color).toHaveValue("#000000");
+  await expect(page.getByTitle("Use the document ink color")).toBeDisabled();
+});
+
 test("keeps Wire active for consecutive independent routes until Escape", async ({
   page,
 }) => {
