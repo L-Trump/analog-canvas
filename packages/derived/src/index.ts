@@ -1,5 +1,6 @@
 export * from "./anchor.js";
 export * from "./annotation-presentation.js";
+export * from "./annotation-color.js";
 export * from "./annotation-text.js";
 export * from "./connectivity.js";
 export * from "./contact.js";

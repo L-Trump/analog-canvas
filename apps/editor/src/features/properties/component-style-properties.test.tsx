@@ -39,6 +39,7 @@ describe("component style properties", () => {
     expect(markup).toContain("Gray · #6b7280");
     expect(markup).not.toContain("Violet");
     expect(markup).toContain("Colors apply only to this component");
+    expect(markup).toContain("Reference and value text inherit");
   });
 
   it("converts custom RGB values to canonical six-digit hex", () => {

@@ -301,7 +301,8 @@ export function applyDraftingStylePatch(
 ): DraftingObject | null {
   if (
     object.locked ||
-    (object.kind !== "arrow" &&
+    (object.kind !== "text" &&
+      object.kind !== "arrow" &&
       object.kind !== "construction-line" &&
       object.kind !== "rectangle" &&
       object.kind !== "circle")

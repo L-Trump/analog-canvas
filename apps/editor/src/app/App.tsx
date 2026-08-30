@@ -21,6 +21,7 @@ import {
 import {
   buildProjectConnectivityIndex,
   computeNetHighlight,
+  annotationOwningInstanceId,
   deriveNetConnectivity,
   deriveRoutingAffectedClosure,
   resolveDraftingObjectGeometry,
@@ -1197,6 +1198,7 @@ export function App({
   const returnablePlacedInstances = document.instances.filter(
     (instance) => instance.placement !== null,
   );
+  const styleProfile = resolveDocumentStyleProfile(document.presentation);
   const {
     selectedIds,
     supplementalSelection,
@@ -1233,6 +1235,17 @@ export function App({
     selection: visualSelection,
     selectedEndpoint,
   });
+  const selectedAnnotationOwnerInstanceId = selectedAnnotation
+    ? annotationOwningInstanceId(selectedAnnotation)
+    : undefined;
+  const selectedAnnotationOwnerInstance = selectedAnnotationOwnerInstanceId
+    ? document.instances.find(
+        (instance) => instance.id === selectedAnnotationOwnerInstanceId,
+      )
+    : undefined;
+  const selectedAnnotationInheritedTextColor =
+    selectedAnnotationOwnerInstance?.styleOverride?.foreground ??
+    styleProfile.foreground;
   const {
     logicalNets,
     routeGeometryRecords,
@@ -1589,7 +1602,6 @@ export function App({
       ? displayableInstanceValue(instance).kind === "displayable"
       : false;
   });
-  const styleProfile = resolveDocumentStyleProfile(document.presentation);
   const wireUnderSymbolWarnings = useMemo(
     () =>
       deriveWireUnderSymbolWarnings(document, resolver, routeGeometryRecords),
@@ -4462,6 +4474,38 @@ export function App({
                         }
                       : {}),
                     onDiscard: discardInstancePropertyDraft,
+                  },
+                }
+              : null
+          }
+          annotationText={
+            selectedAnnotation
+              ? {
+                  annotation: selectedAnnotation,
+                  inheritedColor: selectedAnnotationInheritedTextColor,
+                  onChange: (textColor) => {
+                    if (selectedAnnotation.locked) {
+                      setStatus(
+                        "Unlock this annotation before changing its text color",
+                      );
+                      return;
+                    }
+                    const annotation = { ...selectedAnnotation };
+                    if (textColor === undefined) delete annotation.textColor;
+                    else annotation.textColor = textColor;
+                    const result = transact([
+                      {
+                        kind: "upsert_schematic_annotation",
+                        annotation,
+                      },
+                    ]);
+                    if (result.ok) {
+                      setStatus(
+                        textColor === undefined
+                          ? "Annotation text color set to Auto"
+                          : "Updated annotation text color",
+                      );
+                    }
                   },
                 }
               : null

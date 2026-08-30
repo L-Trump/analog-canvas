@@ -2923,45 +2923,115 @@ test("Properties toggles reference label visibility for one or many components",
   ).toHaveCount(1);
 });
 
-test("Properties colors one component with presets and custom RGB", async ({
+test("Properties keeps component and Annotation text colors independent", async ({
   page,
 }) => {
   await page.goto("/editor");
   await placeComponent(page, "resistor", { x: 280, y: 180 });
+  await placeComponent(page, "resistor", { x: 480, y: 180 });
   await page.getByTestId("hit-R1").click();
   await openSelectionShelf(page);
 
   const properties = page.getByRole("complementary", { name: "Properties" });
   const component = page.locator('[data-object-id="R1"]');
   const symbol = component.locator('[data-role="instance-symbol"]');
+  const label = page.locator('[data-object-id="instance-label-R1"]');
+  const secondLabel = page.locator('[data-object-id="instance-label-R2"]');
 
   await properties
     .getByRole("button", { name: "Use Red for line / foreground" })
     .click();
-  await expect(symbol).toHaveAttribute("stroke", "#dc2626");
-
   await properties
     .getByRole("button", { name: "Use Blue for background / fill" })
     .click();
+  await expect(symbol).toHaveAttribute("stroke", "#dc2626");
+  await expect(
+    component.locator('[data-role="instance-background"]'),
+  ).toHaveAttribute("fill", "#2563eb");
+  await expect(label).toHaveAttribute("fill", "#dc2626");
+
+  await page
+    .getByTestId("annotation-hit-instance-label-R1")
+    .click({ force: true });
+  await openSelectionShelf(page);
+  await expect(
+    properties.getByRole("region", { name: "Text properties" }),
+  ).toBeVisible();
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "Automatic",
+  );
+  await expect(properties.getByLabel("Text color picker")).toHaveValue(
+    "#dc2626",
+  );
+
+  await properties
+    .getByRole("button", { name: "Use Blue for text color" })
+    .click();
+  await expect(label).toHaveAttribute("fill", "#2563eb");
+  await expect(symbol).toHaveAttribute("stroke", "#dc2626");
   await expect(
     component.locator('[data-role="instance-background"]'),
   ).toHaveAttribute("fill", "#2563eb");
 
-  await properties.getByLabel("Line / foreground red").fill("12");
-  await properties.getByLabel("Line / foreground green").fill("128");
-  await properties.getByLabel("Line / foreground blue").fill("255");
-  await expect(symbol).toHaveAttribute("stroke", "#0c80ff");
+  // A pending RGB draft belongs to this Annotation only. Selecting another
+  // Annotation remounts the keyed Text properties before the deferred blur
+  // commit, so R1's draft cannot reach either Annotation.
+  await properties.getByLabel("Text color red").fill("12");
+  await page
+    .getByTestId("annotation-hit-instance-label-R2")
+    .click({ force: true });
+  await page.waitForTimeout(300);
+  await expect(label).toHaveAttribute("fill", "#2563eb");
+  await expect(secondLabel).not.toHaveAttribute("fill");
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "Automatic",
+  );
 
-  await properties
-    .getByRole("button", { name: "Reset line / foreground" })
-    .click();
-  await expect(symbol).toHaveAttribute("stroke", "#000");
-  await properties
-    .getByRole("button", { name: "Reset background / fill" })
-    .click();
-  await expect(
-    component.locator('[data-role="instance-background"]'),
-  ).toHaveCount(0);
+  await page
+    .getByTestId("annotation-hit-instance-label-R1")
+    .click({ force: true });
+  await properties.getByLabel("Text color red").fill("12");
+  const resetTextColor = properties.getByRole("button", {
+    name: "Reset text color",
+  });
+  await resetTextColor.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(300);
+  await expect(label).toHaveAttribute("fill", "#dc2626");
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "Automatic",
+  );
+
+  // Auto replaces the pending draft as one history entry. One Undo restores
+  // the intentional blue override, never the transient #0c63eb draft.
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(label).toHaveAttribute("fill", "#2563eb");
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "#2563eb",
+  );
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(label).toHaveAttribute("fill", "#dc2626");
+  await expect(properties.getByLabel("Text color hex value")).toHaveText(
+    "Automatic",
+  );
+
+  const project = JSON.parse(
+    (await downloadBytes(page, "File", "Export Project File…")).toString(
+      "utf8",
+    ),
+  );
+  const savedR1 = project.documents[0].instances.find(
+    (instance: { id: string }) => instance.id === "R1",
+  );
+  const savedLabel = project.documents[0].annotations.find(
+    (annotation: { id: string }) => annotation.id === "instance-label-R1",
+  );
+  expect(savedR1.styleOverride).toEqual({
+    foreground: "#dc2626",
+    background: "#2563eb",
+  });
+  expect(savedR1.styleOverride).not.toHaveProperty("labelColor");
+  expect(savedLabel).not.toHaveProperty("textColor");
 });
 
 test("shows fixed and variable capacitor plate terminals as read-only Properties", async ({

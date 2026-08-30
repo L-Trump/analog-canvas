@@ -158,6 +158,8 @@ export function renderPositionedOverbarScriptDocument(
     y: number;
     fontSize: number;
     alignment: "start" | "middle" | "end";
+    /** Paint for explicit decorations that cannot inherit from SVG text. */
+    color?: string;
     defaultItalic?: boolean;
     defaultBold?: boolean;
   },
@@ -278,6 +280,6 @@ export function renderPositionedOverbarScriptDocument(
   return {
     width,
     tspans: `<tspan data-text-run="overbar">${baseTspans}<tspan data-text-run="script-stack">${orderedScripts}</tspan></tspan>`,
-    decorations: `<line data-text-decoration="overbar" x1="${number(startX)}" y1="${number(lineY)}" x2="${number(startX + width)}" y2="${number(lineY)}" stroke="${profile.foreground}" stroke-width="${number(strokeWidth)}"/>`,
+    decorations: `<line data-text-decoration="overbar" x1="${number(startX)}" y1="${number(lineY)}" x2="${number(startX + width)}" y2="${number(lineY)}" stroke="${options.color ?? profile.foreground}" stroke-width="${number(strokeWidth)}"/>`,
   };
 }

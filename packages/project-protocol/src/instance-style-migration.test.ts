@@ -16,8 +16,12 @@ import {
   upgradeSchema30To31,
   upgradeSchema30To31WithReport,
 } from "./transforms/signal-flow-parameters.js";
+import {
+  upgradeSchema31To32,
+  upgradeSchema31To32WithReport,
+} from "./transforms/annotation-text-color.js";
 
-describe("schema migrations through Signal Flow parameters", () => {
+describe("schema migrations through Annotation text color", () => {
   it("keeps each retained historical transform independently usable", () => {
     const current = JSON.parse(
       serializeProject(createEmptyProject("test", "Test")),
@@ -25,14 +29,16 @@ describe("schema migrations through Signal Flow parameters", () => {
     const v29 = upgradeSchema28To29({ ...current, schemaVersion: 28 });
     const v30 = upgradeSchema29To30(v29);
     const v31 = upgradeSchema30To31(v30);
+    const v32 = upgradeSchema31To32(v31);
 
     expect(v29.schemaVersion).toBe(29);
     expect(v30.schemaVersion).toBe(30);
-    expect(v31.schemaVersion).toBe(CURRENT_PROJECT_SCHEMA_VERSION);
     expect(v31.schemaVersion).toBe(31);
+    expect(v32.schemaVersion).toBe(CURRENT_PROJECT_SCHEMA_VERSION);
+    expect(v32.schemaVersion).toBe(32);
   });
 
-  it("reports additive 28→29, 29→30, and 30→31 upgrades as unchanged", () => {
+  it("reports additive 28→29, 29→30, 30→31, and 31→32 upgrades as unchanged", () => {
     expect(
       upgradeSchema28To29WithReport({ schemaVersion: 28 }).report.changed,
     ).toBe(false);
@@ -42,34 +48,37 @@ describe("schema migrations through Signal Flow parameters", () => {
     expect(
       upgradeSchema30To31WithReport({ schemaVersion: 30 }).report.changed,
     ).toBe(false);
+    expect(
+      upgradeSchema31To32WithReport({ schemaVersion: 31 }).report.changed,
+    ).toBe(false);
   });
 
-  it("migrates schema 30 to 31 at the rolling project boundary", () => {
+  it("migrates schema 31 to 32 at the rolling project boundary", () => {
+    const current = JSON.parse(
+      serializeProject(createEmptyProject("test", "Test")),
+    ) as Record<string, unknown>;
+    const v31 = JSON.stringify({ ...current, schemaVersion: 31 });
+    const result = tryParseProjectWithMetadata(v31);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.sourceSchemaVersion).toBe(31);
+    expect(result.migrated).toBe(true);
+    expect(result.project.schemaVersion).toBe(32);
+  });
+
+  it("does not keep schema 30 in the rolling read window", () => {
     const current = JSON.parse(
       serializeProject(createEmptyProject("test", "Test")),
     ) as Record<string, unknown>;
     const v30 = JSON.stringify({ ...current, schemaVersion: 30 });
-    const result = tryParseProjectWithMetadata(v30);
-
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.sourceSchemaVersion).toBe(30);
-    expect(result.migrated).toBe(true);
-    expect(result.project.schemaVersion).toBe(31);
-  });
-
-  it("does not keep schema 29 in the rolling read window", () => {
-    const current = JSON.parse(
-      serializeProject(createEmptyProject("test", "Test")),
-    ) as Record<string, unknown>;
-    const v29 = JSON.stringify({ ...current, schemaVersion: 29 });
-    expect(tryParseProjectWithMetadata(v29)).toMatchObject({
+    expect(tryParseProjectWithMetadata(v30)).toMatchObject({
       ok: false,
       diagnostics: [{ code: "UNSUPPORTED_SCHEMA_VERSION" }],
     });
   });
 
-  it("round-trips style and Signal Flow presentation independently from netlist data", () => {
+  it("round-trips style, Signal Flow, and Annotation presentation independently from netlist data", () => {
     const project = createEmptyProject("test", "Test");
     project.documents[0]!.instances.push({
       id: "inst-1",
@@ -91,6 +100,21 @@ describe("schema migrations through Signal Flow parameters", () => {
         bodyHeight: 50,
       },
     });
+    project.documents[0]!.annotations.push({
+      id: "label-inst-1",
+      kind: "instance-label",
+      binding: { kind: "instance-designator", instanceId: "inst-1" },
+      anchor: {
+        kind: "object",
+        objectId: "inst-1",
+        localOffset: { x: 0, y: -20 },
+        fallbackPosition: { x: 0, y: -20 },
+      },
+      alignment: "middle",
+      rotation: 0,
+      locked: false,
+      textColor: "#224488",
+    });
 
     const serialized = serializeProject(project);
     const parsed = parseProject(serialized);
@@ -106,6 +130,9 @@ describe("schema migrations through Signal Flow parameters", () => {
         bodyWidth: 100,
         bodyHeight: 50,
       },
+    });
+    expect(parsed.documents[0]!.annotations[0]).toMatchObject({
+      textColor: "#224488",
     });
     expect(serializeProject(parsed)).toBe(serialized);
   });

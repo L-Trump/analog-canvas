@@ -65,6 +65,55 @@ describe("drafting layer rendering", () => {
     expect(svg).toContain("V_{in}");
   });
 
+  it("paints ordinary and positioned drafting text with its own color", () => {
+    const document = createEmptyDocument("doc", "Colored drafting text");
+    document.drafting = {
+      objects: [
+        {
+          id: "plain-color",
+          kind: "text",
+          locked: false,
+          zIndex: 0,
+          anchor: { kind: "free", position: { x: 20, y: 20 } },
+          content: { runs: [{ kind: "text", value: "plain" }] },
+          alignment: "start",
+          rotation: 0,
+          styleOverride: { color: "#2563eb" },
+        },
+        {
+          id: "overbar-color",
+          kind: "text",
+          locked: false,
+          zIndex: 1,
+          anchor: { kind: "free", position: { x: 20, y: 50 } },
+          content: {
+            runs: [
+              {
+                kind: "span",
+                style: "overbar",
+                children: [{ kind: "text", value: "x" }],
+              },
+            ],
+          },
+          alignment: "start",
+          rotation: 0,
+          styleOverride: { color: "#dc2626" },
+        },
+      ],
+    };
+
+    const svg = renderDocumentSvg(document, resolver);
+    expect(svg).toMatch(
+      /<text data-object-id="plain-color"[^>]*fill="#2563eb"/u,
+    );
+    expect(svg).toMatch(
+      /<text data-object-id="overbar-color"[^>]*fill="#dc2626"/u,
+    );
+    expect(svg).toMatch(
+      /<line data-text-decoration="overbar"[^>]*stroke="#dc2626"/u,
+    );
+  });
+
   it("escapes XML-significant characters in draft text", () => {
     const document = createEmptyDocument("doc", "Drafting");
     document.drafting = {

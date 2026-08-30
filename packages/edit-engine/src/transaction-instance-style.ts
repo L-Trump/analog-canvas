@@ -25,7 +25,7 @@ export type InstanceStyleOverrideEditOutcome = EditMutationOutcome;
  * - `styleOverride: { foreground: "...", background: "..." }` → **replace**
  *   the current override with this object. Fields not present in the new
  *   object are cleared.
- * - `styleOverride: {}` → clears both fields (equivalent to `null`).
+ * - `styleOverride: {}` → clears all fields (equivalent to `null`).
  *
  * The edit is rejected if the instance does not exist or if the new style
  * override is identical to the current one (no-op rejection).

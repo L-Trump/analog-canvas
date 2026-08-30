@@ -2,20 +2,21 @@
 
 Status: `accepted`
 
-Current Project schema: `31`
+Current Project schema: `32`
 
 Primary owners: `packages/model` (current shape) and
 `packages/project-protocol` (file boundary)
 
 An `.icproj.json` file is canonical JSON for one complete `CircuitProject`.
 `@icm/project-protocol` exposes `parseProject`. The rolling file boundary accepts
-schemas 30 and 31. Schema 30 added an optional atomic formula form to canonical
-RichText. Schema 31 adds optional per-instance Signal Flow metadata (`formula`,
-`coefficient`, `bodyWidth`, `bodyHeight`) independent from netlist authority.
-Both additions are optional, so the retained 29→30 and current 30→31 adapters
-preserve existing content and advance only the version stamp. The public file
-boundary supplies only schema 31 in memory and writes only schema 31; schema 29
-and older, and versions newer than 31, are rejected.
+schemas 31 and 32. Schema 31 added optional per-instance Signal Flow metadata
+(`formula`, `coefficient`, `bodyWidth`, `bodyHeight`) independent from netlist
+authority. Schema 32 adds optional presentation-only `Annotation.textColor`.
+The 31→32 adapter preserves inherited text behavior, materializes no color
+field, and advances only the version stamp. The public file boundary supplies
+only schema 32 in memory and writes only schema 32; schema 30 and older, and
+versions newer than 32, are rejected. Retained 29→30 and 30→31 adapters remain
+available only to controlled historical maintenance paths.
 
 ## Current authorities
 
@@ -59,7 +60,10 @@ and older, and versions newer than 31, are rejected.
   `instance-schematic-name`: it reads RichText `schematicName`, then falls
   back to the internal `schematicReference` or `netlist.reference`.
   `instance-designator` is optional read-only network-ID display. Renderers
-  never synthesize instance text from an internal ID. Bound `net-name` and
+  never synthesize instance text from an internal ID. `Annotation.textColor`
+  is an independent presentation override; when absent, instance reference and
+  value annotations inherit their owning Instance foreground, while other
+  annotations inherit the Document foreground. Bound `net-name` and
   `cell-terminal-name` annotations may carry a RichText `formatOverride` only
   when its flattened text equals the semantic Net or terminal name.
 - A RichText document is either ordinary styled text runs or one atomic
@@ -75,8 +79,8 @@ and older, and versions newer than 31, are rejected.
 ## Read and write
 
 ```text
-import text -> parse JSON -> require Project schema 30 or 31
--> converge to schema 31 -> strict schema-31 validation -> install unbound
+import text -> parse JSON -> require Project schema 31 or 32
+-> converge to schema 32 -> strict schema-32 validation -> install unbound
 export -> strict validation -> canonical key ordering -> Blob download
 ```
 
@@ -87,7 +91,7 @@ after explicit human approval in the editor.
 A migrated imported file is marked dirty. The editor never overwrites a source
 selected through the browser file input; the user may Save it as a Cloud
 Project or explicitly export upgraded bytes. Browser recovery records may be
-canonicalized to v31 only after a successful validated write.
+canonicalized to v32 only after a successful validated write.
 
 Project entry does not repair duplicate canonical supply Nets (`0` or `VDD`).
 Duplicate folded Net names are invalid input and remain a blocking diagnostic
@@ -96,7 +100,7 @@ until the author explicitly renames or merges the Nets.
 Canonical serialization ends with one newline and is byte-stable across
 serialize/parse/serialize. The current corpus is listed in
 `fixtures/projects/compatibility-corpus.json`; its accepted entries must all be
-already canonical Project schema 31. The rejected corpus names expected
+already canonical Project schema 32. The rejected corpus names expected
 validation failures.
 
 Viewport, selection, undo history, canvas overlays, Agent credentials,

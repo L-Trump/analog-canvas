@@ -119,7 +119,8 @@ export const SetInstanceSchematicNameEditSchema = z.strictObject({
 /**
  * Set, update, or clear per-instance color overrides.
  *
- * - `styleOverride.foreground` / `styleOverride.background`: hex color strings (`#RRGGBB`).
+ * - `styleOverride.foreground` / `styleOverride.background`: hex color
+ *   strings (`#RRGGBB`).
  * - A non-null object replaces the current override as a whole.
  * - `styleOverride` set to `null` clears all instance style overrides.
  */
@@ -345,6 +346,7 @@ export const SetCellSymbolPresentationEditSchema = z.strictObject({
   /** `null` clears all explicit definition-level symbol intent. */
   presentation: CellSymbolPresentationSchema.nullable(),
 });
+/** AnnotationSchema already carries optional presentation-only `textColor`. */
 export const UpsertSchematicAnnotationEditSchema = z.strictObject({
   kind: z.literal("upsert_schematic_annotation"),
   annotation: AnnotationSchema,

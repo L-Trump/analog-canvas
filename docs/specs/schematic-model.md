@@ -5,7 +5,7 @@ Status: `accepted`
 Primary owner: `packages/model`
 
 The Project contains Documents; each Document owns revisioned electrical,
-geometric, and presentation facts. The current model is strict schema 31 and has
+geometric, and presentation facts. The current model is strict schema 32 and has
 no compatibility shape.
 
 ## Coordinate domains
@@ -111,6 +111,13 @@ source. Renderers never derive visible
 instance text from IDs or copied properties. Drafting objects are visual-only
 and cannot create connectivity.
 
+An Annotation may independently persist presentation-only `textColor`. With
+that field absent, an `instance-label` or `instance-value` inherits the owning
+Instance's effective foreground; all other annotation kinds use the Document
+profile foreground. A semantic binding identifies the owning Instance before
+an object anchor does. Annotation paint never changes electrical topology,
+netlisting, SPICE parameters, or the owning Instance style.
+
 RichText has one canonical persisted authority. A document is either ordinary
 Razavi styled runs or one atomic formula run containing bounded LaTeX source
 and an explicit inline/display mode. Generated formula SVG, font paths, bounds,
@@ -168,7 +175,7 @@ ordinary Schematic edits inside one Project structural transaction. The
 Project's `structureRevision` protects this cross-Document boundary and the
 editor records it as one undoable structural commit.
 
-Persistence writes only schema 31. The rolling reader accepts schema 30 at the
+Persistence writes only schema 32. The rolling reader accepts schema 31 at the
 file boundary and advances it without rewriting content, then supplies the
 current model only; no compatibility shape enters runtime electrical
-derivation.
+derivation. Retained 29→30 and 30→31 adapters are maintenance-only.

@@ -271,7 +271,7 @@ describe("current Agent Circuit API service", () => {
       }
     }
 
-    // RichText recursively unfolds into both part documents. Schema 30 adds
+    // RichText recursively unfolds into both part documents. Schema 30 added
     // one safe atomic formula leaf to every top-level RichText projection;
     // this raised ceiling still guards accidental projection bloat.
     expect(JSON.stringify(AgentCircuitRequestJsonSchema).length).toBeLessThan(
@@ -626,6 +626,44 @@ describe("current Agent Circuit API service", () => {
       fixture.getDocument().instances.find((item) => item.id === "M1")?.netlist
         ?.parameters,
     ).toMatchObject({ value: "12u" });
+  });
+
+  it("accepts annotation textColor through upsert_schematic_annotation", () => {
+    const fixture = serviceFixture();
+    const response = fixture.service.handle({
+      apiVersion: "2.0",
+      requestId: "annotation-text-color",
+      operation: "transact",
+      documentId: "document-differential-stage",
+      transactionId: "annotation-text-color",
+      expectedRevision: 0,
+      edits: [
+        {
+          kind: "upsert_schematic_annotation",
+          annotation: {
+            id: "note-colored",
+            kind: "route-marker",
+            markerKind: "current",
+            content: { runs: [{ kind: "text", value: "I_tail" }] },
+            anchor: {
+              kind: "free",
+              position: { x: 120, y: 120 },
+            },
+            alignment: "middle",
+            rotation: 0,
+            locked: false,
+            textColor: "#123ABC",
+          },
+        },
+      ],
+    });
+
+    expect(response).toMatchObject({ ok: true, applied: true, revision: 1 });
+    expect(
+      fixture
+        .getDocument()
+        .annotations.find((item) => item.id === "note-colored")?.textColor,
+    ).toBe("#123ABC");
   });
 
   it("allows Snapshot permission to be denied independently", () => {

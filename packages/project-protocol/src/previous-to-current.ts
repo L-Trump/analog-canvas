@@ -38,6 +38,10 @@ export {
   upgradeSchema28To29,
   upgradeSchema28To29WithReport,
 } from "./transforms/annotation-grid.js";
+export type {
+  Schema28To29MigrationReport,
+  Schema28To29MigrationResult,
+} from "./transforms/annotation-grid.js";
 export {
   upgradeSchema29To30,
   upgradeSchema29To30WithReport,
@@ -46,10 +50,6 @@ export type {
   Schema29To30MigrationReport,
   Schema29To30MigrationResult,
 } from "./transforms/formula-rich-text.js";
-export type {
-  Schema28To29MigrationReport,
-  Schema28To29MigrationResult,
-} from "./transforms/annotation-grid.js";
 export {
   upgradeSchema30To31,
   upgradeSchema30To31WithReport,
@@ -58,3 +58,11 @@ export type {
   Schema30To31MigrationReport,
   Schema30To31MigrationResult,
 } from "./transforms/signal-flow-parameters.js";
+export {
+  upgradeSchema31To32,
+  upgradeSchema31To32WithReport,
+} from "./transforms/annotation-text-color.js";
+export type {
+  Schema31To32MigrationReport,
+  Schema31To32MigrationResult,
+} from "./transforms/annotation-text-color.js";

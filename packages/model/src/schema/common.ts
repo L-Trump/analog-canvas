@@ -1,7 +1,11 @@
 import { z } from "zod";
-export const CURRENT_PROJECT_SCHEMA_VERSION = 31;
+export const CURRENT_PROJECT_SCHEMA_VERSION = 32;
 
 export const StableIdSchema = z.string().min(1).max(256);
+/** Strict persisted/presentation hex color token. Format: `#RRGGBB`. */
+export const HexColorSchema = z
+  .string()
+  .regex(/^#[0-9A-Fa-f]{6}$/u, "Color must be #RRGGBB hex format");
 /** A persisted Document page point before its Document-grid relation is known. */
 export const GridPointSchema = z.strictObject({
   x: z.number().int(),

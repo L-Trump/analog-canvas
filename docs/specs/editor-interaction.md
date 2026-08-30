@@ -381,6 +381,14 @@ label is one visual deletion: the label removal is planned once, so the atomic
 transaction cannot reject a duplicated annotation removal. Drafting text has
 no electrical meaning.
 
+Selecting an Annotation exposes its own Text color control. Auto removes only
+that Annotation's `textColor`; instance reference/value text then inherits the
+owning Instance's effective foreground, while other annotations use the
+Document profile foreground. Selecting drafting text exposes its independent
+drafting color override, whose Auto state uses the Document profile foreground.
+Both controls transact through their owning object and preserve unrelated
+style fields, selection, and electrical content.
+
 The floating RichText editor has one formula action for editable text content.
 It opens a MathLive math field plus the exact LaTeX source, lets the author
 choose inline or display intent, validates against the bounded Analog Canvas
@@ -394,8 +402,8 @@ system; formulas do not create an Additional Text or Annotation side channel.
 Open, demo load, restore, and human-approved staged import replace the entire
 Project through one replacement boundary; they are not Edit Engine
 transactions. Replacement cancels pending recovery for the outgoing Project
-and terminates its Agent session. A complete schema-30 Project may be upgraded
-at the read boundary and then enters the editor only as schema-31; migrated
+and terminates its Agent session. A complete schema-31 Project may be upgraded
+at the read boundary and then enters the editor only as schema-32; migrated
 files are marked as needing save.
 
 Selection, viewport, active tool, previews, Agent tokens, and approval UI are

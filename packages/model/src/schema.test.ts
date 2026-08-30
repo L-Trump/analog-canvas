@@ -187,7 +187,7 @@ describe("CircuitProject schema", () => {
 
   it("holds electrical objects to the Document grid while annotations position freely", () => {
     const document = createEmptyProject("project-grid", "Grid").documents[0]!;
-    // Schema 31 retains 1-unit-precise drafting and annotation anchors.
+    // Schema 32 retains 1-unit-precise drafting and annotation anchors.
     document.drafting!.objects.push({
       id: "draft-fine",
       kind: "text",
@@ -643,6 +643,25 @@ describe("CircuitProject schema", () => {
     expect(CircuitProjectSchema.safeParse(project).success).toBe(true);
     document.annotations[0] = { ...label, visible: true };
     expect(CircuitProjectSchema.safeParse(project).success).toBe(true);
+  });
+
+  it("accepts an optional presentation-only textColor on annotations", () => {
+    const project = createEmptyProject("project-text-color", "Text color");
+    const document = project.documents[0]!;
+    const label = {
+      id: "label-1",
+      kind: "instance-label" as const,
+      content: { runs: [{ kind: "text" as const, value: "R1" }] },
+      anchor: { kind: "free" as const, position: { x: 20, y: 20 } },
+      alignment: "middle" as const,
+      rotation: 0 as const,
+      locked: false,
+    };
+    document.annotations.push({ ...label, textColor: "#123ABC" });
+    expect(CircuitProjectSchema.safeParse(project).success).toBe(true);
+
+    document.annotations[0] = { ...label, textColor: "blue" };
+    expect(CircuitProjectSchema.safeParse(project).success).toBe(false);
   });
 
   it("validates definition-level Cell symbol placement against stable formal terminals", () => {

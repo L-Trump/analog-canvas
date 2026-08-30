@@ -64,6 +64,10 @@ Annotations are semantic `instance-label`, `instance-value`, `net-label`,
 annotations rotate the arrow independently so their text stays upright.
 Explicit instance labels suppress only the renderer's default instance ID.
 Their text and position are editable without changing stable instance IDs.
+Instance labels and values inherit their owning Instance's effective
+foreground by default; an optional per-Annotation `textColor` override changes
+only that annotation's text. Net, power, and route-marker annotations use the
+Document style profile while their own `textColor` remains Auto.
 Net labels are formal electrical annotations tied to a logical Net; plain text
 has no electrical meaning.
 
