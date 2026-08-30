@@ -49,6 +49,12 @@ export interface ConductorTopologyNormalizationResult {
   changed: boolean;
   changedRouteIds: ReadonlySet<string>;
   changedObjectIds: ReadonlySet<string>;
+  /**
+   * Endpoint key of every Junction this pass folded away, mapped to the Base
+   * Net whose conductor absorbed it. Effect validation reads a coalesced
+   * endpoint as connectivity that survives in that Net, not as a loss.
+   */
+  coalescedEndpoints: ReadonlyMap<string, string>;
 }
 
 /**
@@ -243,6 +249,7 @@ export function normalizeSameNetConductorTopology(
 ): ConductorTopologyNormalizationResult {
   const changedRouteIds = new Set<string>();
   const changedObjectIds = new Set<string>();
+  const coalescedEndpoints = new Map<string, string>();
   let changed = false;
   const occupiedIds = new Set([
     ...document.instances.map((instance) => instance.id),
@@ -338,15 +345,27 @@ export function normalizeSameNetConductorTopology(
     }
     const collapsibleJunctionIds = new Set<string>();
     for (const junction of junctions) {
+      const role = junction.role ?? "branch";
       if (
-        (junction.role ?? "branch") !== "branch" ||
+        (role !== "branch" && role !== "route-anchor") ||
         protectedIds.has(junction.id) ||
         options.preserveJunctionIds?.has(junction.id)
       ) {
         continue;
       }
       const incident = incidentByPoint.get(pointKey(junction.position)) ?? [];
-      if (collinearContinuation(junction.position, incident)) {
+      if (role === "branch") {
+        if (collinearContinuation(junction.position, incident)) {
+          collapsibleJunctionIds.add(junction.id);
+        }
+        continue;
+      }
+      // A degree-two route-anchor is no longer a loose end: its two arms are
+      // one continuous conductor, joined collinearly (the join point
+      // disappears) or at a corner (the join becomes an interior bend).
+      // Collapsing it makes segmentation follow the drawing, not the stroke
+      // history — the W-tool continuation repro.
+      if (incident.length === 2) {
         collapsibleJunctionIds.add(junction.id);
       }
     }
@@ -603,6 +622,10 @@ export function normalizeSameNetConductorTopology(
     }
     for (const junctionId of removedJunctionIds) {
       changedObjectIds.add(junctionId);
+      coalescedEndpoints.set(
+        endpointKey({ kind: "junction", junctionId }),
+        net.id,
+      );
     }
 
     const productIds = rebuiltRoutes.map((route) => route.id);
@@ -659,5 +682,5 @@ export function normalizeSameNetConductorTopology(
     changed = true;
   }
 
-  return { changed, changedRouteIds, changedObjectIds };
+  return { changed, changedRouteIds, changedObjectIds, coalescedEndpoints };
 }
